@@ -60,6 +60,14 @@ tracks wall time within a few percent for every single-process workload; `update
 parse in worker processes, and their wall time includes waiting for SQLite's writes, which moved
 with the load. The load column is the median 1-minute load average while that row ran.
 
+**A later round on a quiet machine** (load 6-9), with commit 7 (`b3d3b89`) in the after build:
+
+| Workload | Original | Jac before | Jac after | after / original | after / before |
+|---|---:|---:|---:|---:|---:|
+| `build` (full, 404 files), 5 runs | 20.6 s | 35.3 s | 27.1 s | 1.32x | 0.77x |
+| `update` after editing one file, 5 runs | 9.2 s | 14.6 s | 11.8 s | 1.27x | 0.80x |
+| Parser alone, 404 files, 3 runs | 24.3 s | | 33.2 s | 1.37x | |
+
 Run of the parser with `held` replaced by an identity function in the process (an experiment to
 size blocker 1, not shipped): 30.2 s, the original's time.
 
@@ -97,7 +105,7 @@ of the package is machine code; it is Jac lowered to Python and run on CPython. 
 imports the package in its own process, so there are no crossings between spaces at run time:
 every cost below is in the Python the cpython space emits.
 
-Six commits, in order of effect:
+Seven commits, in order of effect:
 
 1. **Start-up: import modules where they are used** (`266388e`). The rewrite fetched other
    modules through a helper, `lazy("skills", "PLATFORMS")`, but every name it fetched also had a
@@ -132,6 +140,11 @@ Six commits, in order of effect:
    `node.type` up to seven times per node, each through the runtime; they read it once.
    `_extract_value_references`, also run for every node, qualified the caller's name before
    learning that no branch would use it; it now returns first when none applies.
+6. **Parser: the depth limit and the value-reference gate** (`b3d3b89`). Thirteen nested tree
+   walks read `self._MAX_AST_DEPTH` for every node; the enclosing method reads it once and the
+   walk uses the local. The early return of `_extract_value_references` read three class
+   attributes per node; it checks a module-level set of the same types, which a new test
+   (`tests/test_value_reference_gate.py`) keeps equal to them. 120-file parse: 15.5 s to 14.7 s.
 
 Every commit kept the full test suite at the original's results, apart from tests that cannot run
 in neojac's test tree (above), and every workload's output identical.
@@ -139,7 +152,7 @@ in neojac's test tree (above), and every workload's output identical.
 ## Where the Jac is still slower, and why
 
 The parser is the one workload still well behind the original: parsing the 404 files in one
-process takes 1.44x the original's time (it was 1.87x), and `build` and `update`, which parse in
+process takes 1.37-1.44x the original's time (it was 1.87x), and `build` and `update`, which parse in
 worker processes, move with it. The profile names the cause: on 60 files the parser makes 16
 million calls to the runtime's `held()` (counted after commit 4), one for every attribute read,
 subscript and call result of a Python object (here a tree-sitter `Node`), and `held()` costs about
