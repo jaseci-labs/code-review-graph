@@ -39,13 +39,30 @@ VS Code extension: `code-review-graph-vscode/` (TypeScript, separate `package.js
 
 Database: `.code-review-graph/graph.db` (SQLite, WAL mode).
 
+## Source is Jac, built with neojac
+
+The package is Jac: each module is `code_review_graph/<name>.jac` with its bodies in
+`code_review_graph/impl/<name>.impl.jac` (the file names above still name the modules). It is a
+neojac project: `jac.toml` holds what `pyproject.toml` held and neojac writes `pyproject.toml`
+from it; `archwire.jac` declares the `cpython` space that ships the package and every import
+between the project's files. The Python sources before the port are in `replaced-by-neojac/`.
+`code_review_graph/assets/code-review-graph/scripts/crg_readonly.py` stays Python: the Codex skill
+copies it out and runs it with `python`.
+
+- `neojac install` once, `neojac build pyproject.toml` to build, `neojac test` to run the suite
+  against the build (it runs from a copy of the repository without `code_review_graph/`; tests
+  that read the package's files use `tests/_project.py`).
+- `neojac fmt --fix archwire.jac` rewrites the wires after an import changes.
+- `neojac emit-py code_review_graph -o <dir>` writes the Python that actually runs.
+- A new module file must be added to `[wheel."."] files` in `jac.toml`.
+
 ## Key Commands
 
 ```bash
 # Development
-uv run pytest tests/ --tb=short -q
-uv run ruff check code_review_graph/
-uv run mypy code_review_graph/ --ignore-missing-imports --no-strict-optional
+neojac build pyproject.toml
+neojac test
+neojac fmt code_review_graph
 
 # Graph
 uv run code-review-graph build              # full build
