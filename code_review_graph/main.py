@@ -434,7 +434,7 @@ async def build_or_update_graph_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "build_or_update_graph_tool",
-        lambda: build_or_update_graph(
+        lambda: _resolve_attr("build_or_update_graph")(
             full_rebuild=full_rebuild, repo_root=root, base=base,
             postprocess=postprocess, recurse_submodules=recurse_submodules,
             embedding_provider=embedding_provider,
@@ -482,7 +482,7 @@ async def run_postprocess_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "run_postprocess_tool",
-        lambda: run_postprocess(
+        lambda: _resolve_attr("run_postprocess")(
             flows=flows, communities=communities, fts=fts, repo_root=root,
             embedding_provider=embedding_provider,
             embedding_model=embedding_model,
@@ -518,7 +518,7 @@ async def get_minimal_context_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_minimal_context_tool",
-        lambda: get_minimal_context(
+        lambda: _resolve_attr("get_minimal_context")(
             task=task, changed_files=changed_files,
             repo_root=root, base=base,
         ),
@@ -566,7 +566,7 @@ async def get_impact_radius_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_impact_radius_tool",
-        lambda: get_impact_radius(
+        lambda: _resolve_attr("get_impact_radius")(
             changed_files=changed_files, max_depth=max_depth,
             max_results=max_results,
             repo_root=root, base=base, detail_level=detail_level,
@@ -635,7 +635,7 @@ async def query_graph_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "query_graph_tool",
-        lambda: query_graph(
+        lambda: _resolve_attr("query_graph")(
             pattern=pattern, target=target, repo_root=root,
             detail_level=detail_level, max_results=max_results,
             resolution=resolution, to=to,
@@ -678,7 +678,7 @@ async def get_review_context_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_review_context_tool",
-        lambda: get_review_context(
+        lambda: _resolve_attr("get_review_context")(
             changed_files=changed_files, max_depth=max_depth,
             include_source=include_source, max_lines_per_file=max_lines_per_file,
             repo_root=root, base=base, detail_level=detail_level,
@@ -737,7 +737,7 @@ async def semantic_search_nodes_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "semantic_search_nodes_tool",
-        lambda: semantic_search_nodes(
+        lambda: _resolve_attr("semantic_search_nodes")(
             query=query, kind=kind, limit=limit, repo_root=root,
             model=model, provider=provider, detail_level=detail_level,
             include_source=include_source, expand_neighbors=expand_neighbors,
@@ -778,7 +778,7 @@ async def embed_graph_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "embed_graph_tool",
-        lambda: embed_graph(
+        lambda: _resolve_attr("embed_graph")(
             repo_root=root, model=model, provider=provider,
         ),
         root,
@@ -801,7 +801,7 @@ async def list_graph_stats_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "list_graph_stats_tool",
-        lambda: list_graph_stats(repo_root=root),
+        lambda: _resolve_attr("list_graph_stats")(repo_root=root),
         root,
     )
 
@@ -862,7 +862,7 @@ async def find_large_functions_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "find_large_functions_tool",
-        lambda: find_large_functions(
+        lambda: _resolve_attr("find_large_functions")(
             min_lines=min_lines, kind=kind, file_path_pattern=file_path_pattern,
             limit=limit, repo_root=root, detail_level=detail_level,
         ),
@@ -895,7 +895,7 @@ async def list_flows_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "list_flows_tool",
-        lambda: list_flows(
+        lambda: _resolve_attr("list_flows")(
             repo_root=root, sort_by=sort_by, limit=limit, kind=kind,
             detail_level=detail_level,
         ),
@@ -932,7 +932,7 @@ async def get_flow_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_flow_tool",
-        lambda: get_flow(
+        lambda: _resolve_attr("get_flow")(
             flow_id=flow_id, flow_name=flow_name,
             include_source=include_source, repo_root=root,
             max_steps=max_steps, max_source_lines=max_source_lines,
@@ -969,7 +969,7 @@ async def get_affected_flows_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_affected_flows_tool",
-        lambda: get_affected_flows_func(
+        lambda: _resolve_attr("get_affected_flows_func")(
             changed_files=changed_files, base=base, repo_root=root,
             detail_level=detail_level, max_flows=max_flows,
         ),
@@ -1008,7 +1008,7 @@ async def list_communities_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "list_communities_tool",
-        lambda: list_communities_func(
+        lambda: _resolve_attr("list_communities_func")(
             repo_root=root, sort_by=sort_by, min_size=min_size,
             detail_level=detail_level, max_results=max_results,
             max_members=max_members,
@@ -1045,7 +1045,7 @@ async def get_community_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_community_tool",
-        lambda: get_community_func(
+        lambda: _resolve_attr("get_community_func")(
             community_name=community_name, community_id=community_id,
             include_members=include_members, repo_root=root,
             max_members=max_members,
@@ -1081,7 +1081,7 @@ async def get_architecture_overview_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_architecture_overview_tool",
-        lambda: get_architecture_overview_func(
+        lambda: _resolve_attr("get_architecture_overview_func")(
             repo_root=root,
             detail_level=detail_level,
             max_results=max_results,
@@ -1128,7 +1128,7 @@ async def detect_changes_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "detect_changes_tool",
-        lambda: detect_changes_func(
+        lambda: _resolve_attr("detect_changes_func")(
             base=base, changed_files=changed_files,
             include_source=include_source, max_depth=max_depth,
             repo_root=root, detail_level=detail_level,
@@ -1180,7 +1180,7 @@ async def refactor_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "refactor_tool",
-        lambda: refactor_func(
+        lambda: _resolve_attr("refactor_func")(
             mode=mode, old_name=old_name, new_name=new_name,
             kind=kind, file_pattern=file_pattern, repo_root=root,
             max_results=max_results, detail_level=detail_level,
@@ -1219,7 +1219,7 @@ async def apply_refactor_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "apply_refactor_tool",
-        lambda: apply_refactor_func(
+        lambda: _resolve_attr("apply_refactor_func")(
             refactor_id=refactor_id, repo_root=root,
             dry_run=dry_run, max_diff_files=max_diff_files,
         ),
@@ -1249,7 +1249,7 @@ async def generate_wiki_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "generate_wiki_tool",
-        lambda: generate_wiki_func(
+        lambda: _resolve_attr("generate_wiki_func")(
             repo_root=root, force=force,
         ),
         root,
@@ -1277,7 +1277,7 @@ async def get_wiki_page_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_wiki_page_tool",
-        lambda: get_wiki_page_func(
+        lambda: _resolve_attr("get_wiki_page_func")(
             community_name=community_name, repo_root=root,
             max_chars=max_chars,
         ),
@@ -1305,7 +1305,7 @@ async def get_hub_nodes_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_hub_nodes_tool",
-        lambda: get_hub_nodes_func(
+        lambda: _resolve_attr("get_hub_nodes_func")(
             repo_root=root, top_n=top_n, detail_level=detail_level,
         ),
         root,
@@ -1333,7 +1333,7 @@ async def get_bridge_nodes_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_bridge_nodes_tool",
-        lambda: get_bridge_nodes_func(
+        lambda: _resolve_attr("get_bridge_nodes_func")(
             repo_root=root, top_n=top_n, detail_level=detail_level,
         ),
         root,
@@ -1363,7 +1363,7 @@ async def get_knowledge_gaps_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_knowledge_gaps_tool",
-        lambda: get_knowledge_gaps_func(
+        lambda: _resolve_attr("get_knowledge_gaps_func")(
             repo_root=root, max_per_category=max_per_category,
             detail_level=detail_level,
         ),
@@ -1392,7 +1392,7 @@ async def get_surprising_connections_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_surprising_connections_tool",
-        lambda: get_surprising_connections_func(
+        lambda: _resolve_attr("get_surprising_connections_func")(
             repo_root=root, top_n=top_n, detail_level=detail_level,
         ),
         root,
@@ -1415,7 +1415,7 @@ async def get_suggested_questions_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "get_suggested_questions_tool",
-        lambda: get_suggested_questions_func(
+        lambda: _resolve_attr("get_suggested_questions_func")(
             repo_root=root,
         ),
         root,
@@ -1448,7 +1448,7 @@ async def traverse_graph_tool(
     root = _resolve_repo_root(repo_root)
     return await _offload(
         "traverse_graph_tool",
-        lambda: traverse_graph_func(
+        lambda: _resolve_attr("traverse_graph_func")(
             query=query, mode=mode, depth=depth,
             token_budget=token_budget,
             repo_root=root or "",
@@ -1500,7 +1500,7 @@ async def cross_repo_search_tool(
     """
     return await _offload(
         "cross_repo_search_tool",
-        lambda: cross_repo_search_func(
+        lambda: _resolve_attr("cross_repo_search_func")(
             query=query, kind=kind, limit=limit, max_results=max_results,
             repos=repos,
         ),

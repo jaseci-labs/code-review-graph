@@ -721,9 +721,6 @@ graph import {
     code_review_graph.parser --> code_review_graph.uncertainty { normalize_file_path }
     code_review_graph.tools._common --> code_review_graph.uncertainty { _read_live_git_head }
     code_review_graph.search --> code_review_graph.eval.benchmarks.search_quality { hybrid_search }
-    code_review_graph.tools --> code_review_graph.eval.benchmarks.token_efficiency {
-        get_review_context,
-    }
     code_review_graph.constants --> code_review_graph.tools.docs { read_only_requested }
     code_review_graph.embeddings --> code_review_graph.tools.docs {
         EmbeddingStore,
@@ -3134,4 +3131,7 @@ graph import {
         release_os_memory,
     }
     code_review_graph.registry ++> code_review_graph.daemon { Registry }
+    code_review_graph.tools.review --> code_review_graph.eval.benchmarks.token_efficiency {
+        get_review_context,
+    }
 }

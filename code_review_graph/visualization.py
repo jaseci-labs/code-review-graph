@@ -123,7 +123,7 @@ DEFAULT_MAX_FULL_EDGES = 3 * DEFAULT_MAX_FULL_NODES
 _SEEDED_READ_FALLBACK_NODES = 5000
 
 
-class _NameIndex(dict[str, list[str]]):
+class _NameIndex(dict):
     """Short names to qualified names, which can search one name's candidates.
 
     A name every file defines has thousands of candidates. Checking each one in
@@ -138,7 +138,7 @@ class _NameIndex(dict[str, list[str]]):
         """Return the candidate for *key* starting with *prefix*, if exactly one does."""
         ranked = self._sorted.get(key)
         if ranked is None:
-            ranked = self._sorted[key] = sorted(self[key])
+            ranked = self._sorted[key] = sorted(dict.__getitem__(self, key))
         # Strings sharing a prefix sit together in sorted order, the shortest first.
         start = bisect_left(ranked, prefix)
         if start == len(ranked) or not ranked[start].startswith(prefix):

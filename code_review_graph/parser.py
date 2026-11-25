@@ -27,10 +27,7 @@ from functools import lru_cache
 from pathlib import Path, PurePath
 from typing import Any, NamedTuple, Optional
 
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10
-    import tomli as tomllib  # type: ignore[import-not-found,no-redef]
+import tomllib
 
 from .config_keys import is_spring_config_path, normalize_spring_config_key
 from .constants import (
@@ -47,16 +44,11 @@ from .constants import (
 from .custom_languages import CustomLanguage, load_custom_languages
 from .npm_alias_resolver import NpmAliasResolver
 
-try:
-    import yaml as _yaml  # type: ignore[import-untyped]
-    from yaml import MappingNode as _YamlMapping
-    from yaml import ScalarNode as _YamlScalar
-    from yaml import SequenceNode as _YamlSequence
-    from yaml.events import AliasEvent as _YamlAliasEvent  # type: ignore[import-untyped]
-except ImportError:
-    _yaml = None  # type: ignore[assignment]
-    _YamlMapping = _YamlSequence = _YamlScalar = None  # type: ignore[assignment,misc]
-    _YamlAliasEvent = None  # type: ignore[assignment,misc]
+import yaml as _yaml  # type: ignore[import-untyped]
+from yaml import MappingNode as _YamlMapping
+from yaml import ScalarNode as _YamlScalar
+from yaml import SequenceNode as _YamlSequence
+from yaml.events import AliasEvent as _YamlAliasEvent  # type: ignore[import-untyped]
 
 from .tsconfig_resolver import TsconfigResolver
 from .workspace_resolver import WorkspaceResolver
@@ -357,10 +349,10 @@ def _python_static_truth(
     return None
 
 
-_TRY_STMT_TYPES: tuple[type[ast.AST], ...] = (
+_TRY_STMT_TYPES: tuple[Any, ...] = (
     (ast.Try, ast.TryStar) if hasattr(ast, "TryStar") else (ast.Try,)
 )
-_MATCH_STMT_TYPES: tuple[type[ast.AST], ...] = (
+_MATCH_STMT_TYPES: tuple[Any, ...] = (
     (ast.Match,) if hasattr(ast, "Match") else ()
 )
 
@@ -2145,7 +2137,7 @@ def _vbnet_logical_lines(cleaned: str) -> list[tuple[int, int, str]]:
     parts: list[str] = []
     start_line = 1
     depth = 0
-    for line_no, raw_line in enumerate(cleaned.splitlines(), start=1):
+    for line_no, raw_line in enumerate(cleaned.splitlines(), 1):
         stripped = raw_line.strip()
         if not stripped and not parts:
             continue
@@ -3798,6 +3790,14 @@ _POWERSHELL_RANGE_RE = re.compile(
 _POWERSHELL_SCOPE_RE = re.compile(r"^(?:global|local|private|script):", re.IGNORECASE)
 
 
+_PLSQL_IDENT_RE = r"[^\W\d][\w$#]*"
+
+
+_PLSQL_ROUTINE_RE = (
+    rf"{_PLSQL_IDENT_RE}(?:\.{_PLSQL_IDENT_RE})*(?![\w$#])"
+    r"\s*(?:\((?:[^();]|\([^()]*\))*\)\s*)?"
+)
+
 class CodeParser:
     """Parses source files using Tree-sitter and extracts structural information."""
 
@@ -4664,7 +4664,7 @@ class CodeParser:
         does not rename them, and a second use cannot overwrite the first.
         """
         text = source.decode("utf-8", errors="replace")
-        masked = self._LIQUID_LITERAL_RE.sub(self._blank_liquid_span, text)
+        masked = self._LIQUID_LITERAL_RE.sub(CodeParser._blank_liquid_span, text)
         file_path = normalize_file_path(path)
         nodes = [
             NodeInfo(
@@ -4708,7 +4708,7 @@ class CodeParser:
 
         # Text inside a tag, such as a quoted value, is not output.
         for match in self._LIQUID_OUTPUT_RE.finditer(
-            self._LIQUID_TAG_RE.sub(self._blank_liquid_span, masked),
+            self._LIQUID_TAG_RE.sub(CodeParser._blank_liquid_span, masked),
         ):
             expression = " ".join(match.group(1).split())
             if expression:
@@ -6938,7 +6938,7 @@ class CodeParser:
     # character stays Unicode-aware (matching `\w`'s own default behavior
     # elsewhere in this file, e.g. `_SQL_TABLE_RE`) instead of silently
     # truncating identifiers like `café` at the accented letter.
-    _PLSQL_IDENT = r"[^\W\d][\w$#]*"
+    _PLSQL_IDENT = _PLSQL_IDENT_RE
 
     # Regex for CREATE PROCEDURE — tree-sitter SQL grammar emits an ERROR node
     # for this statement, so we fall back to a regex scan. Leading `\b`
@@ -6964,32 +6964,32 @@ class CodeParser:
     # functions are all extracted via regex, mirroring the CREATE PROCEDURE
     # fallback above. Each starts with `\b` for the same reason as above.
     _SQL_PLSQL_FUNC_RE = re.compile(
-        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+({_PLSQL_IDENT}(?:\.{_PLSQL_IDENT})*)",
+        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+({_PLSQL_IDENT_RE}(?:\.{_PLSQL_IDENT_RE})*)",
         re.IGNORECASE,
     )
     _SQL_TRIGGER_RE = re.compile(
-        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+({_PLSQL_IDENT}(?:\.{_PLSQL_IDENT})*)",
+        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+({_PLSQL_IDENT_RE}(?:\.{_PLSQL_IDENT_RE})*)",
         re.IGNORECASE,
     )
     # Package *specification* — must not also match "PACKAGE BODY".
     _SQL_PACKAGE_RE = re.compile(
-        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?PACKAGE\s+(?!BODY\b)({_PLSQL_IDENT}(?:\.{_PLSQL_IDENT})*)",
+        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?PACKAGE\s+(?!BODY\b)({_PLSQL_IDENT_RE}(?:\.{_PLSQL_IDENT_RE})*)",
         re.IGNORECASE,
     )
     _SQL_PACKAGE_BODY_RE = re.compile(
-        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?PACKAGE\s+BODY\s+({_PLSQL_IDENT}(?:\.{_PLSQL_IDENT})*)",
+        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?PACKAGE\s+BODY\s+({_PLSQL_IDENT_RE}(?:\.{_PLSQL_IDENT_RE})*)",
         re.IGNORECASE,
     )
     # Nested member declarations inside a PACKAGE BODY (no CREATE prefix).
     _SQL_PACKAGE_MEMBER_RE = re.compile(
-        rf"\b(PROCEDURE|FUNCTION)\s+({_PLSQL_IDENT})",
+        rf"\b(PROCEDURE|FUNCTION)\s+({_PLSQL_IDENT_RE})",
         re.IGNORECASE,
     )
     # A call-shaped token: `identifier(` or `pkg.proc(`, not preceded by
     # another identifier character (so `.owner(` in `foo.owner(` still
     # matches, but the `owner` in `xowner(` does not).
     _PLSQL_CALL_RE = re.compile(
-        rf"(?<![\w$#])({_PLSQL_IDENT}(?:\.{_PLSQL_IDENT}){{0,2}})\s*\(",
+        rf"(?<![\w$#])({_PLSQL_IDENT_RE}(?:\.{_PLSQL_IDENT_RE}){{0,2}})\s*\(",
     )
     # PL/SQL control-flow keywords and common scalar type names that also
     # precede `(` (e.g. `v_x VARCHAR2(50);` or `WHILE (cond)`) but are not
@@ -7052,17 +7052,14 @@ class CodeParser:
     # of those: `FUNCTION f RETURN` (others write `RETURNS`) and `PROCEDURE p IS`.
     # `PROCEDURE p AS` is also T-SQL, and with `OR REPLACE` also Postgres, whose
     # body is then a dollar-quoted or quoted string.
-    _PLSQL_ROUTINE = (
-        rf"{_PLSQL_IDENT}(?:\.{_PLSQL_IDENT})*(?![\w$#])"
-        r"\s*(?:\((?:[^();]|\([^()]*\))*\)\s*)?"
-    )
+    _PLSQL_ROUTINE = _PLSQL_ROUTINE_RE
     _ORACLE_SIGNAL_RE = re.compile(
         r"%TYPE\b|%ROWTYPE\b|\bVARCHAR2\b|\bPLS_INTEGER\b|\bBINARY_INTEGER\b|"
         r"\bSYS_REFCURSOR\b|\bDBMS_OUTPUT\b|:(?:NEW|OLD)\.|"
         r"\bCREATE\s+(?:OR\s+REPLACE\s+)?PACKAGE\b|"
-        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+{_PLSQL_ROUTINE}RETURN\b|"
-        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?PROCEDURE\s+{_PLSQL_ROUTINE}IS\b|"
-        rf"\bCREATE\s+OR\s+REPLACE\s+PROCEDURE\s+{_PLSQL_ROUTINE}AS\s+[^\s$']",
+        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+{_PLSQL_ROUTINE_RE}RETURN\b|"
+        rf"\bCREATE\s+(?:OR\s+REPLACE\s+)?PROCEDURE\s+{_PLSQL_ROUTINE_RE}IS\b|"
+        rf"\bCREATE\s+OR\s+REPLACE\s+PROCEDURE\s+{_PLSQL_ROUTINE_RE}AS\s+[^\s$']",
         re.IGNORECASE,
     )
 
@@ -7194,7 +7191,7 @@ class CodeParser:
         re.IGNORECASE,
     )
 
-    _PLSQL_NAMED_END_RE = re.compile(rf"\bEND\b\s*({_PLSQL_IDENT})\s*;", re.IGNORECASE)
+    _PLSQL_NAMED_END_RE = re.compile(rf"\bEND\b\s*({_PLSQL_IDENT_RE})\s*;", re.IGNORECASE)
     # The lookaround keeps `$END` (conditional compilation) and `end_date` out.
     _PLSQL_BLOCK_WORD_RE = re.compile(
         r"(?<![\w$#])(?:(?P<open>BEGIN|CASE)|(?P<skip>END\s+(?:IF|LOOP))|END(?:\s+CASE)?)"
@@ -8545,7 +8542,7 @@ class CodeParser:
             "tsx": {"statement_block"},
             "php": {"compound_statement"},
             "csharp": {"block"},
-        }.get(language, set())
+        }.get(language) or set()
         targets: dict[tuple[int, str, str], tuple[Optional[str], str, str]] = {}
         declared_type_parameters: list[set[str]] = []
 
@@ -8758,7 +8755,7 @@ class CodeParser:
             "typescript": {"required_parameter", "optional_parameter"},
             "tsx": {"required_parameter", "optional_parameter"},
             "csharp": {"parameter"},
-        }.get(language, set())
+        }.get(language) or set()
 
         def visit(node, depth: int = 0) -> None:
             if depth > self._MAX_AST_DEPTH:
@@ -10069,7 +10066,7 @@ class CodeParser:
                         return
                     visit(child, path + (index,), depth + 1)
                 return
-            name = cls._python_binding_target_name(node)
+            name = CodeParser._python_binding_target_name(node)
             if name:
                 found.append((name, path))
 
@@ -11778,7 +11775,7 @@ class CodeParser:
         logical: list[tuple[int, str]] = []
         buffer = ""
         start_line = 1
-        for line_number, physical in enumerate(text.splitlines(), start=1):
+        for line_number, physical in enumerate(text.splitlines(), 1):
             if not buffer:
                 start_line = line_number
             buffer += physical.lstrip() if buffer else physical
@@ -23380,8 +23377,8 @@ class CodeParser:
         for field_name in ("parameters", "result"):
             for parameter_list in node.children_by_field_name(field_name):
                 if any(
-                    parameter.type in cls._GO_PARAMETER_TYPES
-                    and cls._go_field_binds_name(parameter, "name", name)
+                    parameter.type in CodeParser._GO_PARAMETER_TYPES
+                    and CodeParser._go_field_binds_name(parameter, "name", name)
                     for parameter in parameter_list.named_children
                 ):
                     return True

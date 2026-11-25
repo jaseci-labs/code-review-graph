@@ -896,10 +896,14 @@ class CorruptGraphDatabaseError(GraphStoreError):
     shape, which ``CREATE TABLE IF NOT EXISTS`` will not repair.
     """
 
+    db_path: Path
+    reason: str
+
     def __init__(self, db_path: str | Path, reason: object) -> None:
         self.db_path = Path(db_path)
         self.reason = str(reason)
-        super().__init__(
+        GraphStoreError.__init__(
+            self,
             f"the graph database at {self.db_path} is unreadable "
             f"({self.reason}). Run `code-review-graph build` to rebuild it "
             "from scratch."

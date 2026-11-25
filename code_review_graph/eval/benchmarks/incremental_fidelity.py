@@ -33,6 +33,7 @@ what the snapshot cannot.
 
 from __future__ import annotations
 
+import typing
 import json
 import logging
 import os
@@ -231,7 +232,7 @@ def _copy_db(source: Path, target: Path) -> None:
 # ids and timestamps, so a reported difference is a real difference.
 # ---------------------------------------------------------------------------
 
-_Projection = dict[str, "Counter[str]"]
+_Projection = typing.Dict[str, "Counter[str]"]
 
 
 def _blank(value: object) -> str:

@@ -321,7 +321,10 @@ class _Child:
     def _read_stderr(self) -> None:
         assert self.process is not None
         assert self.process.stderr is not None
-        for line in iter(self.process.stderr.readline, b""):
+        while True:
+            line = self.process.stderr.readline()
+            if line == b"":
+                break
             if len(line) > _MAX_FRAME_BYTES:
                 line = line[:_MAX_FRAME_BYTES] + b"\n"
             try:

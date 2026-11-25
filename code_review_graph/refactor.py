@@ -63,11 +63,11 @@ _MOCK_NAME_RE = re.compile(
 # ---------------------------------------------------------------------------
 
 _refactor_lock = threading.Lock()
-_pending_refactors: dict[str, dict] = {}
+_pending_refactors: dict[str, dict[str, Any]] = {}
 # Edit files of a pending refactor that the graph reached through a followed
 # symlinked folder outside the repository (#269). Kept out of the preview so
 # it never reaches a tool response.
-_followed_edit_files: dict[str, frozenset[str]] = {}
+_followed_edit_files: dict[str, Any] = {}
 REFACTOR_EXPIRY_SECONDS = 600  # 10 minutes
 
 
@@ -878,7 +878,7 @@ def _py_find_definition(
         for child in ast.iter_child_nodes(current):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 first = min([d.lineno for d in child.decorator_list] + [child.lineno])
-                if child.name == name and first <= line <= child.lineno:
+                if child.name == name and first <= line and line <= child.lineno:
                     return child, place
                 inner = "class" if isinstance(child, ast.ClassDef) else "function"
                 stack.append((child, inner))
@@ -2030,7 +2030,7 @@ def find_dead_code(
     tested_files: dict[str, set[str]] = {}
     member_call_names: set[str] = set()
     class_names = {_ascii_fold(node.name) for node in candidates if node.kind == "Class"}
-    max_class_name_length = max(map(len, class_names), default=0)
+    max_class_name_length = max((len(class_name) for class_name in class_names), default=0)
     class_bases: dict[str, list[str]] = {}
     base_targets: dict[str, set[str]] = {}
     importer_files: dict[str, set[str]] = {}

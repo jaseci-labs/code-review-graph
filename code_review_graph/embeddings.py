@@ -582,7 +582,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
                 # will keep failing on retry.
                 is_retryable = False
                 if isinstance(e, urllib.error.HTTPError):
-                    is_retryable = e.code == 429 or 500 <= e.code < 600
+                    is_retryable = getattr(e, "code", 0) == 429 or 500 <= getattr(e, "code", 0) < 600
                 elif isinstance(e, (
                     urllib.error.URLError,
                     socket.timeout,
@@ -788,7 +788,7 @@ class VoyageEmbeddingProvider(EmbeddingProvider):
             except Exception as e:
                 is_retryable = False
                 if isinstance(e, urllib.error.HTTPError):
-                    is_retryable = e.code == 429 or 500 <= e.code < 600
+                    is_retryable = getattr(e, "code", 0) == 429 or 500 <= getattr(e, "code", 0) < 600
                 elif isinstance(e, (
                     urllib.error.URLError,
                     socket.timeout,

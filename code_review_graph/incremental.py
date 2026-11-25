@@ -17,6 +17,8 @@ import signal
 import subprocess
 import sys
 import threading
+import types
+import builtins
 import time
 import unicodedata
 import uuid
@@ -98,7 +100,10 @@ def _windows_console_handle(fileno: int) -> bool:
         handle = msvcrt.get_osfhandle(fileno)
         mode = ctypes.c_uint32()
         return bool(ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)))
-    except (AttributeError, OSError, ValueError, ctypes.ArgumentError):
+    except Exception as exc:
+        expected: Any = (AttributeError, OSError, ValueError, ctypes.ArgumentError)
+        if not isinstance(exc, expected):
+            raise
         return False
 
 
@@ -2178,7 +2183,7 @@ def _keep_candidate(
     return True
 
 
-_reported_links: set[tuple[str, str]] = set()
+_reported_links = set()
 
 
 def _report_once(root: Path, key: str, level: int, message: str, *args: object) -> None:
@@ -4725,7 +4730,7 @@ def _create_watch_handler(
     parser = _get_code_parser_cls()(repo_root)
     lexical_root = Path(os.path.abspath(repo_root))
     resolved_root = lexical_root.resolve()
-    manifest_names = set().union(*NESTED_OUTPUT_DIR_MARKERS.values())
+    manifest_names = {name for names in NESTED_OUTPUT_DIR_MARKERS.values() for name in names}
     follow = follow_symlinks_enabled(follow_symlinks)
 
     class WatchBatchProcessor:
@@ -5042,62 +5047,69 @@ def _create_watch_handler(
     debouncer = _WatchDebouncer(_DEBOUNCE_SECONDS, processor.process)
     write_lock_file = write_lock_path(store.db_path)
 
-    class GraphUpdateHandler(FileSystemEventHandler):
-        def dispatch(self, event: FileSystemEvent) -> None:
-            if event.event_type not in {"created", "modified", "deleted", "moved"}:
-                return
-            if event.is_directory and event.event_type == "modified":
-                return
-            if _event_only_touches(event, write_lock_file):
-                # Every batch rewrites the lock file when it takes the lock. A
-                # watch on the whole repository sees that, and acting on it
-                # would take the lock again, once a debounce, for ever.
-                return
-            if (
-                event.is_directory
-                and on_directory_changed is not None
-                and _inside_lexical_root(event.src_path)
-            ):
-                # A followed folder outside the repository is not part of
-                # the repository's watch plan.
-                on_directory_changed()
-            debouncer.handle_event(event)
+    def _handler_dispatch(_self, event: FileSystemEvent) -> None:
+        if event.event_type not in {"created", "modified", "deleted", "moved"}:
+            return
+        if event.is_directory and event.event_type == "modified":
+            return
+        if _event_only_touches(event, write_lock_file):
+            # Every batch rewrites the lock file when it takes the lock. A
+            # watch on the whole repository sees that, and acting on it
+            # would take the lock again, once a debounce, for ever.
+            return
+        if (
+            event.is_directory
+            and on_directory_changed is not None
+            and _inside_lexical_root(event.src_path)
+        ):
+            # A followed folder outside the repository is not part of
+            # the repository's watch plan.
+            on_directory_changed()
+        debouncer.handle_event(event)
 
-        def start(self) -> None:
-            debouncer.start()
+    def _handler_start(_self) -> None:
+        debouncer.start()
 
-        def stop(self) -> None:
-            debouncer.stop()
-            debouncer.join()
+    def _handler_stop(_self) -> None:
+        debouncer.stop()
+        debouncer.join()
 
-        def process(self, events: list[FileSystemEvent]) -> None:
-            processor.process(events)
+    def _handler_process(_self, events: list[FileSystemEvent]) -> None:
+        processor.process(events)
 
-        def serialized(self) -> threading.Lock:
-            """The lock event batches hold while they write to the graph."""
-            return processor.lock
+    def _handler_serialized(_self) -> threading.Lock:
+        """The lock event batches hold while they write to the graph."""
+        return processor.lock
 
-        def raise_if_failed(self) -> None:
-            processor.raise_if_failed()
+    def _handler_raise_if_failed(_self) -> None:
+        processor.raise_if_failed()
 
-        @property
-        def ignore_patterns(self) -> list[str]:
-            # Lists are replaced, never mutated, by the batch processor. The
-            # supervisor can therefore adopt one consistent snapshot per tick.
-            return ignore_patterns
+    def _handler_ignore_patterns(_self) -> list[str]:
+        # Lists are replaced, never mutated, by the batch processor. The
+        # supervisor can therefore adopt one consistent snapshot per tick.
+        return ignore_patterns
 
-        @property
-        def last_event_at(self) -> float | None:
-            return processor.last_event_at
+    def _handler_last_event_at(_self) -> float | None:
+        return processor.last_event_at
 
-        @property
-        def events_seen(self) -> int:
-            return processor.events_seen
+    def _handler_events_seen(_self) -> int:
+        return processor.events_seen
 
-        @property
-        def outside_roots(self) -> set[str]:
-            """Followed folders outside the repository, to watch as well."""
-            return processor.outside_roots
+    def _handler_outside_roots(_self) -> set[str]:
+        """Followed folders outside the repository, to watch as well."""
+        return processor.outside_roots
+
+    handler_class = types.new_class("GraphUpdateHandler", (FileSystemEventHandler,))
+    handler_class.dispatch = _handler_dispatch
+    handler_class.start = _handler_start
+    handler_class.stop = _handler_stop
+    handler_class.process = _handler_process
+    handler_class.serialized = _handler_serialized
+    handler_class.raise_if_failed = _handler_raise_if_failed
+    handler_class.ignore_patterns = builtins.property(_handler_ignore_patterns)
+    handler_class.last_event_at = builtins.property(_handler_last_event_at)
+    handler_class.events_seen = builtins.property(_handler_events_seen)
+    handler_class.outside_roots = builtins.property(_handler_outside_roots)
 
     def _inside_lexical_root(raw: Any) -> bool:
         try:
@@ -5106,7 +5118,7 @@ def _create_watch_handler(
             return False
         return True
 
-    return GraphUpdateHandler()
+    return handler_class()
 
 
 def _sync_watch_tree(supervisor: _WatchSupervisor, handler: Any) -> None:

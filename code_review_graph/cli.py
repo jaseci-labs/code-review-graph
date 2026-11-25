@@ -28,6 +28,7 @@ Usage:
 
 from __future__ import annotations
 
+import builtins
 import sys
 
 # Python version check — must come before any other imports
@@ -296,7 +297,7 @@ def _confirm_yes_no(
         return take_default()
     suffix = "[Y/n]" if default_yes else "[y/N]"
     try:
-        answer = input(f"{prompt} {suffix} ").strip().lower()
+        answer = builtins.input(f"{prompt} {suffix} ").strip().lower()
     except KeyboardInterrupt:
         print()
         if cancel_on_interrupt:

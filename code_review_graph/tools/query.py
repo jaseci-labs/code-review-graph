@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 import logging
 import re
 from collections import defaultdict, deque
@@ -403,7 +404,7 @@ _MAX_ROUTE_HOPS = 30
 
 
 _Hop = tuple[str, int, GraphEdge]
-_Route = list[tuple[str, str, int, GraphEdge]]
+_Route = typing.List[typing.Tuple[str, str, int, GraphEdge]]
 # Resolver candidate lists and the totals they record, under these keys.
 _CANDIDATE_KEYS = (
     ("ambiguous_targets", "ambiguous_target_count"),

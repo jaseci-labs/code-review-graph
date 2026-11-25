@@ -564,7 +564,7 @@ _CHURN_CACHE: dict[tuple[str, str, int], dict[str, int]] = {}
 # history too slow to walk inside a tool call), not a transient. Callers that
 # outlive a repository's state -- a long-lived MCP server, a test suite --
 # clear it with ``clear_churn_cache``.
-_CHURN_UNAVAILABLE: set[tuple[str, int]] = set()
+_CHURN_UNAVAILABLE = set()
 
 # Status values reported alongside the counts, so a degraded review says so
 # rather than quietly scoring the change-frequency term at zero.
