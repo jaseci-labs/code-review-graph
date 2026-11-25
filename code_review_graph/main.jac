@@ -1,0 +1,1136 @@
+"""MCP server entry point for Code Review Graph.
+
+Run as: code-review-graph serve
+Communicates via stdio (standard MCP transport), or use
+``code-review-graph serve --http`` for Streamable HTTP on localhost (port 5555
+by default). The HTTP transport validates ``Host`` and ``Origin`` so the loopback
+endpoint cannot be driven cross-origin (e.g. via DNS rebinding); see
+``code_review_graph.http_origin_guard``.
+"""
+
+import operator;
+
+import from jaclang.comptime { target as target_ }
+
+import from __future__ { annotations }
+
+import asyncio;
+
+import logging;
+
+import os;
+
+import sys;
+
+import threading;
+
+import from collections.abc { Callable }
+
+import from pathlib { Path }
+
+import from typing { TYPE_CHECKING, Any, Optional }
+
+import anyio.to_thread;
+
+import from fastmcp { FastMCP }
+
+import from fastmcp.exceptions { ToolError }
+
+import from fastmcp.prompts { Message }
+
+glob _LAZY_TOOL_NAMES: any;
+
+glob _LAZY_PROMPT_NAMES: any;
+
+glob logger: any;
+
+glob _default_repo_root: str | None;
+
+glob _multi_repo: bool;
+
+glob _TIMEOUT_HINT: any;
+
+glob _DETECT_CHANGES_TIMEOUT_HINT: any;
+
+glob SERVER_INSTRUCTIONS: any;
+
+glob MULTI_REPO_INSTRUCTIONS: any;
+
+glob mcp: any;
+
+with entry {
+    _LAZY_TOOL_NAMES = frozenset({
+        "apply_refactor_func",
+        "build_or_update_graph",
+        "cross_repo_search_func",
+        "detect_changes_func",
+        "embed_graph",
+        "find_large_functions",
+        "generate_wiki_func",
+        "get_affected_flows_func",
+        "get_architecture_overview_func",
+        "get_bridge_nodes_func",
+        "get_community_func",
+        "get_docs_section",
+        "get_flow",
+        "get_hub_nodes_func",
+        "get_impact_radius",
+        "get_knowledge_gaps_func",
+        "get_minimal_context",
+        "get_review_context",
+        "get_suggested_questions_func",
+        "get_surprising_connections_func",
+        "get_wiki_page_func",
+        "list_communities_func",
+        "list_flows",
+        "list_graph_stats",
+        "list_repos_func",
+        "query_graph",
+        "refactor_func",
+        "run_postprocess",
+        "semantic_search_nodes",
+        "traverse_graph_func",
+        "with_provenance",
+    });
+
+    _LAZY_PROMPT_NAMES = frozenset({
+        "architecture_map_prompt",
+        "debug_issue_prompt",
+        "onboard_developer_prompt",
+        "pre_merge_check_prompt",
+        "review_changes_prompt",
+    });
+}
+
+def _resolve_attr(name: str) -> any;
+
+def __getattr__(name: str) -> any;
+
+with entry {
+    logger = logging.getLogger(__name__);
+    _default_repo_root = None;
+    _multi_repo = False;
+}
+
+"""Resolve repo_root for a tool call.
+
+    Order of precedence:
+    1. Explicit ``repo_root`` passed by the MCP client (highest).
+    2. ``--repo`` CLI flag passed to ``code-review-graph serve``
+       (captured in ``_default_repo_root``).
+    3. None — the underlying impl will fall back to the server's cwd.
+
+    With ``serve --http --multi-repo`` there is no fallback at all: see
+    ``_registered_repo_root``.
+
+    All MCP tools that accept ``repo_root`` should use this helper so
+    ``serve --repo <X>`` applies consistently, including
+    ``get_docs_section_tool``. See: #222.
+    """
+def _resolve_repo_root(repo_root: Optional[str]) -> Optional[str];
+
+"""Return the registered repository a ``--multi-repo`` call names.
+
+    One HTTP server shared by several repositories must never guess which one
+    a call means. Falling back to ``--repo`` or the server's working directory
+    answered a call from a repository the client never named (#607), so a
+    missing, relative or unregistered ``repo_root`` is refused with a message
+    that says what to pass instead.
+
+    The registry is read on every call, so ``register`` and ``unregister``
+    apply without a restart. This check comes on top of
+    ``_validate_repo_root``, which every tool body still runs.
+    """
+def _registered_repo_root(repo_root: Optional[str]) -> str;
+
+with entry {
+    _TIMEOUT_HINT = "Narrow the request with whichever of changed_files, max_depth or max_results this tool accepts, or increase CRG_TOOL_TIMEOUT.";
+    _DETECT_CHANGES_TIMEOUT_HINT = "Reduce scope with CRG_MAX_CHANGED_FUNCS / CRG_MAX_TRANSITIVE_FRONTIER, or increase CRG_TOOL_TIMEOUT.";
+}
+
+"""Run *work* on a worker thread, on the same limiter FastMCP uses.
+
+    ``anyio.to_thread.run_sync``, not ``asyncio.to_thread``, and the
+    difference is not cosmetic. A plain ``def`` tool body is dispatched by
+    FastMCP through anyio's default thread limiter (40 slots). Rewriting these
+    tools as ``async def`` takes them off that limiter and onto
+    ``asyncio.to_thread``'s default executor, which is capped at
+    ``min(32, os.cpu_count() + 4)`` -- 8 slots on a 4-core Windows box. Making
+    the server *more* likely to queue was the opposite of the point, so the
+    offload stays on the limiter it came from.
+
+    ``abandon_on_cancel=True`` keeps the semantics ``asyncio.wait_for`` needs:
+    without it, cancelling the await blocks until the thread finishes anyway
+    and the timeout below could never fire.
+    """
+async def _run_off_loop(work: Callable[[], dict]) -> dict;
+
+glob timeout_hint_default_: any;
+
+with entry {
+    timeout_hint_default_ = _TIMEOUT_HINT;
+}
+
+"""Run one blocking tool body off the event loop, optionally bounded.
+
+    Every MCP tool that reaches Git discovery, a BFS traversal, FTS, an
+    embedding provider or any other multi-second work goes through here. Two
+    things happen, and both matter for #262, where a tool call that is quick
+    from the CLI comes back to an MCP client as error -32001:
+
+    1. The work stays off the stdio event loop, so the server can still answer
+       other requests while it runs. FastMCP's own ``run_in_thread`` default
+       does this for sync tool functions today, but that is a library default
+       inside a ``>=3.2.4,<4`` range, and it is not a promise this server's
+       responsiveness should rest on. See #46, #136.
+    2. ``CRG_TOOL_TIMEOUT``, when set above 0, bounds the call. A bounded call
+       answers -- with ``status: error`` and a message naming the tool and the
+       budget -- where an unbounded one just stops responding until the client
+       gives up. That is the difference between a diagnosable result and
+       -32001.
+
+    Unset or 0 leaves every call unbounded, which is the historical behaviour
+    and stays the default.
+
+    Args:
+        tool_name: The registered tool name, used in the timeout message.
+        work: Zero-argument callable returning the tool's result dict. It runs
+            on a worker thread.
+        root: Resolved repository root, passed to ``with_provenance``.
+        provenance: Whether to stamp the result with graph provenance. The
+            stamp reads SQLite and spawns ``git rev-parse``, so it runs on the
+            worker thread too, never on the event loop.
+        bounded: Whether ``CRG_TOOL_TIMEOUT`` applies. **Default True, and the
+            four long-running tools plus ``apply_refactor_tool`` pass False.**
+
+            A timeout here cancels the *await*, never the thread: there is no
+            way to interrupt a running parse, embed, or file rewrite from
+            outside. For a read-only query that is harmless -- the abandoned
+            worker computes a result nobody reads. For a tool that writes, it
+            is not: ``build_or_update_graph_tool`` would report failure to the
+            client while its worker kept writing ``graph.db``, and the natural
+            retry would run a second concurrent update against the same
+            database. ``apply_refactor_tool`` would report failure with the
+            rename already applied to disk, and its retry would fail again
+            with "not found or expired", leaving a modified tree and two
+            errors.
+
+            These tools were also unbounded before this helper existed, and
+            ``CRG_TOOL_TIMEOUT`` is exactly what #262 tells a user to set to
+            keep review calls responsive. Letting that knob quietly abort
+            their builds would make the documented remedy a new bug.
+        timeout_hint: Advice appended to the timeout message.
+    """
+async def _offload(
+    tool_name: str,
+    work: Callable[[], dict],
+    `root: str | None,
+    *,
+    provenance: bool = True,
+    bounded: bool = True,
+    timeout_hint: str = timeout_hint_default_,
+) -> dict;
+
+with entry {
+    SERVER_INSTRUCTIONS = "Code knowledge graph of this repo (Tree-sitter AST + call / import / test edges). Use it whenever the question is about RELATIONSHIPS between pieces of code, in any phase of work - coding, debugging, planning, brainstorming, refactoring, review - not only code review:\n- who calls / references symbol X -> query_graph_tool pattern=callers_of / references_to\n- which files import module or file X -> query_graph_tool pattern=importers_of\n- which tests cover X -> query_graph_tool pattern=tests_for\n- what breaks if X changes (blast radius) -> get_impact_radius_tool\n- what a diff or branch touches -> detect_changes_tool, get_review_context_tool\n- how modules depend on each other -> get_architecture_overview_tool, list_communities_tool\n- follow an execution flow -> list_flows_tool, get_flow_tool\nGraph answers include dependents reached through re-exports and barrel files that never spell the name, which text search silently misses.\nFor plain text - string literals, log messages, env var names, comments, config keys - use Grep; the graph does not index text.";
+    MULTI_REPO_INSTRUCTIONS = "\nThis server serves several repositories: pass repo_root, the absolute path of a registered repository, on every call. list_repos_tool lists them.";
+
+    mcp = FastMCP("code-review-graph", version=__version__, instructions=SERVER_INSTRUCTIONS);
+}
+
+"""Build or incrementally update the code knowledge graph.
+
+    Call this first to initialize the graph, or after making changes.
+    By default performs an incremental update (only changed files).
+    Set full_rebuild=True to re-parse every file.
+
+    Only one build runs per repository at a time. When a commit hook or an
+    editor-save hook is already building, this returns
+    immediately with ``status="contended"``, ``skipped=true`` and the
+    ``holder_pid`` that owns the work, rather than queueing a second parse of
+    the same files behind it; retry once that build finishes. From a shell,
+    ``code-review-graph update --wait`` blocks instead of skipping.
+
+    Args:
+        full_rebuild: If True, re-parse all files. Default: False (incremental).
+        repo_root: Repository root path. Auto-detected from current directory if omitted.
+        base: Git ref to diff against for incremental updates. When omitted,
+            resolves automatically to the commit the graph was last built at,
+            so one update catches everything since the last sync (not just the
+            latest commit). Pass an explicit ref to override.
+        postprocess: Post-processing level: "full" (default), "minimal" (signatures+FTS only),
+                     or "none" (skip all post-processing). Use "minimal" for faster builds.
+        recurse_submodules: If True, include files from git submodules.
+            When None (default), falls back to CRG_RECURSE_SUBMODULES env var.
+        embedding_provider: Exact provider for an explicit post-build embedding
+            refresh. Must be supplied with embedding_model. Default: disabled.
+            Refreshes an existing index only: on a graph with no embeddings
+            the result sets embeddings_refresh_skipped; run embed_graph_tool first.
+        embedding_model: Exact model for an explicit post-build embedding
+            refresh. Must be supplied with embedding_provider. Default: disabled.
+    """
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False})
+async def build_or_update_graph_tool(
+    full_rebuild: bool = False,
+    repo_root: Optional[str] = None,
+    base: Optional[str] = None,
+    postprocess: str = "full",
+    recurse_submodules: Optional[bool] = None,
+    embedding_provider: Optional[str] = None,
+    embedding_model: Optional[str] = None,
+) -> dict;
+
+"""Run post-processing on existing graph (flows, communities, FTS index).
+
+    Use after building with postprocess="none" or "minimal", or to re-run
+    expensive steps independently. Signatures are always computed.
+
+    Takes the same per-repository write lock as ``build_or_update_graph_tool``.
+    When a build, update or another postprocess is already running, this
+    returns immediately with ``status="contended"``, ``skipped=true`` and the
+    ``holder_pid``, instead of recomputing derived data for a graph that is
+    still being written; retry once that write finishes.
+
+    Args:
+        flows: Run flow detection. Default: True.
+        communities: Run community detection. Default: True.
+        fts: Rebuild FTS index. Default: True.
+        repo_root: Repository root path. Auto-detected if omitted.
+        embedding_provider: Exact provider for an explicit embedding refresh.
+            Must be supplied with embedding_model. Default: disabled.
+            Refreshes an existing index only: on a graph with no embeddings
+            the result sets embeddings_refresh_skipped; run embed_graph_tool first.
+        embedding_model: Exact model for an explicit embedding refresh.
+            Must be supplied with embedding_provider. Default: disabled.
+    """
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False})
+async def run_postprocess_tool(
+    flows: bool = True,
+    communities: bool = True,
+    fts: bool = True,
+    repo_root: Optional[str] = None,
+    embedding_provider: Optional[str] = None,
+    embedding_model: Optional[str] = None,
+) -> dict;
+
+"""Get ultra-compact context for any task (~100 tokens). Always call this first.
+
+    Returns graph stats, risk score, top communities/flows, and suggested
+    next tools in a single compact response. Use this as the entry point
+    before any other graph tool to minimize token usage. Returns
+    ``status: not_ready`` with a build suggestion when the graph is missing,
+    empty, or known to have been built at a different Git commit.
+
+    Args:
+        task: What you are doing (e.g. "review PR #42", "debug login timeout").
+        changed_files: Explicit list of changed files. Auto-detected if omitted.
+        repo_root: Repository root path. Auto-detected if omitted.
+        base: Git ref for diff comparison. Default: HEAD~1.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_minimal_context_tool(
+    task: str = "",
+    changed_files: Optional[list[str]] = None,
+    repo_root: Optional[str] = None,
+    base: str = "HEAD~1",
+) -> dict;
+
+glob max_results_default_: any;
+
+with entry {
+    max_results_default_ = MAX_IMPACT_NODES;
+}
+
+"""Analyze the blast radius of changed files in the codebase.
+
+    Shows which functions, classes, and files are impacted by changes.
+    Auto-detects changed files from git if not specified.
+
+    An impacted node that calls or references the changed code directly also
+    carries the ``call_site`` (file and line) it does so at, and
+    ``unresolved_call_sites`` counts call sites that name a changed symbol but
+    were never bound to it, so an empty radius is not mistaken for proof.
+
+    Args:
+        changed_files: List of changed file paths (relative to repo root). Auto-detected if omitted.
+        max_depth: Number of hops to traverse in the dependency graph. Default: 2.
+        max_results: How many impacted nodes to traverse to. Default: the
+            CRG_MAX_IMPACT_NODES setting, or 500. Each list in the response also
+            has a fixed ceiling (100 nodes, 150 edges, 200 files) so the response
+            size does not grow with the repository; the omitted counts report
+            the rest.
+        repo_root: Repository root path. Auto-detected if omitted.
+        base: Git ref for auto-detecting changes. Default: HEAD~1.
+        detail_level: "standard" for graph records, "minimal" for a summary,
+            "compact" for ranked repo-relative file paths without node/edge records.
+        max_files: File display limit in compact mode (default 25, maximum 200).
+            Does not reduce the graph traversal budget set by max_results.
+        resolution: "all" (default) or "direct" to traverse only calls bound to an indexed node.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_impact_radius_tool(
+    changed_files: Optional[list[str]] = None,
+    max_depth: int = 2,
+    max_results: int = max_results_default_,
+    repo_root: Optional[str] = None,
+    base: str = "HEAD~1",
+    detail_level: str = "standard",
+    resolution: str = "all",
+    max_files: int = 25,
+) -> dict;
+
+"""Run a predefined graph query to explore code relationships.
+
+    Available patterns:
+    - callers_of: Find functions that call the target
+    - references_to: Find nodes that reference the target
+    - callees_of: Find functions called by the target
+    - imports_of: Find what the target imports
+    - importers_of: Find files that import the target
+    - children_of: Find nodes contained in a file or class
+    - tests_for: Find tests for the target
+    - inheritors_of: Find classes inheriting from the target
+    - triggers_of: Find methods invoked by a scheduler or other trigger
+    - triggered_by: Find schedulers or other triggers that invoke the target
+    - publishers_of: Find methods that publish an event
+    - listeners_of: Find methods that listen for an event
+    - advises: Find methods an AOP advice targets via its pointcut
+    - advised_by: Find AOP advice methods that intercept the target
+    - handlers_of: Find methods that handle an endpoint
+    - endpoints_for: Find endpoints handled by a method
+    - consumers_of: Find classes that consume a Spring configuration property
+    - file_summary: Get all nodes in a file
+    - path_to: Find how the target reaches ``to``, one row per hop
+
+    callers_of, callees_of and references_to return one row per call site, each
+    carrying the ``call_site`` (file and line) the call is written at, plus a
+    ``resolution_split`` saying how many of those call sites are bound to an
+    indexed node and how many are bare-name matches. When some are bare-name
+    matches, ``confidence`` says so in one short sentence.
+
+    path_to picks the route whose weakest hop is strongest. Each hop's
+    ``certainty`` says how it was bound: ``direct`` to that node, ``unique_name``
+    through a bare name one symbol has, or ``shared_name`` through one several
+    share. ``weakest_hop`` names the hop to check first.
+
+    Args:
+        pattern: Query pattern name (see above).
+        target: Node name, qualified name, or file path to query. A full name
+            that one non-test symbol has resolves to it; otherwise the answer
+            is "ambiguous" and lists qualified names to choose from.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full output, "minimal" for compact summary. Default: standard.
+        max_results: Maximum results to return. Default: 100.
+        resolution: "all" (default), "direct" for only calls bound to an indexed
+            node, or "unresolved" for only the bare-name matches.
+        to: For path_to, the node name, qualified name, or file path to reach.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def query_graph_tool(
+    pattern: str,
+    target: str,
+    repo_root: Optional[str] = None,
+    detail_level: str = "standard",
+    max_results: int = 100,
+    resolution: str = "all",
+    to: Optional[str] = None,
+) -> dict;
+
+"""Generate a focused, token-efficient review context for code changes.
+
+    Combines impact analysis with source snippets and review guidance.
+    Use this for comprehensive code reviews.
+
+    Args:
+        changed_files: Files to review. Auto-detected from git diff if omitted.
+        max_depth: Impact radius depth. Default: 2.
+        include_source: Include source code snippets. Default: True.
+        max_lines_per_file: Max source lines per file. Default: 200.
+        repo_root: Repository root path. Auto-detected if omitted.
+        base: Git ref for change detection. Default: HEAD~1.
+        detail_level: "standard" for full output, "minimal" for
+            token-efficient summary. Default: standard.
+        max_results: Maximum graph nodes per list and edges to return.
+            Default: 50. Each list reports its untruncated ``*_total``.
+        max_files: Maximum files listed and given source snippets.
+            Default: 25. Snippets share an 800-line budget.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_review_context_tool(
+    changed_files: Optional[list[str]] = None,
+    max_depth: int = 2,
+    include_source: bool = True,
+    max_lines_per_file: int = 200,
+    repo_root: Optional[str] = None,
+    base: str = "HEAD~1",
+    detail_level: str = "standard",
+    max_results: int = 100,
+    max_files: int = 25,
+) -> dict;
+
+"""Search for code entities by name, keyword, or semantic similarity.
+
+    Uses vector embeddings for semantic search when available (run embed_graph_tool
+    first, with a provider of your choice: "local" needs sentence-transformers,
+    "openai" / "google" / "minimax" / "voyage" need their respective env vars).
+    Falls back to FTS5 / keyword matching when no matching embeddings exist for
+    the given provider.
+
+    Args:
+        query: Search string to match against node names.
+        kind: Optional filter: File, Class, Function, Type, Test, YamlPath,
+              DocSection, Variable, Output, or JsonPath. Liquid Output nodes
+              are found only by asking for that kind.
+        limit: Maximum results. Default: 20. At most 100, or 5 with
+               detail_level "minimal". ``total`` counts the matches ranked.
+        repo_root: Repository root path. Auto-detected if omitted.
+        model: Embedding model for query vectors. Must match the model used
+               during embed_graph. Falls back to CRG_EMBEDDING_MODEL env var
+               (local), CRG_OPENAI_MODEL (openai), or CRG_VOYAGE_MODEL (voyage).
+        provider: Embedding provider: "local" (default), "openai", "google",
+                  "minimax", or "voyage". Must match the provider used during
+                  embed_graph.
+        detail_level: "standard" for full output, "minimal" for compact summary. Default: standard.
+        include_source: Return the source of each hit alongside its location,
+                        so you can answer without opening the files. Costs
+                        tokens; leave off when you only need locations.
+                        Ignored when detail_level is "minimal". Default: False.
+        expand_neighbors: With include_source, also return each top hit's direct
+                          callers and callees with their source, so one call
+                          answers "how does X work". Default: False.
+        max_source_lines: With include_source, the most lines per snippet
+                          (1-60). Default: 60.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def semantic_search_nodes_tool(
+    query: str,
+    kind: Optional[str] = None,
+    limit: int = 20,
+    repo_root: Optional[str] = None,
+    model: Optional[str] = None,
+    provider: Optional[str] = None,
+    detail_level: str = "standard",
+    include_source: bool = False,
+    expand_neighbors: bool = False,
+    max_source_lines: int = 60,
+) -> dict;
+
+"""Compute vector embeddings for all graph nodes to enable semantic search.
+
+    Afterwards semantic_search_nodes_tool ranks by vector similarity instead
+    of keyword matching. Changing the model or provider re-embeds every node.
+    The local provider needs: pip install "code-review-graph[embeddings]".
+
+    Args:
+        repo_root: Repository root path. Auto-detected if omitted.
+        model: Embedding model. Local: a HuggingFace ID or path (default
+               all-MiniLM-L6-v2); openai / google / voyage: that provider's
+               model ID. Falls back to CRG_EMBEDDING_MODEL, CRG_OPENAI_MODEL
+               or CRG_VOYAGE_MODEL.
+        provider: "local" (default), "openai", "google", "minimax", or
+                  "voyage". "openai" accepts any OpenAI-compatible endpoint
+                  and needs CRG_OPENAI_BASE_URL + CRG_OPENAI_API_KEY;
+                  "voyage" needs VOYAGE_API_KEY.
+    """
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True})
+async def embed_graph_tool(
+    repo_root: Optional[str] = None, model: Optional[str] = None, provider: Optional[str] = None
+) -> dict;
+
+"""Get aggregate statistics about the code knowledge graph.
+
+    Shows total nodes, edges, languages, files, and last update time.
+    Useful for checking if the graph is built and up to date.
+
+    Args:
+        repo_root: Repository root path. Auto-detected if omitted.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def list_graph_stats_tool(repo_root: Optional[str] = None) -> dict;
+
+"""Get a specific section from the LLM-optimized documentation reference.
+
+    Returns only the requested section content for minimal token usage.
+    Use this before answering any user question about the plugin.
+
+    One of the two tools that stay synchronous: it reads one bundled
+    Markdown file and touches neither the graph database nor Git, so there
+    is nothing here that can hold the event loop for seconds. See
+    ``_offload`` for the tools that do.
+
+    Available sections: usage, review-delta, review-pr, commands, legal,
+    watch, embeddings, languages, troubleshooting.
+
+    Args:
+        section_name: The section to retrieve (e.g. "review-delta", "usage").
+        repo_root: Repository root path. Auto-detected if omitted.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_docs_section_tool(section_name: str, repo_root: Optional[str] = None) -> dict;
+
+"""Find functions, classes, or files exceeding a line-count threshold.
+
+    Useful for decomposition audits, code quality checks, and enforcing
+    size limits during code review. Results are ordered by line count.
+
+    Args:
+        min_lines: Minimum line count to flag. Default: 50.
+        kind: Optional filter: Function, Class, File, Test, YamlPath, DocSection,
+            or JsonPath.
+        file_path_pattern: Filter by file path substring (e.g. "components/").
+        limit: Maximum results. Default: 50. At most 100, or 25 with
+            detail_level "minimal". ``total`` always counts every match.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full rows, "minimal" for fewer, smaller rows.
+            Default: standard.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def find_large_functions_tool(
+    min_lines: int = 50,
+    kind: Optional[str] = None,
+    file_path_pattern: Optional[str] = None,
+    limit: int = 50,
+    repo_root: Optional[str] = None,
+    detail_level: str = "standard",
+) -> dict;
+
+"""List execution flows in the codebase, sorted by criticality.
+
+    Each flow represents a call chain starting from an entry point
+    (HTTP handler, CLI command, test function, etc.). Use this to
+    understand the main execution paths through the codebase.
+
+    Args:
+        sort_by: Sort column: criticality, depth, node_count, file_count, or name.
+        limit: Maximum flows to return. Default: 50.
+        kind: Optional filter by entry point kind (e.g. "Test", "Function").
+        detail_level: "standard" (default) returns full flow data; "minimal"
+                      returns only name, criticality, and node_count per flow.
+        repo_root: Repository root path. Auto-detected if omitted.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def list_flows_tool(
+    sort_by: str = "criticality",
+    limit: int = 50,
+    kind: Optional[str] = None,
+    detail_level: str = "standard",
+    repo_root: Optional[str] = None,
+) -> dict;
+
+"""Get detailed information about a single execution flow.
+
+    Returns the full call path with each step's function name, file, and
+    line numbers. Optionally includes source code snippets for each step.
+
+    Provide either flow_id (from list_flows_tool) or flow_name to search by name.
+
+    Args:
+        flow_id: Database ID of the flow.
+        flow_name: Name to search for (partial match). Ignored if flow_id given.
+        include_source: Include source code snippets for each step. Default: False.
+        repo_root: Repository root path. Auto-detected if omitted.
+        max_steps: Maximum steps to return; flow.total_steps reports the
+            full count. Default: 50.
+        max_source_lines: Total source lines across all steps when
+            include_source is set. Default: 400.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_flow_tool(
+    flow_id: Optional[int] = None,
+    flow_name: Optional[str] = None,
+    include_source: bool = False,
+    repo_root: Optional[str] = None,
+    max_steps: int = 50,
+    max_source_lines: int = 400,
+) -> dict;
+
+"""Find execution flows affected by changed files.
+
+    Identifies which execution flows pass through nodes in the changed files.
+    Useful during code review to understand which user-facing or critical paths
+    are impacted by a change. Auto-detects changed files from git if not specified.
+
+    Args:
+        changed_files: List of changed file paths (relative to repo root). Auto-detected if omitted.
+        base: Git ref for auto-detecting changes. Default: HEAD~1.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full step details, "minimal" for per-flow
+            metadata only. Default: standard.
+        max_flows: Maximum flows to return; total reports the full count.
+            Default: 50. Pass 0 for no caller limit. Standard mode
+            additionally caps visible flows at 25 and minimal mode at 500,
+            because a standard flow costs ~980 tokens against ~18 minimal.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_affected_flows_tool(
+    changed_files: Optional[list[str]] = None,
+    base: str = "HEAD~1",
+    repo_root: Optional[str] = None,
+    detail_level: str = "standard",
+    max_flows: int = 50,
+) -> dict;
+
+"""List detected code communities in the codebase.
+
+    Each community represents a cluster of related code entities (functions,
+    classes) detected via the Leiden algorithm or file-based grouping.
+    Use this to understand the high-level structure of the codebase.
+
+    Args:
+        sort_by: Sort column: size, cohesion, or name.
+        min_size: Minimum community size to include. Default: 0.
+        detail_level: "standard" (default) returns full community data;
+                      "minimal" returns only name, size, and cohesion
+                      per community.
+        repo_root: Repository root path. Auto-detected if omitted.
+        max_results: Maximum communities to return; total reports the full
+            count. Default: 50.
+        max_members: Maximum member names listed per community in standard
+            mode. Each community's size still reports its true member
+            count. Default: 10.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def list_communities_tool(
+    sort_by: str = "size",
+    min_size: int = 0,
+    detail_level: str = "standard",
+    repo_root: Optional[str] = None,
+    max_results: int = 50,
+    max_members: int = 10,
+) -> dict;
+
+"""Get detailed information about a single code community.
+
+    Returns community metadata including size, cohesion, dominant language,
+    and member list. Optionally includes full node details for each member.
+
+    Provide either community_id (from list_communities_tool) or community_name
+    to search by name.
+
+    Args:
+        community_name: Name to search for (partial match). Ignored if community_id given.
+        community_id: Database ID of the community.
+        include_members: Include full member node details. Default: False.
+        repo_root: Repository root path. Auto-detected if omitted.
+        max_members: Maximum member entries to include; the community's
+            size still reports its true member count and
+            members_truncated marks the cut. Default: 25.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_community_tool(
+    community_name: Optional[str] = None,
+    community_id: Optional[int] = None,
+    include_members: bool = False,
+    repo_root: Optional[str] = None,
+    max_members: int = 25,
+) -> dict;
+
+"""Generate an architecture overview based on community structure.
+
+    Builds a high-level view of the codebase architecture by analyzing
+    community boundaries and cross-community coupling. Includes warnings
+    for high coupling between communities.
+
+    Args:
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "minimal" (default) drops community member lists
+                      and aggregates cross-community edges to one row per
+                      community pair (typical reduction: 600KB -> <5KB);
+                      "standard" returns full per-edge detail.
+        max_results: Maximum cross-community rows and warnings to return;
+            cross_community_edges_total reports the full count. Default: 100.
+        max_members: Maximum member names per community in standard mode.
+            Default: 10.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_architecture_overview_tool(
+    repo_root: Optional[str] = None,
+    detail_level: str = "minimal",
+    max_results: int = 100,
+    max_members: int = 10,
+) -> dict;
+
+"""Detect changes and produce risk-scored, priority-ordered review guidance.
+
+    Primary tool for code review. Maps git diffs to affected functions,
+    YAML paths, flows, communities, and test coverage gaps. Returns risk
+    scores and prioritized review items. Functions and classes the diff
+    deleted are listed in removed_symbols with what still uses them.
+    Replaces get_review_context for change-aware reviews.
+
+    Args:
+        base: Git ref to diff against. Default: HEAD~1.
+        changed_files: List of changed file paths (relative to repo root). Auto-detected if omitted.
+        include_source: Include source code snippets for changed functions. Default: False.
+        max_depth: Impact radius depth for BFS traversal. Default: 2.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full output, "minimal" for
+            token-efficient summary. Default: standard.
+        max_results: Maximum changed functions, YAML paths, test gaps, and changed files
+            to return; the matching *_total fields report the full counts.
+            Default: 25.
+        max_flows: Maximum affected flows to embed. Embedded flows carry
+            per-flow metadata only — use get_affected_flows_tool for step
+            detail. Default: 20.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def detect_changes_tool(
+    base: str = "HEAD~1",
+    changed_files: Optional[list[str]] = None,
+    include_source: bool = False,
+    max_depth: int = 2,
+    repo_root: Optional[str] = None,
+    detail_level: str = "standard",
+    max_results: int = 25,
+    max_flows: int = 20,
+) -> dict;
+
+"""Graph-powered refactoring operations.
+
+    Unified entry point for rename previews, dead code detection, and
+    refactoring suggestions.
+
+    Modes:
+    - rename: Preview renaming a symbol. Returns an edit list and a refactor_id
+      to pass to apply_refactor_tool. Requires old_name and new_name.
+    - dead_code: Find unreferenced functions/classes (no callers, tests, or
+      importers, and not entry points).
+    - suggest: Get community-driven refactoring suggestions (move misplaced
+      functions, remove dead code).
+
+    Args:
+        mode: Operation mode: "rename", "dead_code", or "suggest".
+        old_name: (rename) Current symbol name to rename.
+        new_name: (rename) Desired new name for the symbol.
+        kind: (dead_code) Optional filter: Function or Class.
+        file_pattern: (dead_code) Filter by file path substring.
+        repo_root: Repository root path. Auto-detected if omitted.
+        max_results: Maximum edits/symbols/suggestions in the response;
+            total reports the full count. The stored rename preview keeps
+            every edit, so apply_refactor_tool still applies them all.
+            Default: 50.
+        detail_level: "standard" for full records, "minimal" for
+            identifying fields only. Default: standard.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def refactor_tool(
+    mode: str = "rename",
+    old_name: Optional[str] = None,
+    new_name: Optional[str] = None,
+    kind: Optional[str] = None,
+    file_pattern: Optional[str] = None,
+    repo_root: Optional[str] = None,
+    max_results: int = 50,
+    detail_level: str = "standard",
+) -> dict;
+
+"""Apply a previously previewed refactoring to source files.
+
+    Takes a refactor_id from a prior refactor_tool(mode="rename") call and
+    applies the exact string replacements to the target files. Previews
+    expire after 10 minutes.
+
+    Security: All edit paths are validated to be within the repo root.
+    Only exact string replacements are performed (no regex, no eval).
+
+    Args:
+        refactor_id: The refactor ID from refactor_tool's response.
+        repo_root: Repository root path. Auto-detected if omitted.
+        dry_run: If True, return a unified diff of what would change
+            without touching any files. The refactor_id remains valid so
+            the same preview can be applied in a follow-up call without
+            dry_run. Use this for a human-in-the-loop review before
+            committing changes to disk. See: #176
+        max_diff_files: Maximum per-file diffs to include in a dry run.
+            would_modify still lists every file. Default: 25.
+    """
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True})
+async def apply_refactor_tool(
+    refactor_id: str,
+    repo_root: Optional[str] = None,
+    dry_run: bool = False,
+    max_diff_files: int = 25,
+) -> dict;
+
+"""Generate a markdown wiki from the code community structure.
+
+    Creates a wiki page for each detected community and an index page.
+    Pages are written to .code-review-graph/wiki/ inside the repository.
+    Only regenerates pages whose content has changed unless force=True.
+
+    Args:
+        repo_root: Repository root path. Auto-detected if omitted.
+        force: If True, regenerate all pages even if content unchanged. Default: False.
+    """
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True})
+async def generate_wiki_tool(repo_root: Optional[str] = None, force: bool = False) -> dict;
+
+"""Retrieve a specific wiki page by community name.
+
+    Returns the markdown content of the wiki page for the given community.
+    The wiki must have been generated first via generate_wiki_tool.
+
+    Args:
+        community_name: Community name to look up.
+        repo_root: Repository root path. Auto-detected if omitted.
+        max_chars: Maximum characters of page content to return;
+            total_chars reports the real length. Default: 20000.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_wiki_page_tool(
+    community_name: str, repo_root: Optional[str] = None, max_chars: int = 20000
+) -> dict;
+
+"""Find the most connected nodes in the codebase (architectural hotspots).
+
+    Hub nodes have the highest total degree (in + out edges). Changes to
+    them have disproportionate blast radius. Excludes File nodes.
+
+    Args:
+        top_n: Number of top hubs to return (capped at 100). Default: 10.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full node data, "minimal" for name,
+            kind, and total_degree only. Default: standard.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_hub_nodes_tool(
+    top_n: int = 10, repo_root: Optional[str] = None, detail_level: str = "standard"
+) -> dict;
+
+"""Find architectural chokepoints via betweenness centrality.
+
+    Bridge nodes sit on shortest paths between many node pairs.
+    If they break, multiple code regions lose connectivity.
+    Uses sampling approximation for graphs > 5000 nodes.
+
+    Args:
+        top_n: Number of top bridges to return (capped at 100). Default: 10.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full node data, "minimal" for name,
+            kind, and betweenness only. Default: standard.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_bridge_nodes_tool(
+    top_n: int = 10, repo_root: Optional[str] = None, detail_level: str = "standard"
+) -> dict;
+
+"""Identify structural weaknesses in the codebase graph.
+
+    Finds isolated nodes (disconnected), thin communities (< 3 members),
+    untested hotspots (high-degree nodes without test coverage), single-file
+    communities, and import cycles (files that import each other; load_time
+    says whether a loop can fail as the files load).
+
+    Args:
+        repo_root: Repository root path. Auto-detected if omitted.
+        max_per_category: Maximum entries per gap category; summary and
+            total_gaps still report the untruncated counts. Default: 15.
+        detail_level: "standard" for full gap records, "minimal" to drop
+            file paths. Default: standard.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_knowledge_gaps_tool(
+    repo_root: Optional[str] = None, max_per_category: int = 15, detail_level: str = "standard"
+) -> dict;
+
+"""Find unexpected architectural coupling via composite surprise scoring.
+
+    Scores edges by: cross-community (+0.3), cross-language (+0.2),
+    peripheral-to-hub (+0.2), cross-test-boundary (+0.15), and
+    unusual edge kinds (+0.15).
+
+    Args:
+        top_n: Number of top surprises to return (capped at 100). Default: 15.
+        repo_root: Repository root path. Auto-detected if omitted.
+        detail_level: "standard" for full edge records, "minimal" for
+            source, target, kind, and score only. Default: standard.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_surprising_connections_tool(
+    top_n: int = 15, repo_root: Optional[str] = None, detail_level: str = "standard"
+) -> dict;
+
+"""Auto-generate review questions from graph analysis.
+
+    Produces prioritized questions about: bridge nodes needing tests,
+    untested hub nodes, surprising cross-community coupling, thin
+    communities, and untested hotspots.
+
+    Args:
+        repo_root: Repository root path. Auto-detected if omitted.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def get_suggested_questions_tool(repo_root: Optional[str] = None) -> dict;
+
+"""BFS/DFS traversal from best-matching node with token budget.
+
+    Free-form graph exploration: finds the node best matching your
+    query, then traverses outward via BFS or DFS up to the given
+    depth, collecting connected nodes within the token budget.
+
+    Args:
+        query: Search string to find the starting node.
+        mode: Traversal mode: "bfs" (breadth-first) or "dfs"
+            (depth-first). Default: bfs.
+        depth: Max traversal depth (1-6). Default: 3.
+        token_budget: Approximate token limit for results, at most 10000.
+            The walk stops when it runs out. Default: 2000.
+        repo_root: Repository root path. Auto-detected if omitted.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def traverse_graph_tool(
+    query: str,
+    mode: str = "bfs",
+    depth: int = 3,
+    token_budget: int = 2000,
+    repo_root: Optional[str] = None,
+) -> dict;
+
+"""List all registered repositories in the multi-repo registry.
+
+    Returns the list of repos registered at ~/.code-review-graph/registry.json.
+    Use the CLI 'register' command to add repos.
+
+    Stays synchronous: one small JSON read, no graph database and no Git.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+def list_repos_tool -> dict;
+
+"""Search for code entities across registered repositories.
+
+    Runs hybrid search on each searched repo's graph database and interleaves
+    results by repository-local rank. Equal ranks follow registry order, and up
+    to ``limit`` results per searched repo may be returned. Register repos first
+    with the CLI 'register' command.
+
+    Args:
+        query: Search string to match against node names.
+        kind: Optional filter: File, Class, Function, Type, Test, YamlPath,
+            DocSection, or JsonPath.
+        limit: Maximum results per repo. Default: 20.
+        max_results: Maximum merged results across searched repos; total
+            reports the untruncated merged count. Default: 50.
+        repos: Optional repo aliases or folder names to search. Default: every
+            registered repo. Use it when the registry spans unrelated products
+            and only some of them can answer the question. Matching is exact
+            and case-sensitive, and paths are not accepted. Names matching no
+            registry entry come back in ``unknown``; a name matching several
+            entries selects all of them and is listed in ``ambiguous``.
+    """
+@mcp.tool(annotations={"readOnlyHint": True})
+async def cross_repo_search_tool(
+    query: str,
+    kind: Optional[str] = None,
+    limit: int = 20,
+    max_results: int = 50,
+    repos: Optional[list[str]] = None,
+) -> dict;
+
+"""Pre-commit review workflow using detect_changes, affected_flows, and test gaps.
+
+    Produces a structured code review with risk levels and actionable findings.
+
+    Args:
+        base: Git ref to diff against. Default: HEAD~1.
+    """
+@mcp.prompt()
+def review_changes(base: str = "HEAD~1") -> list[Message];
+
+"""Architecture documentation using communities, flows, and Mermaid diagrams.
+
+    Generates a comprehensive architecture map with module summaries and coupling warnings.
+    """
+@mcp.prompt()
+def architecture_map -> list[Message];
+
+"""Guided debugging using search, flow tracing, and recent changes.
+
+    Systematic debugging workflow that traces execution paths and identifies root causes.
+
+    Args:
+        description: Description of the issue to debug.
+    """
+@mcp.prompt()
+def debug_issue(description: str = "") -> list[Message];
+
+"""New developer orientation using stats, architecture, and critical flows.
+
+    Creates an onboarding guide covering codebase structure, key modules, and patterns.
+    """
+@mcp.prompt()
+def onboard_developer -> list[Message];
+
+"""PR readiness check with risk scoring, test gaps, and dead code detection.
+
+    Produces a merge readiness report with risk assessment and recommendations.
+
+    Args:
+        base: Git ref to diff against. Default: HEAD~1.
+    """
+@mcp.prompt()
+def pre_merge_check(base: str = "HEAD~1") -> list[Message];
+
+"""Remove tools not listed in the allow-list.
+
+    Accepts a comma-separated string of tool names to keep.  When set,
+    every registered MCP tool whose name is **not** in the list is
+    removed via ``FastMCP.remove_tool()``.
+
+    The allow-list can be supplied in two ways (first match wins):
+
+    1. ``tools`` argument (from ``serve --tools ...``).
+    2. ``CRG_TOOLS`` environment variable.
+
+    When neither is set, all tools remain available.
+
+    This is useful for token-constrained environments: CRG exposes 28+
+    tools by default (~8k description tokens per LLM turn).  Filtering
+    to a working set of 5-10 tools can reduce overhead by 70-85%.
+
+    Example::
+
+        # via CLI
+        code-review-graph serve --tools query_graph_tool,semantic_search_nodes_tool
+
+        # via env var
+        CRG_TOOLS=query_graph_tool,semantic_search_nodes_tool
+    """
+def _apply_tool_filter(tools: str | None = None) -> None;
+
+"""Run the MCP server (stdio or HTTP).
+
+    On Windows, Python 3.8+ defaults to ``ProactorEventLoop``, which
+    interacts poorly with ``concurrent.futures.ProcessPoolExecutor``
+    (used by ``full_build``) over a stdio MCP transport — the combination
+    produces silent hangs on ``build_or_update_graph_tool`` and
+    ``embed_graph_tool``. Switching to ``WindowsSelectorEventLoopPolicy``
+    before fastmcp starts its loop avoids the deadlock.
+    See: #46, #136
+
+    Args:
+        repo_root: Default repository root for all tool calls.
+        tools: Comma-separated list of tool names to expose.
+            Falls back to ``CRG_TOOLS`` env var.  When unset, all
+            tools are available.
+        auto_watch: Start filesystem watcher in a background daemon thread
+            while the MCP server runs.
+        transport: ``"stdio"`` (default) or ``"streamable-http"`` for local HTTP.
+        host: Bind address when using HTTP (required for HTTP; set by CLI).
+        port: Port when using HTTP (required for HTTP; set by CLI).
+        multi_repo: Serve every registered repository over HTTP. Each call
+            must then name one in ``repo_root``; there is no default (#607).
+    """
+def main(
+    repo_root: str | None = None,
+    tools: str | None = None,
+    auto_watch: bool = False,
+    *,
+    transport: str = "stdio",
+    host: str | None = None,
+    port: int | None = None,
+    multi_repo: bool = False,
+) -> None;
+
+with entry:__main__ {
+    main();
+}

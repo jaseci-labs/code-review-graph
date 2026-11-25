@@ -1,0 +1,424 @@
+impl MissingOptionalDependencyError.__repr__ -> str {
+    return (getattr(builtins.super(MissingOptionalDependencyError, self), "__repr__") as any)();
+}
+
+impl MissingOptionalDependencyError.__eq__(other: any) -> bool {
+    return self is other;
+}
+
+impl MissingOptionalDependencyError.__hash__ -> int {
+    return id(self);
+}
+
+impl export_json(store: GraphStore, output_path: Path) -> Path {
+    data: any = export_graph_data(store);
+    output_path.parent.mkdir(parents=True, exist_ok=True);
+    temporary: Path | None = None;
+    try {
+        handle: any;
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=output_path.parent,
+            prefix=f".{output_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle {
+            temporary = Path(handle.name);
+            json.dump(data, handle, ensure_ascii=False, indent=2);
+            handle.write("\n");
+            handle.flush();
+            os.fsync(handle.fileno());
+        }
+        os.replace(temporary, output_path);
+    } finally {
+        if temporary is not None {
+            temporary.unlink(missing_ok=True);
+        }
+    }
+    logger.info("JSON exported to %s", output_path);
+    return output_path;
+}
+
+impl _xml_text(value: object) -> str {
+    return html.escape(_XML_ILLEGAL.sub("", `str(value)), quote=False);
+}
+
+impl export_graphml(store: GraphStore, output_path: Path) -> Path {
+    data: any = export_graph_data(store);
+    nodes: any = data["nodes"];
+    edges: any = data["edges"];
+
+    lines: any = [
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+        f"<graphml xmlns=\"{GRAPHML_NS}\"",
+        "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"",
+        f"  xsi:schemaLocation=\"{GRAPHML_NS} {GRAPHML_SCHEMA}\">",
+        "  <key id=\"qualified_name\" for=\"node\" attr.name=\"qualified_name\" attr.type=\"string\"/>",
+        "  <key id=\"name\" for=\"node\" attr.name=\"name\" attr.type=\"string\"/>",
+        "  <key id=\"kind\" for=\"node\" attr.name=\"kind\" attr.type=\"string\"/>",
+        "  <key id=\"file\" for=\"node\" attr.name=\"file\" attr.type=\"string\"/>",
+        "  <key id=\"language\" for=\"node\" attr.name=\"language\" attr.type=\"string\"/>",
+        "  <key id=\"community\" for=\"node\" attr.name=\"community\" attr.type=\"int\"/>",
+        "  <key id=\"edge_kind\" for=\"edge\" attr.name=\"kind\" attr.type=\"string\"/>",
+        "  <graph id=\"code-review-graph\" edgedefault=\"directed\">",
+    ];
+    node_ids: dict[str, str] = {};
+    index: any;
+    n: any;
+    for (index, n) in enumerate(nodes) {
+        node_ids.setdefault(n["qualified_name"], f"n{index}");
+    }
+
+    for (index, n) in enumerate(nodes) {
+        lines.append(f"    <node id=\"n{index}\">");
+        lines.append(
+            "      <data key=\"qualified_name\">"
+                + format(_xml_text(n["qualified_name"]), "")
+                + "</data>",
+        );
+        lines.append(
+            "      <data key=\"name\">" + format(_xml_text(n.get("name", "")), "") + "</data>"
+        );
+        lines.append(
+            "      <data key=\"kind\">" + format(_xml_text(n.get("kind", "")), "") + "</data>"
+        );
+        lines.append(
+            "      <data key=\"file\">" + format(_xml_text(n.get("file_path", "")), "") + "</data>"
+        );
+        lines.append(
+            "      <data key=\"language\">"
+                + format(_xml_text(n.get("language", "") or ""), "")
+                + "</data>",
+        );
+        cid: any = n.get("community_id");
+        if cid is not None {
+            lines.append(f"      <data key=\"community\">{`int(cid)}</data>");
+        }
+        lines.append("    </node>");
+    }
+
+    written_edges: any = 0;
+    for e in edges {
+        src: any = node_ids.get(e["source"]);
+        tgt: any = node_ids.get(e["target"]);
+        if src is None or tgt is None {
+            logger.debug(
+                "GraphML: dropping edge with an unknown endpoint (%r -> %r)",
+                e["source"],
+                e["target"],
+            );
+            continue;
+        }
+        lines.append(f"    <edge id=\"e{written_edges}\" source=\"{src}\" target=\"{tgt}\">");
+        lines.append(
+            "      <data key=\"edge_kind\">" + format(_xml_text(e.get("kind", "")), "") + "</data>"
+        );
+        lines.append("    </edge>");
+        written_edges += 1;
+    }
+
+    lines.append("  </graph>");
+    lines.append("</graphml>");
+
+    output_path.write_text("\n".join(lines), encoding="utf-8");
+    logger.info(
+        "GraphML exported to %s (%d nodes, %d edges)", output_path, len(nodes), written_edges
+    );
+    return output_path;
+}
+
+impl export_neo4j_cypher(store: GraphStore, output_path: Path) -> Path {
+    data: any = export_graph_data(store);
+    nodes: any = data["nodes"];
+    edges: any = data["edges"];
+
+    lines: any = [
+        "// Generated by code-review-graph",
+        "// Import: paste into Neo4j Browser or run via cypher-shell",
+        "",
+    ];
+    for n in nodes {
+        kind: any = n.get("kind", "Node");
+        props: any = {
+            "qualified_name": n["qualified_name"],
+            "name": n.get("name", ""),
+            "file_path": n.get("file_path", ""),
+            "language": n.get("language", "") or "",
+        };
+        cid: any = n.get("community_id");
+        if cid is not None {
+            props["community_id"] = cid;
+        }
+        props_str: any = _cypher_props(props);
+        lines.append(f"CREATE (:{kind} {props_str});");
+    }
+
+    lines.append("");
+    for e in edges {
+        kind = e.get("kind", "RELATES_TO");
+        src_qn: any = _cypher_escape(e["source"]);
+        tgt_qn: any = _cypher_escape(e["target"]);
+        lines.append(
+            f"MATCH (a {{qualified_name: '{src_qn}'}}), (b {{qualified_name: '{tgt_qn}'}}) CREATE (a)-[:{kind}]->(b);",
+        );
+    }
+
+    output_path.write_text("\n".join(lines), encoding="utf-8");
+    logger.info(
+        "Neo4j Cypher exported to %s (%d nodes, %d edges)", output_path, len(nodes), len(edges)
+    );
+    return output_path;
+}
+
+impl _cypher_escape(s: str) -> str {
+    return s.replace("\\", "\\\\").replace("'", "\\'");
+}
+
+impl _cypher_props(d: dict) -> str {
+    parts: any = [];
+    for (k, v) in d.items() {
+        if isinstance(v, `str) {
+            parts.append(f"{k}: '{_cypher_escape(v)}'");
+        } elif isinstance(v, `bool) {
+            parts.append(format(k, "") + ": " + format("true" if v else "false", ""));
+        } elif isinstance(v, (`int, `float)) {
+            parts.append(f"{k}: {v}");
+        }
+    }
+    return "{" + ", ".join(parts) + "}";
+}
+
+impl export_obsidian_vault(store: GraphStore, output_dir: Path) -> Path {
+    data: any = export_graph_data(store);
+    nodes: any = data["nodes"];
+    edges: any = data["edges"];
+    communities: any = data.get("communities", []);
+
+    output_dir.mkdir(parents=True, exist_ok=True);
+    neighbors: dict[str, list[dict]] = {};
+    for e in edges {
+        src: any = e["source"];
+        tgt: any = e["target"];
+        kind: any = e.get("kind", "RELATES_TO");
+        neighbors.setdefault(src, []).append({"target": tgt, "kind": kind});
+        neighbors.setdefault(tgt, []).append({"target": src, "kind": kind});
+    }
+
+    slugs: any = _obsidian_slugs(nodes);
+    n: any;
+    for n in nodes {
+        qn: any = n["qualified_name"];
+        slug: any = slugs[qn];
+        name: any = n.get("name", qn);
+
+        frontmatter: any = {
+            "kind": n.get("kind", ""),
+            "file": n.get("file_path", ""),
+            "language": n.get("language", "") or "",
+            "community": n.get("community_id"),
+            "tags": [n.get("kind", "").lower()],
+        };
+
+        lines: any = ["---"];
+        for (k, v) in frontmatter.items() {
+            if isinstance(v, `list) {
+                lines.append(f"{k}:");
+                for item in v {
+                    lines.append(f"  - {_yaml_scalar(item)}");
+                }
+            } elif v is not None {
+                lines.append(f"{k}: {_yaml_scalar(v)}");
+            }
+        }
+        lines.append("---");
+        lines.append(f"# {_sanitize_name(name)}");
+        lines.append("");
+        lines.append("**Kind:** " + format(n.get("kind", ""), ""));
+        lines.append("**File:** `" + format(n.get("file_path", ""), "") + "`");
+        lines.append("");
+        nbrs: any = neighbors.get(qn, []);
+        if nbrs {
+            lines.append("## Connections");
+            lines.append("");
+            seen: any = set[any]();
+            for nb in nbrs {
+                tgt_slug: any = slugs.get(nb["target"]);
+                if tgt_slug and tgt_slug not in seen {
+                    seen.add(tgt_slug);
+                    tgt_name: any = tgt_slug.replace("-", " ").title();
+                    lines.append(
+                        "- "
+                            + format(nb["kind"], "")
+                            + ": [["
+                            + format(tgt_slug, "")
+                            + "|"
+                            + format(tgt_name, "")
+                            + "]]",
+                    );
+                }
+            }
+        }
+
+        page_path: any = output_dir / f"{slug}.md";
+        page_path.write_text("\n".join(lines), encoding="utf-8");
+    }
+    community_map: dict[int, list[str]] = {};
+    for n in nodes {
+        cid: any = n.get("community_id");
+        if cid is not None {
+            community_map.setdefault(cid, []).append(n["qualified_name"]);
+        }
+    }
+
+    for c in communities {
+        cid = c.get("id");
+        cname: any = c.get("name", f"community-{cid}");
+        members: any = community_map.get(cid, []);
+
+        lines = [f"# Community: {_sanitize_name(cname)}", ""];
+        lines.append("**Size:** " + format(c.get("size", len(members)), ""));
+        lines.append("**Cohesion:** " + format(c.get("cohesion", 0), ".2f"));
+        lang: any = c.get("dominant_language", "");
+        if lang {
+            lines.append(f"**Language:** {lang}");
+        }
+        lines.append("");
+        lines.append("## Members");
+        lines.append("");
+        for qn in members[:50] {
+            slug = slugs.get(qn);
+            if slug {
+                lines.append(f"- [[{slug}]]");
+            }
+        }
+
+        page_path = output_dir / f"_COMMUNITY_{cid}.md";
+        page_path.write_text("\n".join(lines), encoding="utf-8");
+    }
+    index_lines: any = ["# Code Graph Index", ""];
+    index_lines.append(f"**Nodes:** {len(nodes)}");
+    index_lines.append(f"**Edges:** {len(edges)}");
+    index_lines.append(f"**Communities:** {len(communities)}");
+    index_lines.append("");
+    index_lines.append("## All Nodes");
+    index_lines.append("");
+    for n in sorted(nodes, key=lambda (x) -> any { x.get("name", "") }) {
+        slug = slugs.get(n["qualified_name"]);
+        if slug {
+            index_lines.append(
+                "- [[" + format(slug, "") + "]] (" + format(n.get("kind", ""), "") + ")"
+            );
+        }
+    }
+
+    (output_dir / "_INDEX.md").write_text("\n".join(index_lines), encoding="utf-8");
+
+    logger.info("Obsidian vault exported to %s (%d pages)", output_dir, len(nodes));
+    return output_dir;
+}
+
+impl _yaml_scalar(value: object) -> str {
+    if isinstance(value, `bool) {
+        return "true" if value else "false";
+    }
+    if isinstance(value, `int) {
+        return `str(value);
+    }
+    if isinstance(value, `float) {
+        return repr(value);
+    }
+    return json.dumps(`str(value), ensure_ascii=False);
+}
+
+impl _obsidian_slug(name: str) -> str {
+    slug: any = re.sub("[^\\w\\s-]", "", name.lower());
+    slug = re.sub("[\\s_]+", "-", slug).strip("-");
+    return slug[:100] or "unnamed";
+}
+
+impl _obsidian_slugs(nodes: list[dict]) -> dict[str, str] {
+    slugs: dict[str, str] = {};
+    taken: set[str] = set[any]();
+    next_suffix: dict[str, int] = {};
+    for n in nodes {
+        base: any = _obsidian_slug(n.get("name", n["qualified_name"]));
+        slug: any = base;
+        counter: any = next_suffix.get(base, 1);
+        while slug in taken {
+            slug = f"{base}-{counter}";
+            counter += 1;
+        }
+        next_suffix[base] = counter;
+        taken.add(slug);
+        slugs[n["qualified_name"]] = slug;
+    }
+    return slugs;
+}
+
+impl export_svg(store: GraphStore, output_path: Path) -> Path {
+    try {
+        import matplotlib;
+        matplotlib.use("Agg");
+        import matplotlib.pyplot as plt;
+    } except ImportError as exc {
+        raise MissingOptionalDependencyError(
+            "SVG export requires matplotlib. Run: pip install \"code-review-graph[eval]\""
+        ) from exc;
+    }
+
+    import networkx as nx;
+
+    data: any = export_graph_data(store);
+    nodes_data: any = data["nodes"];
+    edges_data: any = data["edges"];
+
+    nxg: nx.DiGraph = nx.DiGraph();
+    for n in nodes_data {
+        nxg.add_node(n["qualified_name"], label=n.get("name", ""), kind=n.get("kind", ""));
+    }
+    for e in edges_data {
+        if e["source"] in nxg and e["target"] in nxg {
+            nxg.add_edge(e["source"], e["target"]);
+        }
+    }
+
+    if nxg.number_of_nodes() == 0 {
+        raise ValueError("Graph is empty, nothing to export");
+    }
+    kind_colors: any = {
+        "File": "#6c757d",
+        "Class": "#0d6efd",
+        "Function": "#198754",
+        "Type": "#ffc107",
+        "Test": "#dc3545",
+    };
+    colors: any = [kind_colors.get(nxg.nodes[n].get("kind", ""), "#adb5bd") for n in nxg.nodes()];
+    with matplotlib.rc_context({"text.parse_math": False}) {
+        fig: any;
+        ax: any;
+        (fig, ax) = plt.subplots(1, 1, figsize=(16, 12)) as any;
+        pos: any = nx.spring_layout(
+            nxg, k=2 / nxg.number_of_nodes() ** 0.5, iterations=50, seed=42
+        );
+        labels: any = {};
+        if nxg.number_of_nodes() <= 100 {
+            labels = {n: nxg.nodes[n].get("label", n.split("::")[-1]) for n in nxg.nodes()};
+        }
+
+        nx.draw_networkx_nodes(nxg, pos, ax=ax, node_color=colors, node_size=30, alpha=0.8);
+        nx.draw_networkx_edges(nxg, pos, ax=ax, alpha=0.2, arrows=True, arrowsize=5);
+        if labels {
+            nx.draw_networkx_labels(nxg, pos, labels=labels, ax=ax, font_size=6);
+        }
+
+        ax.set_title("Code Review Graph", fontsize=14);
+        ax.axis("off");
+
+        fig.savefig(`str(output_path), format="svg", bbox_inches="tight", dpi=150);
+        plt.close(fig);
+    }
+
+    logger.info("SVG exported to %s (%d nodes)", output_path, nxg.number_of_nodes());
+    return output_path;
+}

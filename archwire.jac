@@ -105,854 +105,6 @@ graph import {
         GraphNode,
         SqliteReader,
     }
-    code_review_graph.cli --> code_review_graph.__main__ { main }
-    code_review_graph.install_manifest --> code_review_graph.cli;
-    code_review_graph.install_plan --> code_review_graph.cli;
-    code_review_graph.errors --> code_review_graph.cli { CodeReviewGraphError, is_lock_error }
-    code_review_graph.install_gitignore --> code_review_graph.cli { Plan, plan }
-    code_review_graph.neighbourhood --> code_review_graph.cli {
-        DEFAULT_DEPTH,
-        DEFAULT_MAX_NODES,
-        SeedResolutionError,
-    }
-    code_review_graph.stdio --> code_review_graph.cli { configure_utf8_stdio }
-    code_review_graph.skills --> code_review_graph.cli {
-        PLATFORMS,
-        _CLAUDE_MD_SECTION,
-        _CLAUDE_MD_SECTION_MARKER,
-        _COPILOT_SECTION,
-        _PLATFORM_INSTRUCTION_CUSTOM_SECTIONS,
-        _PLATFORM_INSTRUCTION_FILES,
-        _git_hooks_dir,
-        _upgrade_managed_block,
-        generate_skills,
-        inject_instruction_files,
-        install_codebuddy_hooks,
-        install_codebuddy_skills,
-        install_codex_hooks,
-        install_codex_skill,
-        install_cursor_hooks,
-        install_gemini_cli_hooks,
-        install_gemini_cli_skills,
-        install_git_hook,
-        install_git_sync_hooks,
-        install_hermes_skills,
-        install_hooks,
-        install_opencode_plugin,
-        install_platform_configs,
-        install_qoder_skills,
-        install_steering_hook,
-        instruction_file_wanted,
-        selected_platforms,
-    }
-    code_review_graph.uninstall --> code_review_graph.cli {
-        UninstallReport,
-        remove_steering_hook,
-        run,
-    }
-    code_review_graph.incremental --> code_review_graph.cli {
-        _create_data_dir,
-        _git_branch_info,
-        _prepare_db_path,
-        assert_graph_serves_root,
-        detect_vcs,
-        discover_review_changes,
-        ensure_repo_gitignore_excludes_crg,
-        find_project_root,
-        find_repo_root,
-        get_changed_files,
-        get_data_dir,
-        get_db_path,
-        watch,
-    }
-    code_review_graph.registry --> code_review_graph.cli { Registry }
-    code_review_graph.change_details --> code_review_graph.cli {
-        build_change_details,
-        parse_detail_sections,
-    }
-    code_review_graph.doctor --> code_review_graph.cli { run_doctor }
-    code_review_graph.context_history --> code_review_graph.cli { CallInfo, recorded_as }
-    code_review_graph.tools._common --> code_review_graph.cli { _open_graph_store }
-    code_review_graph.tools.build --> code_review_graph.cli {
-        _lock_or_skip,
-        _write_skipped_response,
-        build_or_update_graph,
-        build_was_interrupted,
-        run_postprocess,
-    }
-    code_review_graph.changes --> code_review_graph.cli {
-        analyze_changes,
-        format_brief,
-        review_churn_counts,
-    }
-    code_review_graph.context_savings --> code_review_graph.cli {
-        attach_context_savings,
-        estimate_file_tokens,
-        format_context_savings_panel,
-        verify_with_tiktoken,
-    }
-    code_review_graph.locking --> code_review_graph.cli { WriteLock }
-    code_review_graph.graph --> code_review_graph.cli { GraphStore }
-    code_review_graph.forget --> code_review_graph.cli { forget_files }
-    code_review_graph.constants --> code_review_graph.cli { QUERY_PATTERNS }
-    code_review_graph.enrich --> code_review_graph.cli { run_hook }
-    code_review_graph.multi_worktree --> code_review_graph.cli {
-        MultiWorktreeError,
-        run_multi_worktree_server,
-    }
-    code_review_graph.main --> code_review_graph.cli { main }
-    code_review_graph.daemon_cli --> code_review_graph.cli {
-        _handle_add,
-        _handle_logs,
-        _handle_remove,
-        _handle_restart,
-        _handle_start,
-        _handle_status,
-        _handle_stop,
-    }
-    code_review_graph.eval.reporter --> code_review_graph.cli {
-        generate_full_report,
-        generate_readme_tables,
-    }
-    code_review_graph.eval.runner --> code_review_graph.cli { run_eval }
-    code_review_graph.tools.docs --> code_review_graph.cli { embed_graph }
-    code_review_graph.refactor --> code_review_graph.cli { find_dead_code }
-    code_review_graph.build_state --> code_review_graph.cli { BUILD_IN_PROGRESS, read_build_state }
-    code_review_graph.postprocessing --> code_review_graph.cli { run_post_processing }
-    code_review_graph.exports --> code_review_graph.cli {
-        MissingOptionalDependencyError,
-        export_graphml,
-        export_json,
-        export_neo4j_cypher,
-        export_obsidian_vault,
-        export_svg,
-    }
-    code_review_graph.visualization --> code_review_graph.cli { generate_html }
-    code_review_graph.wiki --> code_review_graph.cli { generate_wiki }
-    code_review_graph.parser --> code_review_graph.cli { normalize_file_path }
-    code_review_graph.graph --> code_review_graph.neighbourhood { _sanitize_name }
-    code_review_graph.parser --> code_review_graph.graph { EdgeInfo, NodeInfo, is_test_file }
-    code_review_graph.constants --> code_review_graph.graph {
-        BFS_ENGINE,
-        CALLER_TEST_ROUTE_DEPTH,
-        CALLER_TEST_ROUTE_MAX_CALLERS,
-        CLAIMED_ENDPOINT_KEY,
-        IMPACT_DEFAULT_EDGE_DIRECTION,
-        IMPACT_DEFAULT_EDGE_WEIGHT,
-        IMPACT_DEPTH_DECAY,
-        IMPACT_DIRECTION_INCOMING,
-        IMPACT_DIRECTION_NONE,
-        IMPACT_DIRECTION_OUTGOING,
-        IMPACT_EDGE_DIRECTIONS,
-        IMPACT_EDGE_WEIGHTS,
-        IMPACT_SCORE_FLOOR,
-        IMPORT_SCOPE_KEY,
-        IMPORT_SCOPE_PACKAGE,
-        IMPORT_SCOPE_TREE,
-        INHERITED_ENDPOINT_KEY,
-        INHERITED_THROUGH_KEY,
-        MAX_IMPACT_DEPTH,
-        MAX_IMPACT_NODES,
-        env_int,
-        normalize_file_path,
-        read_only_requested,
-        release_os_memory,
-    }
-    code_review_graph.errors --> code_review_graph.graph { GraphStoreError, is_lock_error }
-    code_review_graph.inheritance --> code_review_graph.graph { InheritanceIndex }
-    code_review_graph.migrations --> code_review_graph.graph {
-        LATEST_VERSION,
-        TARGET_RESOLUTION_EXPR,
-        TARGET_RESOLUTION_KINDS,
-        get_schema_version,
-        run_migrations,
-        target_resolution_expr,
-    }
-    code_review_graph --> code_review_graph.graph { __version__ }
-    code_review_graph.config_keys --> code_review_graph.parser {
-        is_spring_config_path,
-        normalize_spring_config_key,
-    }
-    code_review_graph.constants --> code_review_graph.parser {
-        IMPORT_CONTEXT_DEFERRED,
-        IMPORT_CONTEXT_KEY,
-        IMPORT_CONTEXT_PARENT_PACKAGE,
-        IMPORT_CONTEXT_TYPE_ONLY,
-        IMPORT_SCOPE_KEY,
-        IMPORT_SCOPE_PACKAGE,
-        IMPORT_SCOPE_TREE,
-        normalize_file_path,
-        release_os_memory,
-    }
-    code_review_graph.custom_languages --> code_review_graph.parser {
-        CustomLanguage,
-        load_custom_languages,
-    }
-    code_review_graph.npm_alias_resolver --> code_review_graph.parser { NpmAliasResolver }
-    code_review_graph.tsconfig_resolver --> code_review_graph.parser { TsconfigResolver }
-    code_review_graph.workspace_resolver --> code_review_graph.parser { WorkspaceResolver }
-    code_review_graph.incremental --> code_review_graph.parser {
-        _load_ignore_patterns,
-        _should_ignore,
-    }
-    code_review_graph.install_plan --> code_review_graph.incremental;
-    code_review_graph.build_state --> code_review_graph.incremental {
-        advance_to_postprocess_pending,
-    }
-    code_review_graph.constants --> code_review_graph.incremental {
-        GIT_TIMEOUT,
-        discovery_timeout,
-        env_float,
-        env_int,
-        normalize_file_path,
-        read_only_requested,
-    }
-    code_review_graph.csharp_resolver --> code_review_graph.incremental {
-        restore_csharp_references,
-    }
-    code_review_graph.errors --> code_review_graph.incremental {
-        ChangeDiscoveryError,
-        GraphRootMismatchError,
-        GraphStoreError,
-    }
-    code_review_graph.graph --> code_review_graph.incremental { GraphStore }
-    code_review_graph.locking --> code_review_graph.incremental { WriteLock, write_lock_path }
-    code_review_graph.parser --> code_review_graph.incremental { CodeParser }
-    code_review_graph.python_resolver --> code_review_graph.incremental { resolve_python_imports }
-    code_review_graph.rescript_resolver --> code_review_graph.incremental {
-        resolve_rescript_cross_module,
-    }
-    code_review_graph.spring_resolver --> code_review_graph.incremental { resolve_spring_di_calls }
-    code_review_graph.aop_resolver --> code_review_graph.incremental { resolve_aop_advice }
-    code_review_graph.event_resolver --> code_review_graph.incremental { resolve_spring_events }
-    code_review_graph.temporal_resolver --> code_review_graph.incremental { resolve_temporal_calls }
-    code_review_graph.hcl_resolver --> code_review_graph.incremental {
-        resolve_hcl_module_references,
-    }
-    code_review_graph.scoped_resolver --> code_review_graph.incremental { resolve_scoped_calls }
-    code_review_graph.jedi_resolver --> code_review_graph.incremental { enrich_jedi_calls }
-    code_review_graph.registry --> code_review_graph.incremental { Registry, default_registry_path }
-    code_review_graph.communities --> code_review_graph.incremental {
-        capture_community_assignments,
-        purge_empty_communities,
-        remap_community_assignments,
-    }
-    code_review_graph.flows --> code_review_graph.incremental {
-        capture_affected_flow_entry_points,
-        capture_flow_node_ids,
-        clear_flows_for_files,
-        expand_changed_file_paths,
-        purge_orphan_flow_data,
-        remap_flow_node_ids,
-    }
-    code_review_graph.embeddings --> code_review_graph.incremental { REFRESH_SKIPPED_WARNING }
-    code_review_graph.daemon --> code_review_graph.incremental { watch_health_path }
-    code_review_graph.graph --> code_review_graph.csharp_resolver { GraphStore }
-    code_review_graph.graph --> code_review_graph.python_resolver { GraphStore }
-    code_review_graph.graph --> code_review_graph.rescript_resolver { GraphStore }
-    code_review_graph.graph --> code_review_graph.spring_resolver { GraphStore }
-    code_review_graph.parser --> code_review_graph.aop_resolver { EdgeInfo }
-    code_review_graph.graph --> code_review_graph.aop_resolver { GraphStore }
-    code_review_graph.parser --> code_review_graph.event_resolver { EdgeInfo, NodeInfo }
-    code_review_graph.graph --> code_review_graph.event_resolver { GraphStore }
-    code_review_graph.graph --> code_review_graph.temporal_resolver { GraphStore }
-    code_review_graph.constants --> code_review_graph.hcl_resolver { CLAIMED_ENDPOINT_KEY }
-    code_review_graph.graph --> code_review_graph.hcl_resolver { GraphStore }
-    code_review_graph.csharp_resolver --> code_review_graph.scoped_resolver { resolve_csharp_calls }
-    code_review_graph.graph --> code_review_graph.scoped_resolver { GraphStore }
-    code_review_graph.parser --> code_review_graph.jedi_resolver {
-        CodeParser,
-        EdgeInfo,
-        _is_test_file,
-        normalize_file_path,
-    }
-    code_review_graph.graph --> code_review_graph.jedi_resolver { GraphEdge }
-    code_review_graph.constants --> code_review_graph.communities { env_int }
-    code_review_graph.graph --> code_review_graph.communities {
-        GraphEdge,
-        GraphNode,
-        GraphStore,
-        _sanitize_name,
-    }
-    code_review_graph.flows --> code_review_graph.communities { expand_changed_file_paths }
-    code_review_graph.constants --> code_review_graph.flows { SECURITY_KEYWORDS }
-    code_review_graph.graph --> code_review_graph.flows {
-        FlowAdjacency,
-        GraphNode,
-        GraphStore,
-        _sanitize_name,
-    }
-    code_review_graph.parser --> code_review_graph.flows { is_test_file, normalize_file_path }
-    code_review_graph --> code_review_graph.embeddings { __version__ }
-    code_review_graph.constants --> code_review_graph.embeddings { release_os_memory }
-    code_review_graph.graph --> code_review_graph.embeddings { GraphNode, GraphStore, node_to_dict }
-    code_review_graph.graph --> code_review_graph.migrations { node_index_tokens }
-    code_review_graph.install_gitignore --> code_review_graph.uninstall;
-    code_review_graph.install_manifest --> code_review_graph.uninstall;
-    code_review_graph.install_plan --> code_review_graph.uninstall;
-    code_review_graph.jsonc --> code_review_graph.uninstall;
-    code_review_graph.skills --> code_review_graph.uninstall;
-    code_review_graph.codex_skill --> code_review_graph.uninstall {
-        codex_home,
-        codex_skill_dir,
-        owned_skill_files,
-    }
-    code_review_graph.incremental --> code_review_graph.uninstall { find_repo_root }
-    code_review_graph.communities --> code_review_graph.change_details;
-    code_review_graph.changes --> code_review_graph.change_details { risk_signals }
-    code_review_graph.constants --> code_review_graph.change_details { MAX_IMPACT_DEPTH }
-    code_review_graph.graph --> code_review_graph.change_details {
-        GraphEdge,
-        GraphNode,
-        GraphStore,
-        _sanitize_name,
-    }
-    code_review_graph --> code_review_graph.change_details { __version__ }
-    code_review_graph.constants --> code_review_graph.changes {
-        GIT_TIMEOUT,
-        SECURITY_KEYWORDS,
-        env_float,
-        env_int,
-    }
-    code_review_graph.errors --> code_review_graph.changes { ChangeDiscoveryError }
-    code_review_graph.flows --> code_review_graph.changes {
-        _trace_single_flow,
-        detect_entry_points,
-        get_affected_flows,
-    }
-    code_review_graph.graph --> code_review_graph.changes {
-        GraphEdge,
-        GraphNode,
-        GraphStore,
-        _sanitize_name,
-        node_to_dict,
-        qualified_name_of,
-    }
-    code_review_graph.parser --> code_review_graph.changes {
-        CodeParser,
-        NodeInfo,
-        _repo_relative_path,
-        is_test_file,
-        normalize_file_path,
-    }
-    code_review_graph --> code_review_graph.doctor { __version__ }
-    code_review_graph.skills --> code_review_graph.doctor { PLATFORMS, _codex_home, _strip_jsonc }
-    code_review_graph.incremental --> code_review_graph.doctor { files_hold_commits, get_db_path }
-    code_review_graph.parser --> code_review_graph.doctor { normalize_file_path }
-    code_review_graph.build_state --> code_review_graph.doctor {
-        BUILD_STATE_KEY,
-        INCOMPLETE_BUILD_STATES,
-    }
-    code_review_graph.migrations --> code_review_graph.doctor { LATEST_VERSION, get_schema_version }
-    code_review_graph.graph --> code_review_graph.tools._common {
-        CorruptGraphDatabaseError,
-        GraphStore,
-        _sanitize_name,
-        discard_corrupt_database,
-    }
-    code_review_graph.incremental --> code_review_graph.tools._common {
-        assert_graph_serves_root,
-        find_project_root,
-        get_db_path,
-    }
-    code_review_graph.parser --> code_review_graph.tools._common { normalize_file_path }
-    code_review_graph.build_state --> code_review_graph.tools.build {
-        BUILD_COMPLETE,
-        BUILD_IN_PROGRESS,
-        BUILD_STATE_KEY,
-        INCOMPLETE_BUILD_STATES,
-        POSTPROCESS_PENDING,
-        advance_to_postprocess_pending,
-        graph_contents_are_complete,
-        read_build_state,
-    }
-    code_review_graph.constants --> code_review_graph.tools.build { normalize_file_path }
-    code_review_graph.incremental --> code_review_graph.tools.build {
-        VERIFIED_FILE_COUNT_KEY,
-        _prepare_db_path,
-        collect_all_files,
-        detect_vcs,
-        full_build,
-        get_all_tracked_files,
-        get_db_path,
-        incremental_update,
-        resolve_incremental_base,
-    }
-    code_review_graph.locking --> code_review_graph.tools.build { WriteLock, write_lock_path }
-    code_review_graph.tools._common --> code_review_graph.tools.build { _get_store, _resolve_root }
-    code_review_graph.embeddings --> code_review_graph.tools.build {
-        REFRESH_SKIPPED_WARNING,
-        has_embeddings,
-        refresh_embeddings,
-    }
-    code_review_graph.search --> code_review_graph.tools.build {
-        rebuild_fts_index,
-        update_fts_index,
-    }
-    code_review_graph.flows --> code_review_graph.tools.build {
-        incremental_trace_flows,
-        store_flows,
-        trace_flows,
-    }
-    code_review_graph.communities --> code_review_graph.tools.build {
-        detect_communities,
-        incremental_detect_communities,
-        store_communities,
-    }
-    code_review_graph.graph --> code_review_graph.search {
-        GraphStore,
-        _sanitize_name,
-        identifier_words,
-    }
-    code_review_graph.migrations --> code_review_graph.search {
-        FTS_STATE_METADATA_KEY,
-        FTS_STATE_VERSION,
-        NODES_FTS_COLUMNS,
-        NODES_FTS_DDL,
-        NODES_FTS_STATE_TABLE,
-        ensure_nodes_fts_state,
-    }
-    code_review_graph.parser --> code_review_graph.search { is_test_file, normalize_file_path }
-    code_review_graph.embeddings --> code_review_graph.search { EmbeddingStore }
-    code_review_graph.graph --> code_review_graph.forget { GraphStore }
-    code_review_graph.parser --> code_review_graph.forget { CodeParser }
-    code_review_graph.postprocessing --> code_review_graph.forget { run_post_processing }
-    code_review_graph.python_resolver --> code_review_graph.forget { resolve_python_imports }
-    code_review_graph.scoped_resolver --> code_review_graph.forget { resolve_scoped_calls }
-    code_review_graph.incremental --> code_review_graph.forget {
-        _load_followed_dirs,
-        _relink_edges,
-    }
-    code_review_graph.graph --> code_review_graph.postprocessing { GraphStore }
-    code_review_graph.search --> code_review_graph.postprocessing { update_fts_index }
-    code_review_graph.flows --> code_review_graph.postprocessing { store_flows, trace_flows }
-    code_review_graph.communities --> code_review_graph.postprocessing {
-        detect_communities,
-        store_communities,
-    }
-    code_review_graph.embeddings --> code_review_graph.postprocessing {
-        REFRESH_SKIPPED_WARNING,
-        refresh_embeddings,
-    }
-    code_review_graph.errors --> code_review_graph.enrich { GraphStoreError }
-    code_review_graph.graph --> code_review_graph.enrich { GraphNode, GraphStore }
-    code_review_graph.search --> code_review_graph.enrich { _fts_search }
-    code_review_graph.incremental --> code_review_graph.enrich { find_project_root, get_db_path }
-    code_review_graph.incremental --> code_review_graph.hook_update { get_db_path }
-    code_review_graph.tools.build --> code_review_graph.hook_update { build_or_update_graph }
-    code_review_graph.incremental --> code_review_graph.multi_worktree {
-        find_project_root,
-        get_db_path,
-    }
-    code_review_graph --> code_review_graph.main { __version__ }
-    code_review_graph.incremental --> code_review_graph.main;
-    code_review_graph.incremental --> code_review_graph.main {
-        find_project_root,
-        get_db_path,
-        start_watch_thread,
-    }
-    code_review_graph.constants --> code_review_graph.main { MAX_IMPACT_NODES, env_int }
-    code_review_graph.graph --> code_review_graph.main { GraphStore, _sanitize_name }
-    code_review_graph.registry --> code_review_graph.main { Registry }
-    code_review_graph.tools --> code_review_graph.main {
-        apply_refactor_func,
-        build_or_update_graph,
-        cross_repo_search_func,
-        detect_changes_func,
-        embed_graph,
-        find_large_functions,
-        generate_wiki_func,
-        get_affected_flows_func,
-        get_architecture_overview_func,
-        get_bridge_nodes_func,
-        get_community_func,
-        get_flow,
-        get_hub_nodes_func,
-        get_impact_radius,
-        get_knowledge_gaps_func,
-        get_minimal_context,
-        get_review_context,
-        get_suggested_questions_func,
-        get_surprising_connections_func,
-        get_wiki_page_func,
-        list_communities_func,
-        list_flows,
-        list_graph_stats,
-        query_graph,
-        refactor_func,
-        run_postprocess,
-        semantic_search_nodes,
-        traverse_graph_func,
-    }
-    code_review_graph.postprocessing --> code_review_graph.main { run_post_processing }
-    code_review_graph.embeddings --> code_review_graph.main { prewarm_local_embeddings }
-    code_review_graph.http_origin_guard --> code_review_graph.main { build_http_middleware }
-    code_review_graph.eval.benchmarks.agent_baseline --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.build_performance --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.flow_completeness --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.impact_accuracy --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.incremental_fidelity --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.multi_hop_retrieval --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.search_quality --> code_review_graph.eval.runner;
-    code_review_graph.eval.benchmarks.token_efficiency --> code_review_graph.eval.runner;
-    code_review_graph.embeddings --> code_review_graph.eval.runner {
-        EmbeddingStore,
-        embed_all_nodes,
-    }
-    code_review_graph.graph --> code_review_graph.eval.runner { GraphStore }
-    code_review_graph.incremental --> code_review_graph.eval.runner { full_build, get_db_path }
-    code_review_graph.postprocessing --> code_review_graph.eval.runner { run_post_processing }
-    code_review_graph.parser --> code_review_graph.eval.benchmarks.agent_baseline { is_test_file }
-    code_review_graph.token_benchmark --> code_review_graph.eval.benchmarks.agent_baseline {
-        estimate_tokens,
-    }
-    code_review_graph.search --> code_review_graph.eval.benchmarks.agent_baseline {
-        extract_query_identifiers,
-        hybrid_search,
-    }
-    code_review_graph.graph --> code_review_graph.token_benchmark { GraphStore }
-    code_review_graph.search --> code_review_graph.token_benchmark { hybrid_search }
-    code_review_graph.flows --> code_review_graph.eval.benchmarks.build_performance {
-        store_flows,
-        trace_flows,
-    }
-    code_review_graph.communities --> code_review_graph.eval.benchmarks.build_performance {
-        detect_communities,
-        store_communities,
-    }
-    code_review_graph.flows --> code_review_graph.eval.benchmarks.flow_completeness {
-        store_flows,
-        trace_flows,
-    }
-    code_review_graph.parser --> code_review_graph.eval.benchmarks.impact_accuracy {
-        normalize_file_path,
-    }
-    code_review_graph.changes --> code_review_graph.eval.benchmarks.impact_accuracy {
-        analyze_changes,
-    }
-    code_review_graph.graph --> code_review_graph.eval.benchmarks.incremental_fidelity {
-        GraphStore,
-        _sanitize_name,
-    }
-    code_review_graph.incremental --> code_review_graph.eval.benchmarks.incremental_fidelity {
-        full_build,
-        incremental_update,
-    }
-    code_review_graph.tools.build --> code_review_graph.eval.benchmarks.incremental_fidelity {
-        _run_postprocess,
-    }
-    code_review_graph.graph_diff --> code_review_graph.eval.benchmarks.incremental_fidelity {
-        diff_snapshots,
-        take_snapshot,
-    }
-    code_review_graph.graph --> code_review_graph.graph_diff { GraphStore }
-    code_review_graph.search --> code_review_graph.eval.benchmarks.multi_hop_retrieval {
-        hybrid_search,
-    }
-    code_review_graph.tools.query --> code_review_graph.eval.benchmarks.multi_hop_retrieval {
-        query_graph,
-    }
-    code_review_graph.config_keys --> code_review_graph.tools.query { normalize_spring_config_key }
-    code_review_graph.constants --> code_review_graph.tools.query {
-        IMPORT_CONTEXT_KEY,
-        IMPORT_CONTEXT_TYPE_ONLY,
-        IMPORT_SCOPE_KEY,
-        MAX_IMPACT_NODES,
-        QUERY_PATTERNS,
-    }
-    code_review_graph.context_history --> code_review_graph.tools.query { CallInfo }
-    code_review_graph.context_savings --> code_review_graph.tools.query {
-        attach_context_savings,
-        estimate_file_tokens,
-    }
-    code_review_graph.embeddings --> code_review_graph.tools.query { EmbeddingStore }
-    code_review_graph.errors --> code_review_graph.tools.query { ChangeDiscoveryError }
-    code_review_graph.graph --> code_review_graph.tools.query {
-        GraphEdge,
-        GraphNode,
-        GraphStore,
-        IMPACT_RESOLUTIONS,
-        QUERY_RESOLUTIONS,
-        RESOLUTION_ALL,
-        RESOLUTION_DIRECT,
-        RESOLUTION_UNRESOLVED,
-        _compatible_edge_languages,
-        _sanitize_name,
-        edge_to_dict,
-        import_scope_ancestors,
-        node_to_dict,
-    }
-    code_review_graph.hints --> code_review_graph.tools.query { generate_hints, get_session }
-    code_review_graph.incremental --> code_review_graph.tools.query {
-        discover_review_changes,
-        followed_files,
-        get_db_path,
-        path_within_repo,
-    }
-    code_review_graph.parser --> code_review_graph.tools.query {
-        is_test_file,
-        normalize_file_path,
-        repo_relative_path,
-    }
-    code_review_graph.search --> code_review_graph.tools.query { hybrid_search }
-    code_review_graph.uncertainty --> code_review_graph.tools.query {
-        empty_impact_confidence,
-        empty_query_confidence,
-        empty_search_confidence,
-        guessed_calls_confidence,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.query {
-        _BUILTIN_CALL_NAMES,
-        _bounded,
-        _error_response,
-        _get_store,
-        _resolve_graph_file_paths,
-        _resolve_graph_file_paths_with_unmatched,
-        _shown_of,
-        _unmatched_file_warning,
-        _validate_positive_int,
-    }
-    code_review_graph.constants --> code_review_graph.uncertainty { GIT_TIMEOUT }
-    code_review_graph.graph --> code_review_graph.uncertainty { GraphStore, _sanitize_name }
-    code_review_graph.incremental --> code_review_graph.uncertainty {
-        _load_ignore_patterns,
-        _should_ignore,
-    }
-    code_review_graph.parser --> code_review_graph.uncertainty { normalize_file_path }
-    code_review_graph.tools._common --> code_review_graph.uncertainty { _read_live_git_head }
-    code_review_graph.search --> code_review_graph.eval.benchmarks.search_quality { hybrid_search }
-    code_review_graph.constants --> code_review_graph.tools.docs { read_only_requested }
-    code_review_graph.embeddings --> code_review_graph.tools.docs {
-        EmbeddingStore,
-        embed_all_nodes,
-    }
-    code_review_graph.incremental --> code_review_graph.tools.docs {
-        _prepare_db_path,
-        find_project_root,
-        get_data_dir,
-        get_db_path,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.docs {
-        _get_store,
-        _resolve_root,
-        _validate_positive_int,
-        _validate_repo_root,
-    }
-    code_review_graph.tools.build --> code_review_graph.tools.docs { _lock_or_skip }
-    code_review_graph.wiki --> code_review_graph.tools.docs { generate_wiki, get_wiki_page }
-    code_review_graph.communities --> code_review_graph.wiki { get_communities }
-    code_review_graph.flows --> code_review_graph.wiki { get_flows }
-    code_review_graph.graph --> code_review_graph.wiki { GraphStore, _sanitize_name }
-    code_review_graph.constants --> code_review_graph.refactor {
-        CLAIMED_ENDPOINT_KEY,
-        INHERITED_ENDPOINT_KEY,
-        INHERITED_THROUGH_KEY,
-    }
-    code_review_graph.flows --> code_review_graph.refactor {
-        _has_framework_decorator,
-        _has_override_decorator,
-        _matches_entry_name,
-    }
-    code_review_graph.graph --> code_review_graph.refactor {
-        GraphNode,
-        GraphStore,
-        _compatible_edge_languages,
-        _sanitize_name,
-    }
-    code_review_graph.parser --> code_review_graph.refactor {
-        CodeParser,
-        _STORYBOOK_FILE_RE,
-        is_test_file,
-        normalize_file_path,
-        repo_relative_path,
-    }
-    code_review_graph.incremental --> code_review_graph.refactor {
-        followed_files,
-        path_within_repo,
-    }
-    code_review_graph.graph --> code_review_graph.exports { GraphStore, _sanitize_name }
-    code_review_graph.visualization --> code_review_graph.exports { export_graph_data }
-    code_review_graph.graph --> code_review_graph.visualization {
-        GraphNode,
-        GraphStore,
-        _sanitize_name,
-        edge_to_dict,
-        node_to_dict,
-    }
-    code_review_graph.neighbourhood --> code_review_graph.visualization {
-        DEFAULT_DEPTH,
-        DEFAULT_MAX_NODES,
-        NeighbourhoodSpec,
-        STRUCTURAL_EDGE_KINDS,
-        _parent_files,
-        extract,
-        resolve_seeds,
-    }
-    code_review_graph.parser --> code_review_graph.visualization { normalize_file_path }
-    code_review_graph.flows --> code_review_graph.visualization { get_flows }
-    code_review_graph.communities --> code_review_graph.visualization { get_communities }
-    code_review_graph.constants --> code_review_graph.analysis {
-        IMPORT_CONTEXT_DEFERRED,
-        IMPORT_CONTEXT_KEY,
-        IMPORT_CONTEXT_PARENT_PACKAGE,
-        IMPORT_CONTEXT_TYPE_ONLY,
-    }
-    code_review_graph.graph --> code_review_graph.analysis { GraphEdge, GraphStore, _sanitize_name }
-    code_review_graph.parser --> code_review_graph.analysis { normalize_file_path }
-    code_review_graph.eval.reporter --> code_review_graph.eval {
-        generate_full_report,
-        generate_markdown_report,
-        generate_readme_tables,
-    }
-    code_review_graph.eval.scorer --> code_review_graph.eval {
-        compute_mrr,
-        compute_precision_recall,
-        compute_token_efficiency,
-    }
-    code_review_graph.tools.context --> code_review_graph.eval.token_benchmark {
-        get_minimal_context,
-    }
-    code_review_graph.tools.review --> code_review_graph.eval.token_benchmark {
-        detect_changes_func,
-    }
-    code_review_graph.tools.community_tools --> code_review_graph.eval.token_benchmark {
-        list_communities_func,
-    }
-    code_review_graph.tools.flows_tools --> code_review_graph.eval.token_benchmark { list_flows }
-    code_review_graph.tools.query --> code_review_graph.eval.token_benchmark {
-        list_graph_stats,
-        semantic_search_nodes,
-    }
-    code_review_graph.errors --> code_review_graph.tools.context { ChangeDiscoveryError }
-    code_review_graph.incremental --> code_review_graph.tools.context {
-        discover_review_changes,
-        get_db_path,
-        graph_holds_commits,
-        resolve_review_base,
-    }
-    code_review_graph.parser --> code_review_graph.tools.context { normalize_file_path }
-    code_review_graph.tools._common --> code_review_graph.tools.context {
-        _get_store,
-        _resolve_root,
-        compact_response,
-        graph_provenance,
-    }
-    code_review_graph.changes --> code_review_graph.tools.context { analyze_changes }
-    code_review_graph.changes --> code_review_graph.tools.review {
-        DiffRanges,
-        analyze_changes,
-        compute_risk_score,
-        is_test_gap_exempt,
-        parse_diff_ranges,
-        parse_git_diff_ranges,
-    }
-    code_review_graph.context_history --> code_review_graph.tools.review { CallInfo }
-    code_review_graph.context_savings --> code_review_graph.tools.review {
-        attach_context_savings,
-        estimate_file_tokens,
-    }
-    code_review_graph.errors --> code_review_graph.tools.review { ChangeDiscoveryError }
-    code_review_graph.flows --> code_review_graph.tools.review { get_affected_flows }
-    code_review_graph.graph --> code_review_graph.tools.review {
-        GraphNode,
-        GraphStore,
-        edge_to_dict,
-        node_to_dict,
-    }
-    code_review_graph.hints --> code_review_graph.tools.review { generate_hints, get_session }
-    code_review_graph.incremental --> code_review_graph.tools.review {
-        discover_review_changes,
-        followed_files,
-        path_within_repo,
-        resolve_review_base,
-    }
-    code_review_graph.parser --> code_review_graph.tools.review {
-        is_test_file,
-        normalize_file_path,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.review {
-        _bounded,
-        _error_response,
-        _get_store,
-        _resolve_graph_file_paths_with_unmatched,
-        _shown_of,
-        _unmatched_file_warning,
-        _validate_positive_int,
-    }
-    code_review_graph.communities --> code_review_graph.tools.community_tools {
-        get_architecture_overview,
-        get_communities,
-    }
-    code_review_graph.context_history --> code_review_graph.tools.community_tools { CallInfo }
-    code_review_graph.context_savings --> code_review_graph.tools.community_tools {
-        attach_context_savings,
-    }
-    code_review_graph.graph --> code_review_graph.tools.community_tools { node_to_dict }
-    code_review_graph.hints --> code_review_graph.tools.community_tools {
-        generate_hints,
-        get_session,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.community_tools {
-        _bounded,
-        _get_store,
-        _shown_of,
-        _validate_positive_int,
-    }
-    code_review_graph.flows --> code_review_graph.tools.flows_tools { get_flow_by_id, get_flows }
-    code_review_graph.hints --> code_review_graph.tools.flows_tools { generate_hints, get_session }
-    code_review_graph.incremental --> code_review_graph.tools.flows_tools {
-        followed_files,
-        path_within_repo,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.flows_tools {
-        _bounded,
-        _get_store,
-        _shown_of,
-        _validate_positive_int,
-    }
-    code_review_graph.analysis --> code_review_graph.tools.analysis_tools {
-        find_bridge_nodes,
-        find_hub_nodes,
-        find_knowledge_gaps,
-        find_surprising_connections,
-        generate_suggested_questions,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.analysis_tools {
-        _bounded,
-        _get_store,
-        _shown_of,
-        _validate_positive_int,
-    }
-    code_review_graph.hints --> code_review_graph.tools.refactor_tools {
-        generate_hints,
-        get_session,
-    }
-    code_review_graph.incremental --> code_review_graph.tools.refactor_tools { find_project_root }
-    code_review_graph.refactor --> code_review_graph.tools.refactor_tools {
-        apply_refactor,
-        find_dead_code,
-        rename_preview,
-        suggest_refactorings,
-    }
-    code_review_graph.tools._common --> code_review_graph.tools.refactor_tools {
-        _bounded,
-        _get_store,
-        _shown_of,
-        _validate_positive_int,
-        _validate_repo_root,
-    }
-    code_review_graph.graph --> code_review_graph.tools.registry_tools {
-        GraphStore,
-        _sanitize_name,
-    }
-    code_review_graph.incremental --> code_review_graph.tools.registry_tools { get_db_path }
-    code_review_graph.search --> code_review_graph.tools.registry_tools { hybrid_search }
-    code_review_graph.tools._common --> code_review_graph.tools.registry_tools {
-        _bounded,
-        _shown_of,
-        _validate_positive_int,
-    }
-    code_review_graph.registry --> code_review_graph.tools.registry_tools { Registry }
     code_review_graph.skills --> scripts.generate_documentary_skills {
         DOCUMENTARY_SKILLS,
         generate_documentary_skills,
@@ -3099,7 +2251,6 @@ graph import {
         codex_home,
         install_codex_skill as _install,
     }
-    code_review_graph --> code_review_graph.cli { __version__ }
     code_review_graph.tsconfig_resolver ++> code_review_graph.workspace_resolver {
         _PROBE_EXTENSIONS,
     }
@@ -3131,7 +2282,821 @@ graph import {
         release_os_memory,
     }
     code_review_graph.registry ++> code_review_graph.daemon { Registry }
-    code_review_graph.tools.review --> code_review_graph.eval.benchmarks.token_efficiency {
+    code_review_graph.parser ++> code_review_graph.aop_resolver { EdgeInfo }
+    code_review_graph.constants ++> code_review_graph.communities { env_int }
+    code_review_graph.graph ++> code_review_graph.communities {
+        GraphEdge,
+        GraphNode,
+        GraphStore,
+        _sanitize_name,
+    }
+    code_review_graph.flows ++> code_review_graph.communities { expand_changed_file_paths }
+    code_review_graph ++> code_review_graph.embeddings { __version__ as _crg_version }
+    code_review_graph.constants ++> code_review_graph.embeddings { release_os_memory }
+    code_review_graph.graph ++> code_review_graph.embeddings { GraphNode, GraphStore, node_to_dict }
+    code_review_graph.parser ++> code_review_graph.event_resolver { EdgeInfo, NodeInfo }
+    code_review_graph.constants ++> code_review_graph.flows {
+        SECURITY_KEYWORDS as _SECURITY_KEYWORDS,
+    }
+    code_review_graph.graph ++> code_review_graph.flows {
+        FlowAdjacency,
+        GraphNode,
+        GraphStore,
+        _sanitize_name,
+    }
+    code_review_graph.parser ++> code_review_graph.flows {
+        is_test_file as _is_test_file,
+        normalize_file_path,
+    }
+    code_review_graph.constants ++> code_review_graph.graph {
+        BFS_ENGINE,
+        CALLER_TEST_ROUTE_DEPTH,
+        CALLER_TEST_ROUTE_MAX_CALLERS,
+        CLAIMED_ENDPOINT_KEY,
+        IMPACT_DEFAULT_EDGE_DIRECTION,
+        IMPACT_DEFAULT_EDGE_WEIGHT,
+        IMPACT_DEPTH_DECAY,
+        IMPACT_DIRECTION_INCOMING,
+        IMPACT_DIRECTION_NONE,
+        IMPACT_DIRECTION_OUTGOING,
+        IMPACT_EDGE_DIRECTIONS,
+        IMPACT_EDGE_WEIGHTS,
+        IMPACT_SCORE_FLOOR,
+        IMPORT_SCOPE_KEY,
+        IMPORT_SCOPE_PACKAGE,
+        IMPORT_SCOPE_TREE,
+        INHERITED_ENDPOINT_KEY,
+        INHERITED_THROUGH_KEY,
+        MAX_IMPACT_DEPTH,
+        MAX_IMPACT_NODES,
+        env_int,
+        normalize_file_path,
+        read_only_requested,
+        release_os_memory,
+    }
+    code_review_graph.errors ++> code_review_graph.graph { GraphStoreError, is_lock_error }
+    code_review_graph.inheritance ++> code_review_graph.graph { InheritanceIndex }
+    code_review_graph.migrations ++> code_review_graph.graph {
+        LATEST_VERSION,
+        TARGET_RESOLUTION_EXPR,
+        TARGET_RESOLUTION_KINDS,
+        get_schema_version,
+        run_migrations,
+        target_resolution_expr,
+    }
+    code_review_graph ++> code_review_graph.graph { __version__ }
+    code_review_graph.parser ++> code_review_graph.graph { EdgeInfo, is_test_file }
+    code_review_graph.constants ++> code_review_graph.hcl_resolver { CLAIMED_ENDPOINT_KEY }
+    code_review_graph.install_plan as install_plan ++> code_review_graph.incremental;
+    code_review_graph.build_state ++> code_review_graph.incremental {
+        advance_to_postprocess_pending,
+    }
+    code_review_graph.constants ++> code_review_graph.incremental {
+        GIT_TIMEOUT as _GIT_TIMEOUT,
+        discovery_timeout,
+        env_float,
+        env_int,
+        normalize_file_path,
+        read_only_requested,
+    }
+    code_review_graph.csharp_resolver ++> code_review_graph.incremental {
+        restore_csharp_references,
+    }
+    code_review_graph.errors ++> code_review_graph.incremental {
+        ChangeDiscoveryError,
+        GraphRootMismatchError,
+        GraphStoreError,
+    }
+    code_review_graph.graph ++> code_review_graph.incremental { GraphStore }
+    code_review_graph.locking ++> code_review_graph.incremental { WriteLock, write_lock_path }
+    code_review_graph.parser ++> code_review_graph.incremental { CodeParser }
+    code_review_graph.python_resolver ++> code_review_graph.incremental { resolve_python_imports }
+    code_review_graph.rescript_resolver ++> code_review_graph.incremental {
+        resolve_rescript_cross_module,
+    }
+    code_review_graph.spring_resolver ++> code_review_graph.incremental { resolve_spring_di_calls }
+    code_review_graph.aop_resolver ++> code_review_graph.incremental { resolve_aop_advice }
+    code_review_graph.event_resolver ++> code_review_graph.incremental { resolve_spring_events }
+    code_review_graph.temporal_resolver ++> code_review_graph.incremental { resolve_temporal_calls }
+    code_review_graph.hcl_resolver ++> code_review_graph.incremental {
+        resolve_hcl_module_references,
+    }
+    code_review_graph.scoped_resolver ++> code_review_graph.incremental { resolve_scoped_calls }
+    code_review_graph.jedi_resolver ++> code_review_graph.incremental { enrich_jedi_calls }
+    code_review_graph.registry ++> code_review_graph.incremental { Registry, default_registry_path }
+    code_review_graph.communities ++> code_review_graph.incremental {
+        capture_community_assignments,
+        purge_empty_communities,
+        remap_community_assignments,
+    }
+    code_review_graph.flows ++> code_review_graph.incremental {
+        capture_affected_flow_entry_points,
+        capture_flow_node_ids,
+        clear_flows_for_files,
+        expand_changed_file_paths,
+        purge_orphan_flow_data,
+        remap_flow_node_ids,
+    }
+    code_review_graph.embeddings ++> code_review_graph.incremental { REFRESH_SKIPPED_WARNING }
+    code_review_graph.daemon ++> code_review_graph.incremental { watch_health_path }
+    code_review_graph.parser ++> code_review_graph.jedi_resolver {
+        CodeParser,
+        EdgeInfo,
+        normalize_file_path,
+        _is_test_file as _parser_is_test_file,
+    }
+    code_review_graph.graph ++> code_review_graph.jedi_resolver { GraphEdge }
+    code_review_graph.graph ++> code_review_graph.migrations { node_index_tokens }
+    code_review_graph.config_keys ++> code_review_graph.parser {
+        is_spring_config_path,
+        normalize_spring_config_key,
+    }
+    code_review_graph.constants ++> code_review_graph.parser {
+        IMPORT_CONTEXT_DEFERRED,
+        IMPORT_CONTEXT_KEY,
+        IMPORT_CONTEXT_PARENT_PACKAGE,
+        IMPORT_CONTEXT_TYPE_ONLY,
+        IMPORT_SCOPE_KEY,
+        IMPORT_SCOPE_PACKAGE,
+        IMPORT_SCOPE_TREE,
+        normalize_file_path,
+        release_os_memory,
+    }
+    code_review_graph.custom_languages ++> code_review_graph.parser { load_custom_languages }
+    code_review_graph.npm_alias_resolver ++> code_review_graph.parser { NpmAliasResolver }
+    code_review_graph.tsconfig_resolver ++> code_review_graph.parser { TsconfigResolver }
+    code_review_graph.workspace_resolver ++> code_review_graph.parser { WorkspaceResolver }
+    code_review_graph.incremental ++> code_review_graph.parser {
+        _should_ignore,
+        _load_ignore_patterns,
+    }
+    code_review_graph.csharp_resolver ++> code_review_graph.scoped_resolver { resolve_csharp_calls }
+    code_review_graph.constants ++> code_review_graph.changes {
+        GIT_TIMEOUT as _GIT_TIMEOUT,
+        SECURITY_KEYWORDS as _SECURITY_KEYWORDS,
+        env_float,
+        env_int,
+    }
+    code_review_graph.errors ++> code_review_graph.changes { ChangeDiscoveryError }
+    code_review_graph.flows ++> code_review_graph.changes {
+        _trace_single_flow,
+        detect_entry_points,
+        get_affected_flows,
+    }
+    code_review_graph.graph ++> code_review_graph.changes {
+        GraphEdge,
+        GraphNode,
+        GraphStore,
+        _sanitize_name,
+        node_to_dict,
+        qualified_name_of,
+    }
+    code_review_graph.parser ++> code_review_graph.changes {
+        CodeParser,
+        NodeInfo,
+        _repo_relative_path,
+        is_test_file,
+        normalize_file_path,
+    }
+    code_review_graph.communities as communities ++> code_review_graph.change_details;
+    code_review_graph.changes ++> code_review_graph.change_details { risk_signals }
+    code_review_graph.constants ++> code_review_graph.change_details { MAX_IMPACT_DEPTH }
+    code_review_graph.graph ++> code_review_graph.change_details {
+        GraphEdge,
+        GraphNode,
+        GraphStore,
+        _sanitize_name,
+    }
+    code_review_graph ++> code_review_graph.change_details { __version__ }
+    code_review_graph ++> code_review_graph.doctor { __version__ }
+    code_review_graph.skills ++> code_review_graph.doctor { _strip_jsonc, PLATFORMS, _codex_home }
+    code_review_graph.incremental ++> code_review_graph.doctor { files_hold_commits, get_db_path }
+    code_review_graph.parser ++> code_review_graph.doctor { normalize_file_path }
+    code_review_graph.build_state ++> code_review_graph.doctor {
+        BUILD_STATE_KEY,
+        INCOMPLETE_BUILD_STATES,
+    }
+    code_review_graph.migrations ++> code_review_graph.doctor { LATEST_VERSION, get_schema_version }
+    code_review_graph.graph ++> code_review_graph.search {
+        GraphStore,
+        _sanitize_name,
+        identifier_words,
+    }
+    code_review_graph.migrations ++> code_review_graph.search {
+        FTS_STATE_METADATA_KEY,
+        FTS_STATE_VERSION,
+        NODES_FTS_COLUMNS,
+        NODES_FTS_DDL,
+        NODES_FTS_STATE_TABLE,
+        ensure_nodes_fts_state,
+    }
+    code_review_graph.parser ++> code_review_graph.search { is_test_file, normalize_file_path }
+    code_review_graph.embeddings ++> code_review_graph.search { EmbeddingStore }
+    code_review_graph.errors ++> code_review_graph.enrich { GraphStoreError }
+    code_review_graph.graph ++> code_review_graph.enrich { GraphNode, GraphStore }
+    code_review_graph.search ++> code_review_graph.enrich { _fts_search }
+    code_review_graph.incremental ++> code_review_graph.enrich { find_project_root, get_db_path }
+    code_review_graph.graph ++> code_review_graph.token_benchmark { GraphStore }
+    code_review_graph.search ++> code_review_graph.token_benchmark { hybrid_search }
+    code_review_graph.parser ++> code_review_graph.eval.benchmarks.agent_baseline { is_test_file }
+    code_review_graph.token_benchmark ++> code_review_graph.eval.benchmarks.agent_baseline {
+        estimate_tokens,
+    }
+    code_review_graph.search ++> code_review_graph.eval.benchmarks.agent_baseline {
+        extract_query_identifiers,
+        hybrid_search,
+    }
+    code_review_graph.flows ++> code_review_graph.eval.benchmarks.build_performance {
+        store_flows,
+        trace_flows,
+    }
+    code_review_graph.communities ++> code_review_graph.eval.benchmarks.build_performance {
+        detect_communities,
+        store_communities,
+    }
+    code_review_graph.flows ++> code_review_graph.eval.benchmarks.flow_completeness {
+        store_flows,
+        trace_flows,
+    }
+    code_review_graph.parser ++> code_review_graph.eval.benchmarks.impact_accuracy {
+        normalize_file_path,
+    }
+    code_review_graph.changes ++> code_review_graph.eval.benchmarks.impact_accuracy {
+        analyze_changes,
+    }
+    code_review_graph.graph ++> code_review_graph.graph_diff { GraphStore }
+    code_review_graph.graph ++> code_review_graph.tools._common {
+        GraphStore,
+        _sanitize_name,
+        CorruptGraphDatabaseError,
+        discard_corrupt_database,
+    }
+    code_review_graph.incremental ++> code_review_graph.tools._common {
+        find_project_root,
+        get_db_path,
+        assert_graph_serves_root,
+    }
+    code_review_graph.parser ++> code_review_graph.tools._common { normalize_file_path }
+    code_review_graph.build_state ++> code_review_graph.tools.build {
+        BUILD_COMPLETE,
+        BUILD_IN_PROGRESS,
+        BUILD_STATE_KEY,
+        INCOMPLETE_BUILD_STATES,
+        POSTPROCESS_PENDING,
+        advance_to_postprocess_pending,
+        graph_contents_are_complete,
+        read_build_state,
+    }
+    code_review_graph.constants ++> code_review_graph.tools.build { normalize_file_path }
+    code_review_graph.incremental ++> code_review_graph.tools.build {
+        VERIFIED_FILE_COUNT_KEY,
+        _prepare_db_path,
+        collect_all_files,
+        detect_vcs,
+        full_build,
+        get_all_tracked_files,
+        get_db_path,
+        incremental_update,
+        resolve_incremental_base,
+    }
+    code_review_graph.locking ++> code_review_graph.tools.build { WriteLock, write_lock_path }
+    code_review_graph.tools._common ++> code_review_graph.tools.build { _get_store, _resolve_root }
+    code_review_graph.embeddings ++> code_review_graph.tools.build {
+        refresh_embeddings,
+        REFRESH_SKIPPED_WARNING,
+        has_embeddings,
+    }
+    code_review_graph.search ++> code_review_graph.tools.build {
+        rebuild_fts_index,
+        update_fts_index,
+    }
+    code_review_graph.flows ++> code_review_graph.tools.build {
+        incremental_trace_flows,
+        store_flows as _store_flows,
+        trace_flows as _trace_flows,
+    }
+    code_review_graph.communities ++> code_review_graph.tools.build {
+        incremental_detect_communities,
+        detect_communities as _detect_communities,
+        store_communities as _store_communities,
+    }
+    code_review_graph.graph ++> code_review_graph.eval.benchmarks.incremental_fidelity {
+        GraphStore,
+        _sanitize_name,
+    }
+    code_review_graph.incremental ++> code_review_graph.eval.benchmarks.incremental_fidelity {
+        full_build,
+        incremental_update,
+    }
+    code_review_graph.tools.build ++> code_review_graph.eval.benchmarks.incremental_fidelity {
+        _run_postprocess,
+    }
+    code_review_graph.graph_diff ++> code_review_graph.eval.benchmarks.incremental_fidelity {
+        diff_snapshots,
+        take_snapshot,
+    }
+    code_review_graph.constants ++> code_review_graph.uncertainty { GIT_TIMEOUT }
+    code_review_graph.graph ++> code_review_graph.uncertainty { _sanitize_name }
+    code_review_graph.incremental ++> code_review_graph.uncertainty {
+        _load_ignore_patterns,
+        _should_ignore,
+    }
+    code_review_graph.parser ++> code_review_graph.uncertainty { normalize_file_path }
+    code_review_graph.tools._common ++> code_review_graph.uncertainty { _read_live_git_head }
+    code_review_graph.config_keys ++> code_review_graph.tools.query { normalize_spring_config_key }
+    code_review_graph.constants ++> code_review_graph.tools.query {
+        IMPORT_CONTEXT_KEY,
+        IMPORT_CONTEXT_TYPE_ONLY,
+        IMPORT_SCOPE_KEY,
+        MAX_IMPACT_NODES,
+        QUERY_PATTERNS,
+    }
+    code_review_graph.context_history ++> code_review_graph.tools.query { CallInfo }
+    code_review_graph.context_savings ++> code_review_graph.tools.query {
+        attach_context_savings,
+        estimate_file_tokens,
+    }
+    code_review_graph.embeddings ++> code_review_graph.tools.query { EmbeddingStore }
+    code_review_graph.errors ++> code_review_graph.tools.query { ChangeDiscoveryError }
+    code_review_graph.graph ++> code_review_graph.tools.query {
+        IMPACT_RESOLUTIONS,
+        QUERY_RESOLUTIONS,
+        RESOLUTION_ALL,
+        RESOLUTION_DIRECT,
+        RESOLUTION_UNRESOLVED,
+        GraphEdge,
+        GraphNode,
+        GraphStore,
+        _compatible_edge_languages,
+        _sanitize_name,
+        edge_to_dict,
+        import_scope_ancestors,
+        node_to_dict,
+    }
+    code_review_graph.hints ++> code_review_graph.tools.query { generate_hints, get_session }
+    code_review_graph.incremental ++> code_review_graph.tools.query {
+        discover_review_changes,
+        followed_files,
+        get_db_path,
+        path_within_repo,
+    }
+    code_review_graph.parser ++> code_review_graph.tools.query {
+        is_test_file,
+        normalize_file_path,
+        repo_relative_path,
+    }
+    code_review_graph.search ++> code_review_graph.tools.query { hybrid_search }
+    code_review_graph.uncertainty ++> code_review_graph.tools.query {
+        empty_impact_confidence,
+        empty_query_confidence,
+        empty_search_confidence,
+        guessed_calls_confidence,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.query {
+        _BUILTIN_CALL_NAMES,
+        _bounded,
+        _error_response,
+        _get_store,
+        _resolve_graph_file_paths,
+        _resolve_graph_file_paths_with_unmatched,
+        _shown_of,
+        _unmatched_file_warning,
+        _validate_positive_int,
+    }
+    code_review_graph.search ++> code_review_graph.eval.benchmarks.multi_hop_retrieval {
+        hybrid_search,
+    }
+    code_review_graph.tools.query ++> code_review_graph.eval.benchmarks.multi_hop_retrieval {
+        query_graph,
+    }
+    code_review_graph.search ++> code_review_graph.eval.benchmarks.search_quality { hybrid_search }
+    code_review_graph.changes ++> code_review_graph.tools.review {
+        DiffRanges,
+        analyze_changes,
+        compute_risk_score,
+        is_test_gap_exempt,
+        parse_diff_ranges,
+    }
+    code_review_graph.context_history ++> code_review_graph.tools.review { CallInfo }
+    code_review_graph.context_savings ++> code_review_graph.tools.review {
+        attach_context_savings,
+        estimate_file_tokens,
+    }
+    code_review_graph.errors ++> code_review_graph.tools.review { ChangeDiscoveryError }
+    code_review_graph.flows ++> code_review_graph.tools.review {
+        get_affected_flows as _get_affected_flows,
+    }
+    code_review_graph.graph ++> code_review_graph.tools.review {
+        GraphNode,
+        edge_to_dict,
+        node_to_dict,
+    }
+    code_review_graph.hints ++> code_review_graph.tools.review { generate_hints, get_session }
+    code_review_graph.incremental ++> code_review_graph.tools.review {
+        discover_review_changes,
+        followed_files,
+        path_within_repo,
+        resolve_review_base,
+    }
+    code_review_graph.parser ++> code_review_graph.tools.review {
+        is_test_file,
+        normalize_file_path,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.review {
+        _bounded,
+        _error_response,
+        _get_store,
+        _resolve_graph_file_paths_with_unmatched,
+        _shown_of,
+        _unmatched_file_warning,
+        _validate_positive_int,
+    }
+    code_review_graph.tools.review ++> code_review_graph.eval.benchmarks.token_efficiency {
         get_review_context,
     }
+    code_review_graph.graph ++> code_review_graph.postprocessing { GraphStore }
+    code_review_graph.search ++> code_review_graph.postprocessing { update_fts_index }
+    code_review_graph.flows ++> code_review_graph.postprocessing { store_flows, trace_flows }
+    code_review_graph.communities ++> code_review_graph.postprocessing {
+        detect_communities,
+        store_communities,
+    }
+    code_review_graph.embeddings ++> code_review_graph.postprocessing {
+        REFRESH_SKIPPED_WARNING,
+        refresh_embeddings,
+    }
+    code_review_graph.eval.benchmarks.agent_baseline as agent_baseline ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.build_performance as build_performance ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.flow_completeness as flow_completeness ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.impact_accuracy as impact_accuracy ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.incremental_fidelity as incremental_fidelity ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.multi_hop_retrieval as multi_hop_retrieval ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.search_quality as search_quality ++> code_review_graph.eval.runner;
+    code_review_graph.eval.benchmarks.token_efficiency as token_efficiency ++> code_review_graph.eval.runner;
+    code_review_graph.embeddings ++> code_review_graph.eval.runner {
+        EmbeddingStore,
+        embed_all_nodes,
+    }
+    code_review_graph.graph ++> code_review_graph.eval.runner { GraphStore }
+    code_review_graph.incremental ++> code_review_graph.eval.runner { full_build, get_db_path }
+    code_review_graph.postprocessing ++> code_review_graph.eval.runner { run_post_processing }
+    code_review_graph.graph ++> code_review_graph.neighbourhood { _sanitize_name as _impl }
+    code_review_graph.graph ++> code_review_graph.visualization {
+        GraphNode,
+        GraphStore,
+        _sanitize_name,
+        edge_to_dict,
+        node_to_dict,
+    }
+    code_review_graph.neighbourhood ++> code_review_graph.visualization {
+        DEFAULT_DEPTH,
+        DEFAULT_MAX_NODES,
+        STRUCTURAL_EDGE_KINDS,
+        NeighbourhoodSpec,
+        _parent_files,
+        resolve_seeds,
+        extract as extract_neighbourhood,
+    }
+    code_review_graph.parser ++> code_review_graph.visualization { normalize_file_path }
+    code_review_graph.flows ++> code_review_graph.visualization { get_flows }
+    code_review_graph.communities ++> code_review_graph.visualization { get_communities }
+    code_review_graph.graph ++> code_review_graph.exports { GraphStore, _sanitize_name }
+    code_review_graph.visualization ++> code_review_graph.exports { export_graph_data }
+    code_review_graph.graph ++> code_review_graph.forget { GraphStore }
+    code_review_graph.parser ++> code_review_graph.forget { CodeParser }
+    code_review_graph.postprocessing ++> code_review_graph.forget { run_post_processing }
+    code_review_graph.python_resolver ++> code_review_graph.forget { resolve_python_imports }
+    code_review_graph.scoped_resolver ++> code_review_graph.forget { resolve_scoped_calls }
+    code_review_graph.incremental ++> code_review_graph.forget {
+        _load_followed_dirs,
+        _relink_edges,
+    }
+    code_review_graph ++> code_review_graph.main { __version__ }
+    code_review_graph.incremental as _incremental ++> code_review_graph.main;
+    code_review_graph.constants ++> code_review_graph.main { MAX_IMPACT_NODES, env_int }
+    code_review_graph.graph ++> code_review_graph.main { GraphStore, _sanitize_name }
+    code_review_graph.incremental ++> code_review_graph.main {
+        find_project_root,
+        get_db_path,
+        start_watch_thread,
+    }
+    code_review_graph.registry ++> code_review_graph.main { Registry }
+    code_review_graph.postprocessing ++> code_review_graph.main { run_post_processing }
+    code_review_graph.embeddings ++> code_review_graph.main { prewarm_local_embeddings }
+    code_review_graph.http_origin_guard ++> code_review_graph.main { build_http_middleware }
+    code_review_graph.incremental ++> code_review_graph.multi_worktree {
+        find_project_root,
+        get_db_path,
+    }
+    code_review_graph.constants ++> code_review_graph.refactor {
+        CLAIMED_ENDPOINT_KEY,
+        INHERITED_ENDPOINT_KEY,
+        INHERITED_THROUGH_KEY,
+    }
+    code_review_graph.flows ++> code_review_graph.refactor {
+        _has_framework_decorator,
+        _has_override_decorator,
+        _matches_entry_name,
+    }
+    code_review_graph.graph ++> code_review_graph.refactor {
+        GraphNode,
+        GraphStore,
+        _compatible_edge_languages,
+        _sanitize_name,
+    }
+    code_review_graph.parser ++> code_review_graph.refactor {
+        _STORYBOOK_FILE_RE,
+        CodeParser,
+        normalize_file_path,
+        is_test_file as _is_test_file,
+        repo_relative_path as _repo_relative,
+    }
+    code_review_graph.incremental ++> code_review_graph.refactor {
+        followed_files,
+        path_within_repo,
+    }
+    code_review_graph.communities ++> code_review_graph.wiki { get_communities }
+    code_review_graph.flows ++> code_review_graph.wiki { get_flows }
+    code_review_graph.graph ++> code_review_graph.wiki { GraphStore, _sanitize_name }
+    code_review_graph.constants ++> code_review_graph.tools.docs { read_only_requested }
+    code_review_graph.embeddings ++> code_review_graph.tools.docs {
+        EmbeddingStore,
+        embed_all_nodes,
+    }
+    code_review_graph.incremental ++> code_review_graph.tools.docs {
+        _prepare_db_path,
+        find_project_root,
+        get_db_path,
+        get_data_dir,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.docs {
+        _get_store,
+        _resolve_root,
+        _validate_positive_int,
+        _validate_repo_root,
+    }
+    code_review_graph.tools.build ++> code_review_graph.tools.docs { _lock_or_skip }
+    code_review_graph.wiki ++> code_review_graph.tools.docs { generate_wiki, get_wiki_page }
+    code_review_graph.install_gitignore as install_gitignore ++> code_review_graph.uninstall;
+    code_review_graph.install_manifest as install_manifest ++> code_review_graph.uninstall;
+    code_review_graph.install_plan as install_plan ++> code_review_graph.uninstall;
+    code_review_graph.jsonc as jsonc ++> code_review_graph.uninstall;
+    code_review_graph.skills as skills ++> code_review_graph.uninstall;
+    code_review_graph.codex_skill ++> code_review_graph.uninstall {
+        codex_home,
+        codex_skill_dir,
+        owned_skill_files,
+    }
+    code_review_graph.incremental ++> code_review_graph.uninstall { find_repo_root }
+    code_review_graph.install_manifest as install_manifest ++> code_review_graph.cli;
+    code_review_graph.install_plan as install_plan ++> code_review_graph.cli;
+    code_review_graph.errors ++> code_review_graph.cli { CodeReviewGraphError, is_lock_error }
+    code_review_graph.neighbourhood ++> code_review_graph.cli {
+        DEFAULT_DEPTH as NB_DEFAULT_DEPTH,
+        DEFAULT_MAX_NODES as NB_DEFAULT_MAX_NODES,
+        SeedResolutionError,
+    }
+    code_review_graph.stdio ++> code_review_graph.cli {
+        configure_utf8_stdio as _configure_utf8_stdio,
+    }
+    code_review_graph ++> code_review_graph.cli { __version__ as fallback_version }
+    code_review_graph.skills ++> code_review_graph.cli {
+        _CLAUDE_MD_SECTION,
+        _CLAUDE_MD_SECTION_MARKER,
+        _COPILOT_SECTION,
+        _PLATFORM_INSTRUCTION_CUSTOM_SECTIONS,
+        _PLATFORM_INSTRUCTION_FILES,
+        _upgrade_managed_block,
+        instruction_file_wanted,
+        install_steering_hook,
+        inject_instruction_files,
+        selected_platforms,
+        PLATFORMS,
+        install_platform_configs,
+        _git_hooks_dir,
+        generate_skills,
+        install_codebuddy_hooks,
+        install_codebuddy_skills,
+        install_codex_hooks,
+        install_codex_skill,
+        install_cursor_hooks,
+        install_gemini_cli_hooks,
+        install_gemini_cli_skills,
+        install_git_hook,
+        install_git_sync_hooks,
+        install_hermes_skills,
+        install_hooks,
+        install_opencode_plugin,
+        install_qoder_skills,
+    }
+    code_review_graph.uninstall ++> code_review_graph.cli {
+        remove_steering_hook,
+        UninstallReport,
+        run as run_uninstall,
+    }
+    code_review_graph.incremental ++> code_review_graph.cli {
+        find_repo_root,
+        ensure_repo_gitignore_excludes_crg,
+        find_project_root,
+        get_data_dir,
+        _create_data_dir,
+        assert_graph_serves_root,
+        get_db_path,
+        discover_review_changes,
+        _prepare_db_path,
+        watch,
+        _git_branch_info,
+        detect_vcs,
+        get_changed_files,
+    }
+    code_review_graph.install_gitignore ++> code_review_graph.cli { plan as _plan_gitignore }
+    code_review_graph.registry ++> code_review_graph.cli { Registry }
+    code_review_graph.change_details ++> code_review_graph.cli {
+        parse_detail_sections,
+        build_change_details,
+    }
+    code_review_graph.doctor ++> code_review_graph.cli { run_doctor }
+    code_review_graph.tools._common ++> code_review_graph.cli { _open_graph_store as open_store }
+    code_review_graph.tools.build ++> code_review_graph.cli {
+        build_or_update_graph,
+        _write_skipped_response,
+        _lock_or_skip,
+        run_postprocess,
+        build_was_interrupted,
+    }
+    code_review_graph.changes ++> code_review_graph.cli {
+        analyze_changes,
+        review_churn_counts,
+        format_brief,
+    }
+    code_review_graph.context_history ++> code_review_graph.cli { CallInfo, recorded_as }
+    code_review_graph.context_savings ++> code_review_graph.cli {
+        attach_context_savings,
+        estimate_file_tokens,
+        format_context_savings_panel,
+        verify_with_tiktoken,
+    }
+    code_review_graph.locking ++> code_review_graph.cli { WriteLock }
+    code_review_graph.graph ++> code_review_graph.cli { GraphStore }
+    code_review_graph.forget ++> code_review_graph.cli { forget_files }
+    code_review_graph.constants ++> code_review_graph.cli { QUERY_PATTERNS }
+    code_review_graph.enrich ++> code_review_graph.cli { run_hook }
+    code_review_graph.multi_worktree ++> code_review_graph.cli {
+        MultiWorktreeError,
+        run_multi_worktree_server,
+    }
+    code_review_graph.main ++> code_review_graph.cli { main as serve_main }
+    code_review_graph.daemon_cli ++> code_review_graph.cli {
+        _handle_add,
+        _handle_logs,
+        _handle_remove,
+        _handle_restart,
+        _handle_start,
+        _handle_status,
+        _handle_stop,
+    }
+    code_review_graph.eval.reporter ++> code_review_graph.cli {
+        generate_full_report,
+        generate_readme_tables,
+    }
+    code_review_graph.eval.runner ++> code_review_graph.cli { run_eval }
+    code_review_graph.tools.docs ++> code_review_graph.cli { embed_graph }
+    code_review_graph.refactor ++> code_review_graph.cli { find_dead_code }
+    code_review_graph.build_state ++> code_review_graph.cli { BUILD_IN_PROGRESS, read_build_state }
+    code_review_graph.postprocessing ++> code_review_graph.cli { run_post_processing }
+    code_review_graph.exports ++> code_review_graph.cli {
+        export_json,
+        export_graphml,
+        export_neo4j_cypher,
+        export_obsidian_vault,
+        MissingOptionalDependencyError,
+        export_svg,
+    }
+    code_review_graph.visualization ++> code_review_graph.cli { generate_html }
+    code_review_graph.wiki ++> code_review_graph.cli { generate_wiki }
+    code_review_graph.parser ++> code_review_graph.cli { normalize_file_path }
+    code_review_graph.cli ++> code_review_graph.__main__ { main }
+    code_review_graph.constants ++> code_review_graph.analysis {
+        IMPORT_CONTEXT_DEFERRED,
+        IMPORT_CONTEXT_KEY,
+        IMPORT_CONTEXT_PARENT_PACKAGE,
+        IMPORT_CONTEXT_TYPE_ONLY,
+    }
+    code_review_graph.graph ++> code_review_graph.analysis { GraphEdge, GraphStore, _sanitize_name }
+    code_review_graph.parser ++> code_review_graph.analysis { normalize_file_path }
+    include code_review_graph.eval.reporter ++> code_review_graph.eval {
+        generate_full_report,
+        generate_markdown_report,
+        generate_readme_tables,
+    }
+    include code_review_graph.eval.scorer ++> code_review_graph.eval {
+        compute_mrr,
+        compute_precision_recall,
+        compute_token_efficiency,
+    }
+    code_review_graph.communities ++> code_review_graph.tools.community_tools {
+        get_architecture_overview,
+        get_communities,
+    }
+    code_review_graph.context_history ++> code_review_graph.tools.community_tools { CallInfo }
+    code_review_graph.context_savings ++> code_review_graph.tools.community_tools {
+        attach_context_savings,
+    }
+    code_review_graph.graph ++> code_review_graph.tools.community_tools { node_to_dict }
+    code_review_graph.hints ++> code_review_graph.tools.community_tools {
+        generate_hints,
+        get_session,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.community_tools {
+        _bounded,
+        _get_store,
+        _shown_of,
+        _validate_positive_int,
+    }
+    code_review_graph.errors ++> code_review_graph.tools.context { ChangeDiscoveryError }
+    code_review_graph.incremental ++> code_review_graph.tools.context {
+        discover_review_changes,
+        get_db_path,
+        graph_holds_commits,
+        resolve_review_base,
+    }
+    code_review_graph.parser ++> code_review_graph.tools.context { normalize_file_path }
+    code_review_graph.tools._common ++> code_review_graph.tools.context {
+        _get_store,
+        _resolve_root,
+        compact_response,
+        graph_provenance,
+    }
+    code_review_graph.changes ++> code_review_graph.tools.context { analyze_changes }
+    code_review_graph.flows ++> code_review_graph.tools.flows_tools { get_flow_by_id, get_flows }
+    code_review_graph.hints ++> code_review_graph.tools.flows_tools { generate_hints, get_session }
+    code_review_graph.incremental ++> code_review_graph.tools.flows_tools {
+        followed_files,
+        path_within_repo,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.flows_tools {
+        _bounded,
+        _get_store,
+        _shown_of,
+        _validate_positive_int,
+    }
+    code_review_graph.tools.context ++> code_review_graph.eval.token_benchmark {
+        get_minimal_context,
+    }
+    code_review_graph.tools.review ++> code_review_graph.eval.token_benchmark {
+        detect_changes_func,
+    }
+    code_review_graph.tools.community_tools ++> code_review_graph.eval.token_benchmark {
+        list_communities_func,
+    }
+    code_review_graph.tools.flows_tools ++> code_review_graph.eval.token_benchmark { list_flows }
+    code_review_graph.tools.query ++> code_review_graph.eval.token_benchmark {
+        semantic_search_nodes,
+        list_graph_stats,
+    }
+    code_review_graph.incremental ++> code_review_graph.hook_update { get_db_path }
+    code_review_graph.tools.build ++> code_review_graph.hook_update { build_or_update_graph }
+    code_review_graph.analysis ++> code_review_graph.tools.analysis_tools {
+        find_bridge_nodes,
+        find_hub_nodes,
+        find_knowledge_gaps,
+        find_surprising_connections,
+        generate_suggested_questions,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.analysis_tools {
+        _bounded,
+        _get_store,
+        _shown_of,
+        _validate_positive_int,
+    }
+    code_review_graph.hints ++> code_review_graph.tools.refactor_tools {
+        generate_hints,
+        get_session,
+    }
+    code_review_graph.incremental ++> code_review_graph.tools.refactor_tools { find_project_root }
+    code_review_graph.refactor ++> code_review_graph.tools.refactor_tools {
+        apply_refactor,
+        find_dead_code,
+        rename_preview,
+        suggest_refactorings,
+    }
+    code_review_graph.tools._common ++> code_review_graph.tools.refactor_tools {
+        _bounded,
+        _get_store,
+        _shown_of,
+        _validate_positive_int,
+        _validate_repo_root,
+    }
+    code_review_graph.graph ++> code_review_graph.tools.registry_tools {
+        GraphStore,
+        _sanitize_name,
+    }
+    code_review_graph.incremental ++> code_review_graph.tools.registry_tools { get_db_path }
+    code_review_graph.search ++> code_review_graph.tools.registry_tools { hybrid_search }
+    code_review_graph.tools._common ++> code_review_graph.tools.registry_tools {
+        _bounded,
+        _shown_of,
+        _validate_positive_int,
+    }
+    code_review_graph.registry ++> code_review_graph.tools.registry_tools { Registry }
 }
