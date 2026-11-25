@@ -984,25 +984,24 @@ def get_architecture_overview(store: GraphStore) -> dict[str, Any] {
             node_to_community[qn] = comm_id;
         }
     }
-    all_edges: any = store.get_all_edges();
     cross_edges: list[dict[str, Any]] = [];
     cross_counts: Counter[tuple[int, int]] = Counter();
 
-    for e in all_edges {
-        if e.kind == "TESTED_BY" {
+    for (kind, source, target) in store.iter_edge_kinds_and_ends() {
+        if kind == "TESTED_BY" {
             continue;
         }
-        src_comm: any = node_to_community.get(e.source_qualified);
-        tgt_comm: any = node_to_community.get(e.target_qualified);
+        src_comm: any = node_to_community.get(source);
+        tgt_comm: any = node_to_community.get(target);
         if src_comm is not None and tgt_comm is not None and src_comm != tgt_comm {
             pair: any = (min(src_comm, tgt_comm), max(src_comm, tgt_comm));
             cross_counts[pair] += 1;
             cross_edges.append({
                 "source_community": src_comm,
                 "target_community": tgt_comm,
-                "edge_kind": e.kind,
-                "source": _sanitize_name(e.source_qualified),
-                "target": _sanitize_name(e.target_qualified),
+                "edge_kind": kind,
+                "source": _sanitize_name(source),
+                "target": _sanitize_name(target),
             });
         }
     }

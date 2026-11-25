@@ -13,12 +13,11 @@ glob _MAX_CYCLE_FILES: any = 10;
 glob _MAX_CYCLE_HOPS: any = 10;
 
 def find_hub_nodes(store: GraphStore, top_n: int = 10) -> list[dict] {
-    edges: any = store.get_all_edges();
     in_degree: dict[str, int] = Counter();
     out_degree: dict[str, int] = Counter();
-    for e in edges {
-        out_degree[e.source_qualified] += 1;
-        in_degree[e.target_qualified] += 1;
+    for (_kind, source, target) in store.iter_edge_kinds_and_ends() {
+        out_degree[source] += 1;
+        in_degree[target] += 1;
     }
     nodes: any = store.get_all_nodes(exclude_files=True);
     community_map: any = store.get_all_community_ids();
@@ -289,16 +288,15 @@ def find_knowledge_gaps(store: GraphStore, repo_root: Path | None = None) -> dic
 }
 
 def find_surprising_connections(store: GraphStore, top_n: int = 15) -> list[dict] {
-    edges: any = store.get_all_edges();
+    edges: any = `list(store.iter_edge_kinds_and_ends());
     nodes: any = store.get_all_nodes(exclude_files=True);
     community_map: any = store.get_all_community_ids();
 
     node_map: any = {n.qualified_name: n for n in nodes};
     degree: dict[str, int] = Counter();
-    e: any;
-    for e in edges {
-        degree[e.source_qualified] += 1;
-        degree[e.target_qualified] += 1;
+    for (_kind, source, target) in edges {
+        degree[source] += 1;
+        degree[target] += 1;
     }
     degrees: any = [d for d in degree.values() if d > 0];
     if not degrees {
@@ -308,9 +306,9 @@ def find_surprising_connections(store: GraphStore, top_n: int = 15) -> list[dict
     high_deg_threshold: any = max(median_deg * 3, 10);
 
     scored_edges: any = [];
-    for e in edges {
-        src: any = node_map.get(e.source_qualified);
-        tgt: any = node_map.get(e.target_qualified);
+    for (kind, source, target) in edges {
+        src: any = node_map.get(source);
+        tgt: any = node_map.get(target);
         if not src or not tgt {
             continue;
         }
@@ -320,8 +318,8 @@ def find_surprising_connections(store: GraphStore, top_n: int = 15) -> list[dict
 
         score: any = 0.0;
         reasons: any = [];
-        src_cid: any = community_map.get(e.source_qualified);
-        tgt_cid: any = community_map.get(e.target_qualified);
+        src_cid: any = community_map.get(source);
+        tgt_cid: any = community_map.get(target);
         if src_cid is not None and tgt_cid is not None and src_cid != tgt_cid {
             score += 0.3;
             reasons.append("cross-community");
@@ -332,19 +330,19 @@ def find_surprising_connections(store: GraphStore, top_n: int = 15) -> list[dict
             score += 0.2;
             reasons.append("cross-language");
         }
-        src_deg: any = degree.get(e.source_qualified, 0);
-        tgt_deg: any = degree.get(e.target_qualified, 0);
+        src_deg: any = degree.get(source, 0);
+        tgt_deg: any = degree.get(target, 0);
         if src_deg <= 2 and tgt_deg >= high_deg_threshold
             or tgt_deg <= 2 and src_deg >= high_deg_threshold
         {
             score += 0.2;
             reasons.append("peripheral-to-hub");
         }
-        if src.is_test != tgt.is_test and e.kind == "CALLS" {
+        if src.is_test != tgt.is_test and kind == "CALLS" {
             score += 0.15;
             reasons.append("cross-test-boundary");
         }
-        if e.kind == "CALLS" and src.kind == "Type" {
+        if kind == "CALLS" and src.kind == "Type" {
             score += 0.15;
             reasons.append("unusual-edge-kind");
         }
@@ -352,10 +350,10 @@ def find_surprising_connections(store: GraphStore, top_n: int = 15) -> list[dict
         if score > 0 {
             scored_edges.append({
                 "source": _sanitize_name(src.name),
-                "source_qualified": e.source_qualified,
+                "source_qualified": source,
                 "target": _sanitize_name(tgt.name),
-                "target_qualified": e.target_qualified,
-                "edge_kind": e.kind,
+                "target_qualified": target,
+                "edge_kind": kind,
                 "surprise_score": round(score, 2),
                 "reasons": reasons,
                 "source_community": src_cid,
@@ -382,8 +380,9 @@ def generate_suggested_questions(store: GraphStore) -> list[dict] {
         });
     }
     hubs: any = find_hub_nodes(store, top_n=3);
-    edges: any = store.get_all_edges();
-    tested: any = {e.source_qualified for e in edges if e.kind == "TESTED_BY"};
+    tested: any = {
+        source for (kind, source, _target) in store.iter_edge_kinds_and_ends() if kind == "TESTED_BY"
+    };
     h: any;
     for h in hubs {
         if h["qualified_name"] not in tested {

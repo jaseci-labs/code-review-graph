@@ -4450,6 +4450,16 @@ class GraphStore(builtins.object) {
         return [found[edge_id] for edge_id in sorted(found)];
     }
 
+    """Each edge's (kind, source, target), in the order get_all_edges lists them."""
+    def iter_edge_kinds_and_ends -> Generator[any, any, any] {
+        rows: any = self._conn.execute(
+            "SELECT kind, source_qualified, target_qualified FROM edges ORDER BY rowid"
+        );
+        for row in rows {
+            yield row;
+        }
+    }
+
     def iter_edge_end_counts(column: str) -> Generator[any, any, any] {
         if column not in ("source_qualified", "target_qualified") {
             raise ValueError(f"not an edge end: {column!r}");
