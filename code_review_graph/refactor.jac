@@ -2225,7 +2225,6 @@ def find_dead_code(
     bare_files_by_language: dict[tuple[str, str, str | None], set[str]];
     bare_files_all: dict[tuple[str, str], set[str]];
     importer_files: dict[str, set[str]];
-    end: any;
     name_counts: dict[str, int];
     `node: any;
     candidates: any = store.get_nodes_by_kind(
@@ -2294,16 +2293,15 @@ def find_dead_code(
                         _ascii_fold(written_target.rsplit("::", 1)[-1]), set[any]()
                     ).add(file_path);
                 }
-                lowered_target: any = _ascii_fold(written_target);
-                character: any;
-                for item__ in enumerate(lowered_target) {
-                    (end, character) = item__;
+                lowered_target: str = _ascii_fold(written_target);
+                for (dot_at, character) in enumerate(lowered_target) {
                     if character == "." {
-                        member_call_names.update(
-                            lowered_target[start:end]
-                            for start in range(max(0, end - max_class_name_length), end)
-                            if lowered_target[start:end] in class_names,
-                        );
+                        for start in range(max(0, dot_at - max_class_name_length), dot_at) {
+                            piece: str = lowered_target[start:dot_at];
+                            if piece in class_names {
+                                member_call_names.add(piece);
+                            }
+                        }
                     }
                 }
             }
