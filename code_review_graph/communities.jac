@@ -1,16 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
-
-import importlib.util;
-
-import logging;
-
-import random;
-
-import re;
+import importlib, operator, importlib.util, logging, random, re;
 
 import from collections { Counter, defaultdict, namedtuple }
 
@@ -20,108 +10,43 @@ import from pathlib { Path }
 
 import from typing { Any }
 
-glob _CommunityEdge: any;
+glob _CommunityEdge: any = namedtuple(
+    "_CommunityEdge", ("kind", "source_qualified", "target_qualified")
+);
 
-glob _LEIDEN_SEED: any;
+glob _LEIDEN_SEED: any = 42;
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _SQL_BATCH: any;
+glob _SQL_BATCH: any = 450;
 
-glob _SLUG_MAX_LEN: any;
+glob _SLUG_MAX_LEN: any = 30;
 
-glob IGRAPH_AVAILABLE: any;
+glob IGRAPH_AVAILABLE: any = importlib.util.find_spec("igraph") is not None;
 
-glob ig: Any;
+glob ig: Any = None;
 
-glob DETECTOR_METADATA_KEY: any;
+glob DETECTOR_METADATA_KEY: any = "community_detector";
 
-glob DETECTOR_LEIDEN: any;
+glob DETECTOR_LEIDEN: any = "leiden";
 
-glob DETECTOR_FILE: any;
+glob DETECTOR_FILE: any = "file";
 
-glob EDGE_WEIGHTS: dict[str, float];
+glob EDGE_WEIGHTS: dict[str, float] = {
+    "CALLS": 1.0,
+    "IMPORTS_FROM": 0.5,
+    "INHERITS": 0.8,
+    "IMPLEMENTS": 0.7,
+    "CONTAINS": 0.3,
+    "TESTED_BY": 0.4,
+    "DEPENDS_ON": 0.6,
+};
 
-glob _COMMON_WORDS: any;
-
-glob _TEST_COMMUNITY_RE: any;
-
-with entry {
-    _CommunityEdge = namedtuple("_CommunityEdge", ("kind", "source_qualified", "target_qualified"));
-    _LEIDEN_SEED = 42;
-
-    logger = logging.getLogger(__name__);
-    _SQL_BATCH = 450;
-    _SLUG_MAX_LEN = 30;
-
-    IGRAPH_AVAILABLE = importlib.util.find_spec("igraph") is not None;
-    ig = None;
-    DETECTOR_METADATA_KEY = "community_detector";
-    DETECTOR_LEIDEN = "leiden";
-    DETECTOR_FILE = "file";
-
-    EDGE_WEIGHTS = {
-        "CALLS": 1.0,
-        "IMPORTS_FROM": 0.5,
-        "INHERITS": 0.8,
-        "IMPLEMENTS": 0.7,
-        "CONTAINS": 0.3,
-        "TESTED_BY": 0.4,
-        "DEPENDS_ON": 0.6,
-    };
-    _COMMON_WORDS = frozenset({
-        "get",
-        "set",
-        "self",
-        "init",
-        "new",
-        "create",
-        "update",
-        "delete",
-        "add",
-        "remove",
-        "make",
-        "build",
-        "from",
-        "to",
-        "for",
-        "with",
-        "the",
-        "and",
-        "test",
-        "main",
-        "run",
-        "do",
-        "is",
-        "has",
-        "on",
-        "of",
-        "in",
-        "at",
-        "by",
-        "my",
-        "this",
-        "that",
-        "all",
-        "none",
-        "should",
-        "when",
-        "then",
-        "given",
-        "return",
-        "returns",
-        "raise",
-        "raises",
-        "expect",
-        "expected",
-        "assert",
-        "tests",
-        "be",
-        "it",
-        "if",
-        "not",
-    });
-}
+glob _COMMON_WORDS: any = frozenset(
+    ("get set self init new create update delete add remove make build from to for with the and "
+        "test main run do is has on of in at by my this that all none should when then given return "
+        "returns raise raises expect expected assert tests be it if not").split(),
+);
 
 def _is_test_node(`node: GraphNode) -> bool;
 def _naming_members(members: list[GraphNode]) -> list[GraphNode];
@@ -186,11 +111,9 @@ def get_communities(
     members_by_community: dict[int, list[str]] | None = None,
 ) -> list[dict[str, Any]];
 
-with entry {
-    _TEST_COMMUNITY_RE = re.compile(
-        "(^test[-/]|[-/]test([:/]|$)|it:should|describe:|spec[-/]|[-/]spec$)", re.IGNORECASE
-    );
-}
+glob _TEST_COMMUNITY_RE: any = re.compile(
+    "(^test[-/]|[-/]test([:/]|$)|it:should|describe:|spec[-/]|[-/]spec$)", re.IGNORECASE
+);
 
 def _is_test_community(name: str) -> bool;
 def get_architecture_overview(store: GraphStore) -> dict[str, Any];

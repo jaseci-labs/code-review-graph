@@ -1,27 +1,14 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import logging;
-
-import statistics;
-
-import subprocess;
+import importlib, logging, statistics, subprocess;
 
 import from pathlib { Path }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob MODE_GRAPH_DERIVED: any;
+glob MODE_GRAPH_DERIVED: any = "graph-derived (circular — upper bound)";
 
-glob MODE_CO_CHANGE: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    MODE_GRAPH_DERIVED = "graph-derived (circular — upper bound)";
-    MODE_CO_CHANGE = "co-change (same commit, seed excluded)";
-}
+glob MODE_CO_CHANGE: any = "co-change (same commit, seed excluded)";
 
 def _get_changed_files(repo_path: Path, sha: str) -> list[str];
 def _files_from_analysis(analysis: dict) -> set[str];

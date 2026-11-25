@@ -200,7 +200,7 @@ impl _percent(row: dict[str, Any]) -> int {
 impl format_table(rows: list[dict[str, Any]], totals: dict[str, Any], *, `by: str) -> str {
     head: any = "Day (UTC)" if `by == "day" else "Tool";
     width: any = max([len(head), len("Total"), *(len(r["key"]) for r in rows)]);
-    header: any = format(head, "<" + format(width, ""))
+    header: any = format(head, f"<{width}")
         + "  "
         + format("Calls", ">6")
         + "  "
@@ -213,9 +213,9 @@ impl format_table(rows: list[dict[str, Any]], totals: dict[str, Any], *, `by: st
         + format("Largest reply", ">13");
     out: any = [header];
     for row in [*rows, totals] {
-        saved: any = format(row["saved_tokens"], ",") + " (" + format(_percent(row), "") + "%)";
+        saved: any = f"{row["saved_tokens"]:,} ({_percent(row)}%)";
         out.append(
-            format(row["key"], "<" + format(width, ""))
+            format(row["key"], f"<{width}")
                 + "  "
                 + format(row["calls"], ">6,")
                 + "  "

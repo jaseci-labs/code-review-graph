@@ -62,7 +62,6 @@ impl get_flow(
     max_steps: int = 50,
     max_source_lines: int = 400,
 ) -> dict[str, Any] {
-    lines: any;
     _validate_positive_int(max_steps, "max_steps");
     _validate_positive_int(max_source_lines, "max_source_lines");
 
@@ -116,7 +115,7 @@ impl get_flow(
                     and path_within_repo(`root, file_path, followed)
                 {
                     try {
-                        lines = file_path.read_text(
+                        lines: any = file_path.read_text(
                             encoding="utf-8", errors="replace"
                         ).splitlines();
                         start: any = max(0, (step.get("line_start") or 1) - 1);

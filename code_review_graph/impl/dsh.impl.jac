@@ -91,7 +91,6 @@ impl _owned_operation(document: list[Any], op_index: int) -> bool {
 }
 
 impl render_operation(row: dict[str, Any], indent: int = 0) -> str {
-    pad: any;
     text: any = yaml.dump(
         [{"insert": [row]}],
         Dumper=_Dumper,
@@ -99,7 +98,7 @@ impl render_operation(row: dict[str, Any], indent: int = 0) -> str {
         sort_keys=False,
         allow_unicode=True,
     );
-    pad = " " * indent;
+    pad: any = " " * indent;
     return "".join(f"{pad}{line}" for line in text.splitlines(keepends=True));
 }
 

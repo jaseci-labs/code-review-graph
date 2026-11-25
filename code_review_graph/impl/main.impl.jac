@@ -81,7 +81,6 @@ impl _offload(
     bounded: bool = True,
     timeout_hint: str = timeout_hint_default_,
 ) -> dict {
-    error_response: any;
     def run_fn -> Any {
         for name in getattr(getattr(work, "__code__", None), "co_names", ()) {
             if name in _LAZY_TOOL_NAMES and name not in globals() {
@@ -103,7 +102,7 @@ impl _offload(
         return await asyncio.wait_for(_run_off_loop(run_fn), timeout=tool_timeout);
     } except asyncio.TimeoutError {
         message: any = f"{tool_name} timed out after {tool_timeout}s. {timeout_hint}";
-        error_response = {"status": "error", "error": message, "summary": message};
+        error_response: any = {"status": "error", "error": message, "summary": message};
         if not provenance {
             return error_response;
         }
@@ -775,8 +774,7 @@ impl _apply_tool_filter(tools: str | None = None) -> None {
         return;
     }
     def _list_tool_names -> list[str] {
-        coro_factory: any;
-        coro_factory = mcp.list_tools;
+        coro_factory: any = mcp.list_tools;
         try {
             asyncio.get_running_loop();
         } except RuntimeError {

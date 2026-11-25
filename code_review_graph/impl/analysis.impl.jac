@@ -101,7 +101,6 @@ impl _shortest_loop(adjacency: dict[str, set[str]], start: str) -> list[str] {
 impl find_import_cycles(
     store: GraphStore, edges: list[GraphEdge] | None = None, repo_root: Path | None = None
 ) -> list[dict] {
-    prefix: any;
     group: any;
     import networkx as nx;
 
@@ -145,7 +144,7 @@ impl find_import_cycles(
         key=lambda (group) -> any { (-len(group), min(group)) },
     );
 
-    prefix = f"{normalize_file_path(repo_root)}/" if repo_root else "";
+    prefix: any = f"{normalize_file_path(repo_root)}/" if repo_root else "";
     def short(path: str) -> str {
         return _sanitize_name(path.removeprefix(prefix));
     }
@@ -417,7 +416,7 @@ impl generate_suggested_questions(store: GraphStore) -> list[dict] {
                 + "' has only "
                 + format(c["size"], "")
                 + " member(s). Should it be merged with a neighbor?",
-            "target": "community:" + format(c["community_id"], ""),
+            "target": f"community:{c["community_id"]}",
             "priority": "low",
         });
     }

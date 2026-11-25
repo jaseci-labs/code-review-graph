@@ -170,13 +170,12 @@ impl _normalise_path(value: str) -> str {
 }
 
 impl resolve_symbol(nodes: Sequence[dict], query: str) -> list[str] {
-    normalised: any;
     by_qn: any = {`node["qualified_name"] for `node in nodes};
     if query in by_qn {
         return [query];
     }
 
-    normalised = _normalise_path(query);
+    normalised: any = _normalise_path(query);
     if normalised in by_qn {
         return [normalised];
     }
@@ -385,7 +384,6 @@ impl extract(
     resolved: ResolvedSeeds | None = None,
     totals: tuple[int, int] | None = None,
 ) -> dict {
-    kept_ids: any;
     spec.validate();
     nodes: list[dict] = data["nodes"];
     edges: list[dict] = data["edges"];
@@ -438,7 +436,7 @@ impl extract(
     }
     out_edges: any = [e for e in edges if e["source"] in selected and e["target"] in selected];
 
-    kept_ids = {n["id"] for n in out_nodes if n.get("id") is not None};
+    kept_ids: any = {n["id"] for n in out_nodes if n.get("id") is not None};
     out_flows: any = [
         f
         for f in data.get("flows", [])

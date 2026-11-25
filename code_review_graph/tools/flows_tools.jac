@@ -4,20 +4,13 @@ import from pathlib { Path }
 
 import from typing { Any }
 
-glob _FETCH_ALL: any;
+glob _FETCH_ALL: any = 10 ** 9;
 
-glob _MAX_FLOWS: any;
+glob _MAX_FLOWS: any = 200;
 
-glob _MAX_FLOW_STEPS: any;
+glob _MAX_FLOW_STEPS: any = 200;
 
-glob _MAX_FLOW_SOURCE_LINES: any;
-
-with entry {
-    _FETCH_ALL = 10 ** 9;
-    _MAX_FLOWS = 200;
-    _MAX_FLOW_STEPS = 200;
-    _MAX_FLOW_SOURCE_LINES = 2000;
-}
+glob _MAX_FLOW_SOURCE_LINES: any = 2000;
 
 def list_flows(
     repo_root: str | None = None,

@@ -109,8 +109,7 @@ impl _selectable_qualified_name(`node: GraphNode, `root: Path) -> str {
 impl _rank_disambiguation_candidates(
     candidates: list[GraphNode], target: str, `root: Path
 ) -> list[dict[str, Any]] {
-    target_lower: any;
-    target_lower = target.lower();
+    target_lower: any = target.lower();
 
     def score(`node: GraphNode) -> tuple[int, str] {
         if `node.qualified_name == target {
@@ -140,7 +139,6 @@ impl _compact_impact_response(
     resolution: str,
     unresolved_call_sites: int,
 ) -> dict[str, Any] {
-    file_set: any;
     def requested_path(path: str) -> str {
         relative: any = repo_relative_path(path, `root);
         return path if relative is None else relative;
@@ -162,7 +160,7 @@ impl _compact_impact_response(
         }
         return relative;
     }
-    file_set = `set(result["impacted_files"]);
+    file_set: any = `set(result["impacted_files"]);
     ranked_files: any = `list(
         dict.fromkeys(
             `node.file_path for `node in result["impacted_nodes"] if `node.file_path in file_set
@@ -455,7 +453,6 @@ impl _query_route(
     store: GraphStore, `root: Path, target: str, to: str, minimal: bool
 ) -> dict[str, Any] {
     `graph: any;
-    root_prefix: any;
     `graph = _RouteGraph(store, `root);
     ends: list[GraphNode] = [];
     for (name, which) in ((target, "target"), (to, "to")) {
@@ -472,7 +469,7 @@ impl _query_route(
     start: any;
     finish: any;
     (start, finish) = ends as any;
-    root_prefix = f"{normalize_file_path(`root)}/";
+    root_prefix: any = f"{normalize_file_path(`root)}/";
 
     def relative(path: str) -> str {
         return _sanitize_name(path.removeprefix(root_prefix));
@@ -566,7 +563,6 @@ impl get_impact_radius(
     resolution: str = resolution_default_,
     max_files: int = 25,
 ) -> dict[str, Any] {
-    changed_qns: any;
     if isinstance(max_results, `bool) or max_results < 1 {
         raise ValueError("max_results must be an integer greater than or equal to 1");
     }
@@ -670,7 +666,7 @@ impl get_impact_radius(
 
         impact_scores: any = result.get("impact_scores", {});
         changed_dicts: any = [node_to_dict(n) for n in result["changed_nodes"]];
-        changed_qns = {n.qualified_name for n in result["changed_nodes"]};
+        changed_qns: any = {n.qualified_name for n in result["changed_nodes"]};
         direct_sites: dict[str, list[Any]] = {};
         for `edge in result["edges"] {
             if `edge.kind in ("CALLS", "REFERENCES")
@@ -747,7 +743,7 @@ impl get_impact_radius(
 
         summary_parts: any = [
             f"Blast radius for {len(changed_files)} changed file(s):",
-            "  - " + format(len(result["changed_nodes"]), "") + " nodes directly changed",
+            f"  - {len(result["changed_nodes"])} nodes directly changed",
             f"  - {total_impacted} nodes impacted (within {max_depth} hops)",
             f"  - {files_total} additional files affected",
         ];
@@ -841,11 +837,8 @@ impl query_graph(
     to: str | None = None,
 ) -> dict[str, Any] {
     store: any;
-    response_limit: any;
     results: list[dict[str, Any]];
     edges_out: list[dict[str, Any]];
-    total_results: any;
-    inferred_results: any;
     call_sites: list[tuple[str, dict[str, Any], GraphEdge]];
     node_cache: dict[str, GraphNode | None];
     `node: any;
@@ -878,11 +871,11 @@ impl query_graph(
             }
             return _query_route(store, `root, target, to, minimal);
         }
-        response_limit = min(max_results, 5) if minimal else max_results;
+        response_limit: any = min(max_results, 5) if minimal else max_results;
         results = [];
         edges_out = [];
-        total_results = 0;
-        inferred_results = 0;
+        total_results: any = 0;
+        inferred_results: any = 0;
         call_sites = [];
         def add_result(result: dict[str, Any], `edge: Any | None = None) {
             total_results += 1;
@@ -1838,8 +1831,8 @@ impl list_graph_stats(repo_root: str | None = None) -> dict[str, Any] {
             f"  Files: {stats.files_count}",
             f"  Total nodes: {stats.total_nodes}",
             f"  Total edges: {stats.total_edges}",
-            "  Languages: " + format(", ".join(stats.languages) if stats.languages else "none", ""),
-            "  Last updated: " + format(stats.last_updated or "never", ""),
+            f"  Languages: {", ".join(stats.languages) if stats.languages else "none"}",
+            f"  Last updated: {stats.last_updated or "never"}",
             "",
             "Nodes by kind:",
         ];

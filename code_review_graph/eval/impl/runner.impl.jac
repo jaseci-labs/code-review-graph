@@ -76,12 +76,7 @@ impl clone_or_update(config: dict, repos_dir: Path | None = None) -> Path {
             ["git", "clone", config["url"], `str(repo_path)], capture_output=True, text=True
         );
         if proc.returncode != 0 {
-            raise RuntimeError(
-                "git clone failed for "
-                    + format(config["url"], "")
-                    + ": "
-                    + format(proc.stderr.strip(), ""),
-            );
+            raise RuntimeError(f"git clone failed for {config["url"]}: {proc.stderr.strip()}");
         }
     }
 

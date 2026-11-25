@@ -356,11 +356,7 @@ impl check_mcp_entries(`root: Path, prober: _Prober) -> tuple[list[McpEntry], li
         }
         tokens: any = _entry_tokens(`entry);
         relative: any = Path(os.path.relpath(path, `root)).as_posix();
-        label: any = "MCP entry in "
-            + format(relative, "")
-            + " ("
-            + format(", ".join(names), "")
-            + ")";
+        label: any = f"MCP entry in {relative} ({", ".join(names)})";
         if tokens is None {
             findings.append(Finding(WARN, f"{label}: no command doctor can read."));
             continue;
@@ -683,9 +679,7 @@ impl check_hooks(
         return (hooks, findings);
     }
 
-    listed: any = "; ".join(
-        format(h["where"], "") + " " + format(", ".join(h["events"]), "") for h in hooks
-    );
+    listed: any = "; ".join(f"{h["where"]} {", ".join(h["events"])}" for h in hooks);
     findings.append(Finding(OK, f"Hooks: {listed}."));
     if "PATH" in runners and not path_copies {
         findings.append(
@@ -786,49 +780,13 @@ impl diagnose(
     );
     `report.findings.append(Finding(OK, f"This copy: {__version__} at {`here}."));
 
-    items_: any = list(check_path_copies(prober) as any);
-    if len(items_) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items_)})"
-                if len(items_) > 2
-                else f"not enough values to unpack (expected 2, got {len(items_)})",
-        );
-    }
-    `report.path_copies = items_[0];
-    found: any = items_[1];
+    (`report.path_copies, found) = (check_path_copies(prober));
     `report.findings.extend(found);
-    items__: any = list(check_mcp_entries(repo_root, prober) as any);
-    if len(items__) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items__)})"
-                if len(items__) > 2
-                else f"not enough values to unpack (expected 2, got {len(items__)})",
-        );
-    }
-    `report.mcp_entries = items__[0];
-    found = items__[1];
+    (`report.mcp_entries, found) = (check_mcp_entries(repo_root, prober));
     `report.findings.extend(found);
-    items___: any = list(check_graph(repo_root) as any);
-    if len(items___) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items___)})"
-                if len(items___) > 2
-                else f"not enough values to unpack (expected 2, got {len(items___)})",
-        );
-    }
-    `report.graph = items___[0];
-    found = items___[1];
+    (`report.graph, found) = (check_graph(repo_root));
     `report.findings.extend(found);
-    items____: any = list(check_hooks(repo_root, prober, `report.path_copies) as any);
-    if len(items____) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items____)})"
-                if len(items____) > 2
-                else f"not enough values to unpack (expected 2, got {len(items____)})",
-        );
-    }
-    `report.hooks = items____[0];
-    found = items____[1];
+    (`report.hooks, found) = (check_hooks(repo_root, prober, `report.path_copies));
     `report.findings.extend(found);
     return `report;
 }
@@ -844,12 +802,7 @@ impl render(`report: Report) -> str {
     problems: any = sum(1 for f in `report.findings if f.status == FAIL);
     lines.append("");
     lines.append(
-        "All good."
-            if not problems
-            else format(problems, "")
-                + " problem"
-                + format("s" if problems != 1 else "", "")
-                + " found.",
+        "All good." if not problems else f"{problems} problem{"s" if problems != 1 else ""} found."
     );
     return "\n".join(lines);
 }

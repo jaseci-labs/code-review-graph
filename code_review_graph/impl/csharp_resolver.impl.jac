@@ -104,8 +104,6 @@ impl resolve_csharp_calls(store: GraphStore, repo_root: Path | None = None) -> d
     parents: dict[str, str];
     partial_types: dict[str, str];
     type_files: dict[str, str];
-    namespaces: any;
-    based: any;
     imports: dict[tuple[str, int], list[tuple[str, dict]]];
     global_imports: dict[str, list[tuple[str, dict]]];
     row: any;
@@ -139,7 +137,7 @@ impl resolve_csharp_calls(store: GraphStore, repo_root: Path | None = None) -> d
     parents = {};
     partial_types = {};
     type_files = {};
-    namespaces = {""};
+    namespaces: any = {""};
     for `node in nodes {
         extra: any = _extra(`node["extra"]);
         namespace: any = extra.get("csharp_namespace");
@@ -169,17 +167,14 @@ impl resolve_csharp_calls(store: GraphStore, repo_root: Path | None = None) -> d
                 partial_types[qualified] = type_key;
             }
         } elif `node["kind"] in ("Function", "Method", "Test") {
-            method_key: any = (
-                format(`node["file_path"], "") + "::" + format(parent, ""),
-                `node["name"],
-            );
+            method_key: any = (f"{`node["file_path"]}::{parent}", `node["name"]);
             methods.setdefault(method_key, []).append(qualified);
             if extra.get("csharp_static") {
                 static_methods.add(qualified);
             }
         }
     }
-    based = {
+    based: any = {
         row[0]
         for row in conn.execute(
             "SELECT DISTINCT e.source_qualified FROM edges e JOIN nodes n ON n.qualified_name = e.source_qualified WHERE e.kind IN ('INHERITS', 'IMPLEMENTS') AND n.language = 'csharp'",
@@ -352,7 +347,7 @@ impl resolve_csharp_calls(store: GraphStore, repo_root: Path | None = None) -> d
                 break;
             }
             if extra.get("receiver") == "this" or kind == "unqualified" {
-                own_type: any = format(row["file_path"], "") + "::" + format(enclosing, "");
+                own_type: any = f"{row["file_path"]}::{enclosing}";
                 candidates: any = [own_type] if own_type in parents else [];
                 if own_type in partial_types {
                     candidates = [

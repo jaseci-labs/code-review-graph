@@ -1,18 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import logging;
-
-import os;
-
-import re;
-
-import subprocess;
-
-import threading;
+import builtins, operator, logging, os, re, subprocess, threading;
 
 import from collections { Counter }
 
@@ -22,103 +10,33 @@ import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _OVERALL_RISK_LINE: any;
+glob _OVERALL_RISK_LINE: any = "  - Overall risk score: {:.2f}";
 
-glob _TEST_GAP_EXEMPT_NAMES: any;
+glob _TEST_GAP_EXEMPT_NAMES: any = frozenset(
+    ("setUp tearDown setUpBeforeClass tearDownAfterClass setup_method teardown_method setUpClass "
+        "tearDownClass __construct __init__ __destruct").split(),
+);
 
-glob _MIGRATION_METHOD_NAMES: any;
+glob _MIGRATION_METHOD_NAMES: any = frozenset({"up", "down"});
 
-glob _MIGRATION_DIRS: any;
-
-glob _SAFE_GIT_REF: any;
-
-glob _SAFE_SVN_REV: any;
-
-glob _LS_FILES_CHUNK: any;
-
-glob _C_QUOTE_ESCAPES: any;
-
-glob _POST_IMAGE_HEADER: any;
-
-glob _PRE_IMAGE_HEADER: any;
-
-glob _HUNK_HEADER: any;
-
-glob _CHURN_SATURATION: any;
-
-glob _CHURN_WEIGHT: any;
-
-glob _NUMSTAT_COUNT: any;
-
-glob _CHURN_TIMEOUT: any;
-
-glob _CHURN_MAX_COMMITS: any;
-
-glob _CHURN_CACHE_MAX_ENTRIES: any;
-
-glob _CHURN_CACHE_LOCK: any;
-
-glob _CHURN_CACHE: dict[tuple[str, str, int], dict[str, int]];
-
-glob _CHURN_UNAVAILABLE: any;
-
-glob CHURN_OK: any;
-
-glob CHURN_UNAVAILABLE: any;
-
-glob CHURN_OFF: any;
-
-glob _CODE_KINDS: any;
-
-glob _MAX_DELETION_FILES: any;
-
-glob _MAX_REMOVED_SYMBOLS: any;
-
-glob _MAX_REMOVED_USERS_SHOWN: any;
-
-glob _SELF_RECEIVERS: any;
-
-glob BRIEF_PRIORITIES: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _OVERALL_RISK_LINE = "  - Overall risk score: {:.2f}";
-    _TEST_GAP_EXEMPT_NAMES = frozenset({
-        "setUp",
-        "tearDown",
-        "setUpBeforeClass",
-        "tearDownAfterClass",
-        "setup_method",
-        "teardown_method",
-        "setUpClass",
-        "tearDownClass",
-        "__construct",
-        "__init__",
-        "__destruct",
-    });
-    _MIGRATION_METHOD_NAMES = frozenset({"up", "down"});
-    _MIGRATION_DIRS = frozenset({"migrations", "migrate"});
-}
+glob _MIGRATION_DIRS: any = frozenset({"migrations", "migrate"});
 
 def _is_migration_file(file_path: str, repo_root: str | Path | None) -> bool;
 def is_test_gap_exempt(`node: GraphNode, repo_root: str | Path | None = None) -> bool;
 def _is_test_lifecycle(`node: GraphNode, store: GraphStore) -> bool;
 
-with entry {
-    _SAFE_GIT_REF = re.compile("^[A-Za-z0-9_.~^/@{}\\-]+$");
-    _SAFE_SVN_REV = re.compile("^r?\\d+(:r?\\d+|:HEAD|:BASE|:COMMITTED)?$", re.IGNORECASE);
-}
+glob _SAFE_GIT_REF: any = re.compile("^[A-Za-z0-9_.~^/@{}\\-]+$");
+
+glob _SAFE_SVN_REV: any = re.compile("^r?\\d+(:r?\\d+|:HEAD|:BASE|:COMMITTED)?$", re.IGNORECASE);
 
 def _vcs_unavailable(tool: str, exc: BaseException) -> ChangeDiscoveryError;
 def parse_git_diff_ranges(
     repo_root: str, base: str = "HEAD~1", *, require_vcs: bool = False
 ) -> dict[str, list[tuple[int, int]]];
 
-with entry {
-    _LS_FILES_CHUNK = 200;
-}
+glob _LS_FILES_CHUNK: any = 200;
 
 def _untracked_among(repo_root: str, rel_paths: list[str]) -> set[str];
 def _new_files_without_ranges(
@@ -131,28 +49,28 @@ def parse_diff_ranges(
     repo_root: str, base: str = "HEAD~1", *, require_vcs: bool = False
 ) -> dict[str, list[tuple[int, int]]];
 
-with entry {
-    _C_QUOTE_ESCAPES = {
-        "a": "\x07",
-        "b": "\x08",
-        "f": "\x0c",
-        "n": "\n",
-        "r": "\r",
-        "t": "\t",
-        "v": "\x0b",
-        "\\": "\\",
-        "\"": "\"",
-    };
-}
+glob _C_QUOTE_ESCAPES: any = {
+    "a": "\x07",
+    "b": "\x08",
+    "f": "\x0c",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+    "v": "\x0b",
+    "\\": "\\",
+    "\"": "\"",
+};
 
 def _unquote_c_path(quoted: str) -> str;
 def _diff_header_path(rest: str, prefix: str = "b/") -> str | None;
 
-with entry {
-    _POST_IMAGE_HEADER = re.compile("^\\+\\+\\+ (/dev/null|\"b/(?:[^\"\\\\]|\\\\.)*\"|b/.*)$");
-    _PRE_IMAGE_HEADER = re.compile("^--- (/dev/null|\"a/(?:[^\"\\\\]|\\\\.)*\"|a/.*)$");
-    _HUNK_HEADER = re.compile("^@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@");
-}
+glob _POST_IMAGE_HEADER: any = re.compile(
+    "^\\+\\+\\+ (/dev/null|\"b/(?:[^\"\\\\]|\\\\.)*\"|b/.*)$"
+);
+
+glob _PRE_IMAGE_HEADER: any = re.compile("^--- (/dev/null|\"a/(?:[^\"\\\\]|\\\\.)*\"|a/.*)$");
+
+glob _HUNK_HEADER: any = re.compile("^@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@");
 
 @dataclass(frozen=True)
 class PureDeletion {
@@ -181,20 +99,29 @@ class DiffRanges(builtins.dict) {
 
 def _parse_unified_diff(diff_text: str) -> DiffRanges;
 
-with entry {
-    _CHURN_SATURATION = 10.0;
-    _CHURN_WEIGHT = 0.15;
-    _NUMSTAT_COUNT = re.compile("^(?:\\d+|-)$");
-    _CHURN_TIMEOUT = env_float("CRG_CHURN_TIMEOUT", 5.0);
-    _CHURN_MAX_COMMITS = env_int("CRG_CHURN_MAX_COMMITS", 2000);
-    _CHURN_CACHE_MAX_ENTRIES = 32;
-    _CHURN_CACHE_LOCK = threading.Lock();
-    _CHURN_CACHE = {};
-    _CHURN_UNAVAILABLE = set[any]();
-    CHURN_OK = "ok";
-    CHURN_UNAVAILABLE = "unavailable";
-    CHURN_OFF = "off";
-}
+glob _CHURN_SATURATION: any = 10.0;
+
+glob _CHURN_WEIGHT: any = 0.15;
+
+glob _NUMSTAT_COUNT: any = re.compile("^(?:\\d+|-)$");
+
+glob _CHURN_TIMEOUT: any = env_float("CRG_CHURN_TIMEOUT", 5.0);
+
+glob _CHURN_MAX_COMMITS: any = env_int("CRG_CHURN_MAX_COMMITS", 2000);
+
+glob _CHURN_CACHE_MAX_ENTRIES: any = 32;
+
+glob _CHURN_CACHE_LOCK: any = threading.Lock();
+
+glob _CHURN_CACHE: dict[tuple[str, str, int], dict[str, int]] = {};
+
+glob _CHURN_UNAVAILABLE: any = set[any]();
+
+glob CHURN_OK: any = "ok";
+
+glob CHURN_UNAVAILABLE: any = "unavailable";
+
+glob CHURN_OFF: any = "off";
 
 def clear_churn_cache;
 
@@ -211,13 +138,15 @@ def map_changes_to_nodes(
     store: GraphStore, changed_ranges: dict[str, list[tuple[int, int]]]
 ) -> list[GraphNode];
 
-with entry {
-    _CODE_KINDS = ("Function", "Test", "Class");
-    _MAX_DELETION_FILES = env_int("CRG_MAX_DELETION_FILES", 100);
-    _MAX_REMOVED_SYMBOLS = 200;
-    _MAX_REMOVED_USERS_SHOWN = 3;
-    _SELF_RECEIVERS = frozenset({"self", "this", "cls"});
-}
+glob _CODE_KINDS: any = ("Function", "Test", "Class");
+
+glob _MAX_DELETION_FILES: any = env_int("CRG_MAX_DELETION_FILES", 100);
+
+glob _MAX_REMOVED_SYMBOLS: any = 200;
+
+glob _MAX_REMOVED_USERS_SHOWN: any = 3;
+
+glob _SELF_RECEIVERS: any = frozenset({"self", "this", "cls"});
 
 @dataclass
 class _DeletionReview {
@@ -329,20 +258,14 @@ def analyze_changes(
     require_vcs: bool = False,
 ) -> dict[str, Any];
 
-with entry {
-    BRIEF_PRIORITIES = 3;
-}
+glob BRIEF_PRIORITIES: any = 3;
 
 def risk_label(score: float) -> str;
 def _short_name(qualified_name: str) -> str;
 def _name_list(names: list[str], limit: int = 2) -> str;
 def _brief_priority_line(store: GraphStore, priority: dict[str, Any], repo_root: str | None) -> str;
 
-glob limit_default_: any;
-
-with entry {
-    limit_default_ = BRIEF_PRIORITIES;
-}
+glob limit_default_: any = BRIEF_PRIORITIES;
 
 def format_brief(
     store: GraphStore,

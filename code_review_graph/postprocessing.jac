@@ -1,20 +1,12 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import logging;
-
-import sqlite3;
+import importlib, logging, sqlite3;
 
 import from collections.abc { Sequence }
 
 import from typing { Any }
 
-glob logger: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 def run_post_processing(
     store: GraphStore,

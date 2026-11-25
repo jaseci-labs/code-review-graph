@@ -169,11 +169,9 @@ impl _reassign_test_nodes(
     edges: Sequence[GraphEdge | _CommunityEdge],
     resolution_nodes: list[GraphNode] | None = None,
 ) -> list[list[int]] {
-    vertex_to_cluster: any;
     names_to_qns: dict[str, str | None];
-    highest_vote: any;
     vertex: any;
-    vertex_to_cluster = {
+    vertex_to_cluster: any = {
         vertex: cluster_id
         for (cluster_id, cluster) in enumerate(clusters)
         for vertex in cluster
@@ -238,7 +236,7 @@ impl _reassign_test_nodes(
             continue;
         }
 
-        highest_vote = max(votes.values());
+        highest_vote: any = max(votes.values());
         tied_clusters: any = sorted(
             cluster_id for (cluster_id, vote_count) in votes.items() if vote_count == highest_vote
         );
@@ -391,20 +389,17 @@ impl _detect_file_based(
     min_size: int,
     adj: dict[str, list[str]] | None = None,
 ) -> list[dict[str, Any]] {
-    prefix_len: any;
-    i: any;
-    seg: any;
     all_dir_parts: list[list[str]] = [];
     for n in nodes {
         parts: any = n.file_path.replace("\\", "/").split("/");
         all_dir_parts.append([p for p in parts[:-1] if p]);
     }
-    prefix_len = 0;
+    prefix_len: any = 0;
     if all_dir_parts {
         shortest: any = min(len(p) for p in all_dir_parts);
         for i_ in range(shortest) {
-            i = i_;
-            seg = all_dir_parts[0][i];
+            i: any = i_;
+            seg: any = all_dir_parts[0][i];
             if all(operator.eq(p[i], seg) for p in all_dir_parts) {
                 prefix_len = i + 1;
             } else {

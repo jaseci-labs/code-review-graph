@@ -161,7 +161,7 @@ impl _pick_existing_qualified(target_file: str, rest: str, store: GraphStore) ->
     parts: any = rest.split(".");
     while len(parts) > 1 {
         parts.pop();
-        candidate: any = format(target_file, "") + "::" + format(".".join(parts), "");
+        candidate: any = f"{target_file}::{".".join(parts)}";
         if store.get_node(candidate) is not None {
             return candidate;
         }

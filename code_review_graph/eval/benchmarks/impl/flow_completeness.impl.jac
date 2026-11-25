@@ -1,11 +1,10 @@
 impl run(repo_path: Path, store, config: dict) -> list[dict] {
-    detected_entries: any;
     store_flows = lazy("flows", "store_flows");
     trace_flows = lazy("flows", "trace_flows");
 
     flows: any = trace_flows(store);
     count: any = store_flows(store, flows);
-    detected_entries = set[any]();
+    detected_entries: any = set[any]();
     for `flow in flows {
         detected_entries.add(`flow.get("entry_point") or `flow.get("name", ""));
     }

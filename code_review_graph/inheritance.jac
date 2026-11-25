@@ -1,23 +1,19 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import json;
-
-import sqlite3;
+import builtins, operator, json, sqlite3;
 
 import from typing { Optional }
 
-glob _SINGLE_SUPERCLASS: any;
+glob _SINGLE_SUPERCLASS: any = frozenset({
+    "java",
+    "csharp",
+    "typescript",
+    "tsx",
+    "javascript",
+    "php",
+});
 
-glob _MAX_DEPTH: any;
-
-with entry {
-    _SINGLE_SUPERCLASS = frozenset({"java", "csharp", "typescript", "tsx", "javascript", "php"});
-    _MAX_DEPTH = 32;
-}
+glob _MAX_DEPTH: any = 32;
 
 def _load_extra(raw: Optional[str]) -> dict;
 def _is_interface(language: str, extra: dict) -> bool;

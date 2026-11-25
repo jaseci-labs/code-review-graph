@@ -778,8 +778,7 @@ impl _merge_dsh_patch_server(config_path: Path, server_entry: dict[str, Any]) ->
 }
 
 impl _indent_block(text: str, indent: int) -> str {
-    pad: any;
-    pad = " " * indent;
+    pad: any = " " * indent;
     return "".join(
         f"{pad}{line}" if line.strip() else line for line in text.splitlines(keepends=True)
     );
@@ -930,8 +929,6 @@ impl _install_platform_configs(
     repo_root: Path, target: str, dry_run: bool, platforms: Iterable[str] | None = None
 ) -> list[str] {
     shared_aliases: dict[str, tuple[str, ...]];
-    claude: any;
-    codebuddy: any;
     configured: list[str];
     shared_aliases = {};
     if target == "all" {
@@ -941,8 +938,8 @@ impl _install_platform_configs(
             chosen: any = `set(platforms);
             platforms_to_install = {k: v for (k, v) in PLATFORMS.items() if k in chosen};
         }
-        claude = platforms_to_install.get("claude");
-        codebuddy = platforms_to_install.get("codebuddy");
+        claude: any = platforms_to_install.get("claude");
+        codebuddy: any = platforms_to_install.get("codebuddy");
         if claude is not None and codebuddy is not None {
             same_contract: any = operator.eq(
                 claude["config_path"](repo_root), codebuddy["config_path"](repo_root)
@@ -996,18 +993,14 @@ impl _install_platform_configs(
                 continue;
             }
             if not changed {
-                print(
-                    "  " + format(plat["name"], "") + ": already configured in " + format(shown, "")
-                );
+                print(f"  {plat["name"]}: already configured in {shown}");
                 _record_configured(key, plat);
                 continue;
             }
             if dry_run {
-                print(
-                    "  [dry-run] " + format(plat["name"], "") + ": would write " + format(shown, "")
-                );
+                print(f"  [dry-run] {plat["name"]}: would write {shown}");
             } else {
-                print("  " + format(plat["name"], "") + ": configured " + format(shown, ""));
+                print(f"  {plat["name"]}: configured {shown}");
             }
             _record_configured(key, plat);
             continue;
@@ -1085,12 +1078,7 @@ impl _install_platform_configs(
                     continue;
                 }
                 if len(ours) == 1 and current == arr_entry {
-                    print(
-                        "  "
-                            + format(plat["name"], "")
-                            + ": already configured in "
-                            + format(shown, ""),
-                    );
+                    print(f"  {plat["name"]}: already configured in {shown}");
                     _record_configured(key, plat);
                     continue;
                 }
@@ -1128,9 +1116,7 @@ impl _install_platform_configs(
                     continue;
                 }
             } elif current == server_entry and not migrated {
-                print(
-                    "  " + format(plat["name"], "") + ": already configured in " + format(shown, "")
-                );
+                print(f"  {plat["name"]}: already configured in {shown}");
                 _record_configured(key, plat);
                 continue;
             } else {
@@ -1168,9 +1154,9 @@ impl _install_platform_configs(
                 else json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
         );
         if dry_run {
-            print("  [dry-run] " + format(plat["name"], "") + ": would write " + format(shown, ""));
+            print(f"  [dry-run] {plat["name"]}: would write {shown}");
         } else {
-            print("  " + format(plat["name"], "") + ": configured " + format(shown, ""));
+            print(f"  {plat["name"]}: configured {shown}");
         }
 
         if wrote_entry {
@@ -1210,14 +1196,14 @@ impl render_documentary_skill_markdown(slug: str) -> str {
         known: any = ", ".join(sorted(DOCUMENTARY_SKILLS));
         raise KeyError(f"unknown documentary skill {slug!r} (known: {known})") from None;
     }
-    frontmatter: any = ["---", f"name: {slug}", "description: " + format(spec["description"], "")];
+    frontmatter: any = ["---", f"name: {slug}", f"description: {spec["description"]}"];
     argument_hint: any = spec.get("argument_hint");
     if argument_hint {
         frontmatter.append(f"argument-hint: \"{argument_hint}\"");
     }
     frontmatter.append("---");
     frontmatter.append("");
-    frontmatter.append("# " + format(spec["title"], ""));
+    frontmatter.append(f"# {spec["title"]}");
     frontmatter.append("");
     frontmatter.append(spec["body"]);
     frontmatter.append("");
@@ -1362,8 +1348,7 @@ impl generate_steering_hooks_config(program: _HookProgram | None = None) -> dict
                     "hooks": [
                         {
                             "type": "command",
-                            "command": format(_codex_hook_command("enrich", program), "")
-                                + " || true",
+                            "command": f"{_codex_hook_command("enrich", program)} || true",
                             "timeout": 5,
                         },
                     ],
@@ -1972,7 +1957,6 @@ impl _report_settings_left_alone(label: str, path: Path, problem: str) {
 impl _read_settings_for_merge(
     path: Path, label: str, events: Iterable[str]
 ) -> tuple[str, dict[str, Any]] | None {
-    hooks: any;
     if not install_plan.exists(path) {
         return ("", {});
     }
@@ -2000,7 +1984,7 @@ impl _read_settings_for_merge(
         _report_settings_left_alone(label, path, "is valid JSON but not a top-level object");
         return None;
     }
-    hooks = parsed.get("hooks", {});
+    hooks: any = parsed.get("hooks", {});
     if not isinstance(hooks, `dict) {
         _report_settings_left_alone(label, path, "has a 'hooks' setting that is not an object");
         return None;
@@ -2010,9 +1994,7 @@ impl _read_settings_for_merge(
     );
     if wrong_shape {
         _report_settings_left_alone(
-            label,
-            path,
-            "has hook settings that are not lists (" + format(", ".join(wrong_shape), "") + ")",
+            label, path, f"has hook settings that are not lists ({", ".join(wrong_shape)})"
         );
         return None;
     }
@@ -2295,7 +2277,6 @@ impl _remove_legacy_instruction_file(path: Path) {
 }
 
 impl install_gemini_cli_hooks(repo_root: Path) -> Path | None {
-    hooks_obj: any;
     settings_dir: any = repo_root / ".gemini";
     settings_path: any = settings_dir / "settings.json";
 
@@ -2320,7 +2301,7 @@ impl install_gemini_cli_hooks(repo_root: Path) -> Path | None {
         "__CRG_FUNCTION__\n", cli_function
     );
 
-    hooks_obj = existing.get("hooks", {});
+    hooks_obj: any = existing.get("hooks", {});
 
     def _ensure_group(event_name: str, matcher: str, hook_command: str, name: str, timeout: int) {
         arr: any = hooks_obj.get(event_name, []);

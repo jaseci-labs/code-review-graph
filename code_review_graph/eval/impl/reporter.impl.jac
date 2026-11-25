@@ -107,16 +107,8 @@ impl generate_full_report(results_dir: str | Path) -> str {
     );
     lines.append("");
 
-    benchmark_types: any = [
-        "token_efficiency",
-        "impact_accuracy",
-        "agent_baseline",
-        "flow_completeness",
-        "search_quality",
-        "build_performance",
-        "multi_hop_retrieval",
-        "incremental_fidelity",
-    ];
+    benchmark_types: any = ("token_efficiency impact_accuracy agent_baseline flow_completeness search_quality "
+        "build_performance multi_hop_retrieval incremental_fidelity").split();
 
     for btype in benchmark_types {
         rows: any = _read_csvs(results_dir, btype);

@@ -1,16 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import logging;
-
-import os;
-
-import re;
-
-import subprocess;
+import builtins, operator, logging, os, re, subprocess;
 
 import from collections.abc { Iterable }
 
@@ -18,24 +8,15 @@ import from dataclasses { dataclass, field }
 
 import from pathlib { Path, PurePath, PurePosixPath }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob BLOCK_START: any;
+glob BLOCK_START: any = "# >>> code-review-graph install files >>>";
 
-glob BLOCK_NOTE: any;
+glob BLOCK_NOTE: any = "# Added by `code-review-graph install --gitignore`. `uninstall` removes this block.";
 
-glob BLOCK_END: any;
+glob BLOCK_END: any = "# <<< code-review-graph install files <<<";
 
-glob _ENTRY: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    BLOCK_START = "# >>> code-review-graph install files >>>";
-    BLOCK_NOTE = "# Added by `code-review-graph install --gitignore`. `uninstall` removes this block.";
-    BLOCK_END = "# <<< code-review-graph install files <<<";
-    _ENTRY = re.compile("/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*/?");
-}
+glob _ENTRY: any = re.compile("/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*/?");
 
 @dataclass(frozen=True)
 class Plan {

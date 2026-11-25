@@ -1,14 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import logging;
-
-import os;
-
-import re;
-
-import subprocess;
+import importlib, logging, os, re, subprocess;
 
 import from dataclasses { dataclass }
 
@@ -18,33 +10,15 @@ import from pathlib { Path }
 
 import from typing { TYPE_CHECKING, Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob MAX_CONFIDENCE_CHARS: any;
+glob MAX_CONFIDENCE_CHARS: any = 140;
 
-glob IMPACT_PATTERN: any;
+glob IMPACT_PATTERN: any = "impact_radius";
 
-glob _UPDATE_HINT: any;
+glob _UPDATE_HINT: any = "run `code-review-graph update`";
 
-glob _WHITESPACE: any;
-
-glob _JS_FAMILY: any;
-
-glob _CALL_PATTERNS: any;
-
-glob _IMPORT_PATTERNS: any;
-
-glob LANGUAGE_GAPS: tuple[LanguageGap, ...];
-
-with entry {
-    logger = logging.getLogger(__name__);
-    MAX_CONFIDENCE_CHARS = 140;
-    IMPACT_PATTERN = "impact_radius";
-
-    _UPDATE_HINT = "run `code-review-graph update`";
-
-    _WHITESPACE = re.compile("\\s+");
-}
+glob _WHITESPACE: any = re.compile("\\s+");
 
 @dataclass(frozen=True)
 class LanguageGap {
@@ -55,17 +29,22 @@ class LanguageGap {
     has note: str;
 }
 
+glob _JS_FAMILY: any = frozenset({"javascript", "typescript", "tsx"});
+
+glob _CALL_PATTERNS: any = frozenset({
+    "callers_of",
+    "callees_of",
+    "tests_for",
+    "advises",
+    "advised_by",
+    IMPACT_PATTERN,
+});
+
+glob _IMPORT_PATTERNS: any = frozenset({"imports_of", "importers_of", IMPACT_PATTERN});
+
+glob LANGUAGE_GAPS: tuple[LanguageGap, ...];
+
 with entry {
-    _JS_FAMILY = frozenset({"javascript", "typescript", "tsx"});
-    _CALL_PATTERNS = frozenset({
-        "callers_of",
-        "callees_of",
-        "tests_for",
-        "advises",
-        "advised_by",
-        IMPACT_PATTERN,
-    });
-    _IMPORT_PATTERNS = frozenset({"imports_of", "importers_of", IMPACT_PATTERN});
     LANGUAGE_GAPS = (
         LanguageGap(
             languages=frozenset({"php"}),

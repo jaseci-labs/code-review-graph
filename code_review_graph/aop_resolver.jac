@@ -1,53 +1,32 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import json;
-
-import logging;
-
-import re;
+import builtins, operator, json, logging, re;
 
 import from typing { TYPE_CHECKING, Optional }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _ADVICE_ANNOTATIONS: any;
+glob _ADVICE_ANNOTATIONS: any = frozenset({
+    "Before",
+    "After",
+    "Around",
+    "AfterReturning",
+    "AfterThrowing",
+});
 
-glob _COMPOUND_OPERATORS: any;
+glob _COMPOUND_OPERATORS: any = ("&&", "||");
 
-glob _NAMED_POINTCUT_REF: any;
+glob _NAMED_POINTCUT_REF: any = re.compile("^\\s*([A-Za-z_][A-Za-z0-9_]*)\\(\\s*\\)\\s*$");
 
-glob _ANNOTATION_POINTCUT: any;
+glob _ANNOTATION_POINTCUT: any = re.compile("^\\s*@annotation\\s*\\((.+)\\)\\s*$", re.DOTALL);
 
-glob _EXECUTION_POINTCUT: any;
+glob _EXECUTION_POINTCUT: any = re.compile("^\\s*execution\\s*\\((.*)\\)\\s*$", re.DOTALL);
 
-glob _DESIGNATOR_PREFIX: any;
+glob _DESIGNATOR_PREFIX: any = re.compile(
+    "^\\s*(?:execution|@annotation|within|args|target|this)\\s*\\("
+);
 
-glob _DERIVED_FLAG: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    _ADVICE_ANNOTATIONS = frozenset({
-        "Before",
-        "After",
-        "Around",
-        "AfterReturning",
-        "AfterThrowing",
-    });
-    _COMPOUND_OPERATORS = ("&&", "||");
-    _NAMED_POINTCUT_REF = re.compile("^\\s*([A-Za-z_][A-Za-z0-9_]*)\\(\\s*\\)\\s*$");
-    _ANNOTATION_POINTCUT = re.compile("^\\s*@annotation\\s*\\((.+)\\)\\s*$", re.DOTALL);
-    _EXECUTION_POINTCUT = re.compile("^\\s*execution\\s*\\((.*)\\)\\s*$", re.DOTALL);
-    _DESIGNATOR_PREFIX = re.compile(
-        "^\\s*(?:execution|@annotation|within|args|target|this)\\s*\\("
-    );
-
-    _DERIVED_FLAG = "aop_resolved";
-}
+glob _DERIVED_FLAG: any = "aop_resolved";
 
 def _extract_annotation_string_arg(deco_text: str) -> Optional[str];
 def _annotation_head(deco_text: str) -> str;

@@ -72,24 +72,12 @@ impl export_graphml(store: GraphStore, output_path: Path) -> Path {
 
     for (index, n) in enumerate(nodes) {
         lines.append(f"    <node id=\"n{index}\">");
+        lines.append(f"      <data key=\"qualified_name\">{_xml_text(n["qualified_name"])}</data>");
+        lines.append(f"      <data key=\"name\">{_xml_text(n.get("name", ""))}</data>");
+        lines.append(f"      <data key=\"kind\">{_xml_text(n.get("kind", ""))}</data>");
+        lines.append(f"      <data key=\"file\">{_xml_text(n.get("file_path", ""))}</data>");
         lines.append(
-            "      <data key=\"qualified_name\">"
-                + format(_xml_text(n["qualified_name"]), "")
-                + "</data>",
-        );
-        lines.append(
-            "      <data key=\"name\">" + format(_xml_text(n.get("name", "")), "") + "</data>"
-        );
-        lines.append(
-            "      <data key=\"kind\">" + format(_xml_text(n.get("kind", "")), "") + "</data>"
-        );
-        lines.append(
-            "      <data key=\"file\">" + format(_xml_text(n.get("file_path", "")), "") + "</data>"
-        );
-        lines.append(
-            "      <data key=\"language\">"
-                + format(_xml_text(n.get("language", "") or ""), "")
-                + "</data>",
+            f"      <data key=\"language\">{_xml_text(n.get("language", "") or "")}</data>"
         );
         cid: any = n.get("community_id");
         if cid is not None {
@@ -111,9 +99,7 @@ impl export_graphml(store: GraphStore, output_path: Path) -> Path {
             continue;
         }
         lines.append(f"    <edge id=\"e{written_edges}\" source=\"{src}\" target=\"{tgt}\">");
-        lines.append(
-            "      <data key=\"edge_kind\">" + format(_xml_text(e.get("kind", "")), "") + "</data>"
-        );
+        lines.append(f"      <data key=\"edge_kind\">{_xml_text(e.get("kind", ""))}</data>");
         lines.append("    </edge>");
         written_edges += 1;
     }
@@ -181,7 +167,7 @@ impl _cypher_props(d: dict) -> str {
         if isinstance(v, `str) {
             parts.append(f"{k}: '{_cypher_escape(v)}'");
         } elif isinstance(v, `bool) {
-            parts.append(format(k, "") + ": " + format("true" if v else "false", ""));
+            parts.append(f"{k}: {"true" if v else "false"}");
         } elif isinstance(v, (`int, `float)) {
             parts.append(f"{k}: {v}");
         }
@@ -234,8 +220,8 @@ impl export_obsidian_vault(store: GraphStore, output_dir: Path) -> Path {
         lines.append("---");
         lines.append(f"# {_sanitize_name(name)}");
         lines.append("");
-        lines.append("**Kind:** " + format(n.get("kind", ""), ""));
-        lines.append("**File:** `" + format(n.get("file_path", ""), "") + "`");
+        lines.append(f"**Kind:** {n.get("kind", "")}");
+        lines.append(f"**File:** `{n.get("file_path", "")}`");
         lines.append("");
         nbrs: any = neighbors.get(qn, []);
         if nbrs {
@@ -247,15 +233,7 @@ impl export_obsidian_vault(store: GraphStore, output_dir: Path) -> Path {
                 if tgt_slug and tgt_slug not in seen {
                     seen.add(tgt_slug);
                     tgt_name: any = tgt_slug.replace("-", " ").title();
-                    lines.append(
-                        "- "
-                            + format(nb["kind"], "")
-                            + ": [["
-                            + format(tgt_slug, "")
-                            + "|"
-                            + format(tgt_name, "")
-                            + "]]",
-                    );
+                    lines.append(f"- {nb["kind"]}: [[{tgt_slug}|{tgt_name}]]");
                 }
             }
         }
@@ -277,8 +255,8 @@ impl export_obsidian_vault(store: GraphStore, output_dir: Path) -> Path {
         members: any = community_map.get(cid, []);
 
         lines = [f"# Community: {_sanitize_name(cname)}", ""];
-        lines.append("**Size:** " + format(c.get("size", len(members)), ""));
-        lines.append("**Cohesion:** " + format(c.get("cohesion", 0), ".2f"));
+        lines.append(f"**Size:** {c.get("size", len(members))}");
+        lines.append(f"**Cohesion:** {c.get("cohesion", 0):.2f}");
         lang: any = c.get("dominant_language", "");
         if lang {
             lines.append(f"**Language:** {lang}");
@@ -306,9 +284,7 @@ impl export_obsidian_vault(store: GraphStore, output_dir: Path) -> Path {
     for n in sorted(nodes, key=lambda (x) -> any { x.get("name", "") }) {
         slug = slugs.get(n["qualified_name"]);
         if slug {
-            index_lines.append(
-                "- [[" + format(slug, "") + "]] (" + format(n.get("kind", ""), "") + ")"
-            );
+            index_lines.append(f"- [[{slug}]] ({n.get("kind", "")})");
         }
     }
 

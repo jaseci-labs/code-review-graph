@@ -13,7 +13,6 @@ impl get_minimal_context(
     repo_root: str | None = None,
     base: str = "HEAD~1",
 ) -> dict[str, Any] {
-    task_lower: any;
     `root: any = _resolve_root(repo_root);
     db_path: any = get_db_path(`root, read_only=True);
     if not db_path.is_file() {
@@ -99,7 +98,7 @@ impl get_minimal_context(
         } except sqlite3.OperationalError {
             logger.debug("flows table not yet populated");
         }
-        task_lower = task.lower();
+        task_lower: any = task.lower();
         if `any(w in task_lower for w in ("review", "pr", "merge", "diff")) {
             suggestions: any = [
                 "detect_changes_tool",

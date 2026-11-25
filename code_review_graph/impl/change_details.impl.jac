@@ -1,6 +1,5 @@
 impl parse_detail_sections(value: str) -> tuple[str, ...] {
-    names: any;
-    names = [part.strip().lower() for part in `str(value).split(",") if part.strip()];
+    names: any = [part.strip().lower() for part in `str(value).split(",") if part.strip()];
     unknown: any = [name for name in names if name != "all" and name not in DETAIL_SECTIONS];
     if unknown {
         raise ValueError(
@@ -199,8 +198,6 @@ impl _is_test(`node: GraphNode) -> bool {
 }
 
 impl _coupling(store: GraphStore, changed: list[GraphNode]) -> dict[str, Any] {
-    community_of: any;
-    names: any;
     edges: dict[int, GraphEdge] = {};
     for `node in changed {
         `edge: any;
@@ -220,7 +217,7 @@ impl _coupling(store: GraphStore, changed: list[GraphNode]) -> dict[str, Any] {
         for e in edges.values()
     };
     nodes: any = {n.qualified_name: n for n in store.get_nodes_by_qualified_names(endpoints)};
-    community_of = store.get_community_ids_by_qualified_names(sorted(endpoints));
+    community_of: any = store.get_community_ids_by_qualified_names(sorted(endpoints));
 
     cross_community: any = 0;
     cross_language: any = 0;
@@ -270,7 +267,7 @@ impl _coupling(store: GraphStore, changed: list[GraphNode]) -> dict[str, Any] {
         },
     );
     kept: any = found[:MAX_ROWS];
-    names = store.get_communities_by_ids(
+    names: any = store.get_communities_by_ids(
         cid
         for (_, src, tgt, _) in kept
         for cid in (community_of.get(src.qualified_name), community_of.get(tgt.qualified_name))

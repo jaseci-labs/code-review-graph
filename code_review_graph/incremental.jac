@@ -1,42 +1,10 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
+import importlib, operator;
 
 import from jaclang.comptime { target as target_ }
 
-import concurrent.futures;
-
-import fnmatch;
-
-import hashlib;
-
-import json;
-
-import logging;
-
-import os;
-
-import re;
-
-import signal;
-
-import subprocess;
-
-import sys;
-
-import threading;
-
-import types;
-
-import builtins;
-
-import time;
-
-import unicodedata;
-
-import uuid;
+import concurrent.futures, fnmatch, hashlib, json, logging, os, re, signal, subprocess, sys, threading, types, builtins, time, unicodedata, uuid;
 
 import from collections { deque }
 
@@ -50,134 +18,42 @@ def _get_code_parser_cls -> any;
 
 def __getattr__(name: str) -> any;
 
-glob _MAX_PARSE_WORKERS: any;
+glob _MAX_PARSE_WORKERS: any = env_int("CRG_PARSE_WORKERS", min(os.cpu_count() or 4, 8));
 
-glob _MCP_STDIO_ACTIVE: any;
+glob _MCP_STDIO_ACTIVE: any = False;
 
-glob _PARSE_WORKER_STATE: any;
-
-glob logger: any;
-
-glob VERIFIED_FILE_COUNT_KEY: any;
-
-glob CPP_IDENTITY_VERSION: any;
-
-glob _CPP_IDENTITY_METADATA_KEY: any;
-
-glob CSHARP_IDENTITY_VERSION: any;
-
-glob _CSHARP_IDENTITY_METADATA_KEY: any;
-
-glob _CSHARP_PENDING_METADATA_KEY: any;
-
-glob NESTED_SCOPE_IDENTITY_VERSION: any;
-
-glob _NESTED_SCOPE_METADATA_KEY: any;
-
-glob _NESTED_SCOPE_PENDING_KEY: any;
-
-glob _NESTED_SCOPE_UNCHANGED_LANGUAGES: any;
-
-glob _CPP_IDENTITY_PENDING_KEY: any;
-
-glob _DEPENDENTS_PENDING_KEY: any;
-
-glob DEFAULT_IGNORE_PATTERNS: any;
-
-glob NESTED_OUTPUT_DIR_MARKERS: dict[str, frozenset[str]];
-
-glob _MODULE_SCAN_DEPTH: any;
-
-glob _MODULE_SCAN_MAX_DIRS: any;
-
-glob _MAX_NESTED_OUTPUT_PATTERNS: any;
-
-glob _NESTED_IGNORE_TTL_SECONDS: any;
-
-glob _nested_ignore_cache: dict[tuple[str, tuple[str, ...], tuple[str, ...]], tuple[float, list[str]]];
-
-glob _nested_ignore_lock: any;
-
-glob _RECURSE_SUBMODULES: any;
-
-glob _SAFE_GIT_REF: any;
-
-glob _SAFE_SVN_REV: any;
-
-glob DEFAULT_REVIEW_BASE: any;
-
-glob ONE_COMMIT_NOTE: any;
-
-glob NO_COMMIT_NOTE: any;
-
-glob SHALLOW_CLONE_NOTE: any;
-
-glob _FRESHNESS_FILE_LIMIT: any;
-
-glob INSTALL_MANIFEST: any;
-
-glob FOLLOW_SYMLINKS_ENV: any;
-
-glob _FOLLOWED_FILES_KEY: any;
-
-glob _FOLLOWED_DIRS_KEY: any;
-
-glob _reported_links: any;
-
-glob _ROOT_PROBE_LIMIT: any;
-
-glob _MAX_DEPENDENT_HOPS: any;
-
-glob _MAX_DEPENDENT_FILES: any;
-
-glob _NO_GRAMMAR_LANGUAGES: any;
-
-glob _DEBOUNCE_SECONDS: any;
-
-glob _WATCH_PLAN_DEPTH: any;
-
-glob _MAX_WATCH_SCHEDULES: any;
-
-glob _WATCH_SPLIT_MIN_DIRS: any;
-
-glob _WATCH_HEALTH_INTERVAL: any;
-
-glob _WATCH_STOP_TIMEOUT: any;
-
-glob _WATCH_TICK_SECONDS: any;
-
-glob _WATCH_LOCK_POLL_SECONDS: any;
-
-glob _PROMOTION_RETRY_SECONDS: any;
-
-glob _MAX_UNWATCHED_TRACKED: any;
-
-with entry {
-    _MAX_PARSE_WORKERS = env_int("CRG_PARSE_WORKERS", min(os.cpu_count() or 4, 8));
-    _MCP_STDIO_ACTIVE = False;
-    _PARSE_WORKER_STATE = threading.local();
-}
+glob _PARSE_WORKER_STATE: any = threading.local();
 
 def _windows_console_handle(fileno: int) -> bool;
 def _stdin_is_interactive -> bool;
 def _select_executor_kind -> str;
 def _make_executor(max_workers: int) -> any;
 
-with entry {
-    logger = logging.getLogger(__name__);
-    VERIFIED_FILE_COUNT_KEY = "verified_file_count";
-    CPP_IDENTITY_VERSION = "1";
-    _CPP_IDENTITY_METADATA_KEY = "cpp_identity_version";
-    CSHARP_IDENTITY_VERSION = "5";
-    _CSHARP_IDENTITY_METADATA_KEY = "csharp_identity_version";
-    _CSHARP_PENDING_METADATA_KEY = "csharp_identity_pending_files";
-    NESTED_SCOPE_IDENTITY_VERSION = "1";
-    _NESTED_SCOPE_METADATA_KEY = "nested_scope_identity_version";
-    _NESTED_SCOPE_PENDING_KEY = "nested_scope_identity_pending_files";
-    _NESTED_SCOPE_UNCHANGED_LANGUAGES = ("python", "cpp", "julia", "ruby", "csharp");
-    _CPP_IDENTITY_PENDING_KEY = "cpp_identity_pending";
-    _DEPENDENTS_PENDING_KEY = "dependents_reparse_pending";
-}
+glob logger: any = logging.getLogger(__name__);
+
+glob VERIFIED_FILE_COUNT_KEY: any = "verified_file_count";
+
+glob CPP_IDENTITY_VERSION: any = "1";
+
+glob _CPP_IDENTITY_METADATA_KEY: any = "cpp_identity_version";
+
+glob CSHARP_IDENTITY_VERSION: any = "5";
+
+glob _CSHARP_IDENTITY_METADATA_KEY: any = "csharp_identity_version";
+
+glob _CSHARP_PENDING_METADATA_KEY: any = "csharp_identity_pending_files";
+
+glob NESTED_SCOPE_IDENTITY_VERSION: any = "1";
+
+glob _NESTED_SCOPE_METADATA_KEY: any = "nested_scope_identity_version";
+
+glob _NESTED_SCOPE_PENDING_KEY: any = "nested_scope_identity_pending_files";
+
+glob _NESTED_SCOPE_UNCHANGED_LANGUAGES: any = ("python", "cpp", "julia", "ruby", "csharp");
+
+glob _CPP_IDENTITY_PENDING_KEY: any = "cpp_identity_pending";
+
+glob _DEPENDENTS_PENDING_KEY: any = "dependents_reparse_pending";
 
 def _load_pending_paths(store: GraphStore, key: str) -> set[str];
 def _nested_scope_files(store: GraphStore, repo_root: Path) -> set[str];
@@ -202,89 +78,46 @@ def _run_jedi_enrichment(
 ) -> Optional[dict];
 def _refresh_target_resolution(store: GraphStore);
 
-with entry {
-    DEFAULT_IGNORE_PATTERNS = [
-        "**/.code-review-graph/**",
-        "**/node_modules/**",
-        "**/.git/**",
-        "**/.svn/**",
-        "**/__pycache__/**",
-        "*.pyc",
-        "**/.venv/**",
-        "**/venv/**",
-        "/dist/**",
-        "/build/**",
-        "/.next/**",
-        "/.nuxt/**",
-        "/target/**",
-        "/bin/**",
-        "/obj/**",
-        "**/vendor/**",
-        "/storage/**",
-        "/bootstrap/cache/**",
-        "/public/build/**",
-        "**/.bundle/**",
-        "**/.gradle/**",
-        "*.jar",
-        "**/.dart_tool/**",
-        "**/.pub-cache/**",
-        "**/cdk.out/**",
-        "/coverage/**",
-        "**/.cache/**",
-        "/.tmp/**",
-        "/tmp/**",
-        "*.min.js",
-        "*.min.css",
-        "*.map",
-        "*.lock",
-        "package-lock.json",
-        "**/package-lock.json",
-        "npm-shrinkwrap.json",
-        "**/npm-shrinkwrap.json",
-        "*.lock.json",
-        "project.assets.json",
-        "**/project.assets.json",
-        "*.min.json",
-        "pnpm-lock.yaml",
-        "**/pnpm-lock.yaml",
-        "yarn.lock",
-        "*.db",
-        "*.sqlite",
-        "*.db-journal",
-        "*.db-wal",
-    ];
-    NESTED_OUTPUT_DIR_MARKERS = {
-        "vendor": frozenset({
-            "composer.json",
-            "go.mod",
-            "go.work",
-            "Gemfile",
-            "Rakefile",
-            "Cargo.toml",
-        }),
-        "target": frozenset({"pom.xml", "Cargo.toml", "build.sbt"}),
-        "build": frozenset({
-            "build.gradle",
-            "build.gradle.kts",
-            "settings.gradle",
-            "settings.gradle.kts",
-        }),
-        ".next": frozenset({
-            "next.config.js",
-            "next.config.mjs",
-            "next.config.cjs",
-            "next.config.ts",
-        }),
-        ".nuxt": frozenset({"nuxt.config.js", "nuxt.config.mjs", "nuxt.config.ts"}),
-    };
-    _MODULE_SCAN_DEPTH = env_int("CRG_MODULE_SCAN_DEPTH", 3);
-    _MODULE_SCAN_MAX_DIRS = env_int("CRG_MODULE_SCAN_MAX_DIRS", 2000);
-    _MAX_NESTED_OUTPUT_PATTERNS = 200;
-    _NESTED_IGNORE_TTL_SECONDS = env_float("CRG_NESTED_IGNORE_TTL", 300.0);
+glob DEFAULT_IGNORE_PATTERNS: any = ("**/.code-review-graph/** **/node_modules/** **/.git/** **/.svn/** **/__pycache__/** *.pyc "
+    "**/.venv/** **/venv/** /dist/** /build/** /.next/** /.nuxt/** /target/** /bin/** /obj/** "
+    "**/vendor/** /storage/** /bootstrap/cache/** /public/build/** **/.bundle/** **/.gradle/** "
+    "*.jar **/.dart_tool/** **/.pub-cache/** **/cdk.out/** /coverage/** **/.cache/** /.tmp/** "
+    "/tmp/** *.min.js *.min.css *.map *.lock package-lock.json **/package-lock.json "
+    "npm-shrinkwrap.json **/npm-shrinkwrap.json *.lock.json project.assets.json "
+    "**/project.assets.json *.min.json pnpm-lock.yaml **/pnpm-lock.yaml yarn.lock *.db *.sqlite "
+    "*.db-journal *.db-wal").split();
 
-    _nested_ignore_cache = {};
-    _nested_ignore_lock = threading.Lock();
-}
+glob NESTED_OUTPUT_DIR_MARKERS: dict[str, frozenset[str]] = {
+    "vendor": frozenset({
+        "composer.json",
+        "go.mod",
+        "go.work",
+        "Gemfile",
+        "Rakefile",
+        "Cargo.toml",
+    }),
+    "target": frozenset({"pom.xml", "Cargo.toml", "build.sbt"}),
+    "build": frozenset({
+        "build.gradle",
+        "build.gradle.kts",
+        "settings.gradle",
+        "settings.gradle.kts",
+    }),
+    ".next": frozenset({"next.config.js", "next.config.mjs", "next.config.cjs", "next.config.ts"}),
+    ".nuxt": frozenset({"nuxt.config.js", "nuxt.config.mjs", "nuxt.config.ts"}),
+};
+
+glob _MODULE_SCAN_DEPTH: any = env_int("CRG_MODULE_SCAN_DEPTH", 3);
+
+glob _MODULE_SCAN_MAX_DIRS: any = env_int("CRG_MODULE_SCAN_MAX_DIRS", 2000);
+
+glob _MAX_NESTED_OUTPUT_PATTERNS: any = 200;
+
+glob _NESTED_IGNORE_TTL_SECONDS: any = env_float("CRG_NESTED_IGNORE_TTL", 300.0);
+
+glob _nested_ignore_cache: dict[tuple[str, tuple[str, ...], tuple[str, ...]], tuple[float, list[str]]] = {};
+
+glob _nested_ignore_lock: any = threading.Lock();
 
 def find_svn_root(start: Path | None = None) -> Optional[Path];
 def find_repo_root(start: Path | None = None, stop_at: Path | None = None) -> Optional[Path];
@@ -301,14 +134,9 @@ def _load_ignore_patterns(repo_root: Path) -> list[str];
 def _should_ignore(path: str, patterns: list[str]) -> bool;
 def _child_directories(directory: Path) -> list[tuple[str, bool]];
 
-glob max_depth_default_: any;
+glob max_depth_default_: any = _MODULE_SCAN_DEPTH;
 
-glob max_dirs_default_: any;
-
-with entry {
-    max_depth_default_ = _MODULE_SCAN_DEPTH;
-    max_dirs_default_ = _MODULE_SCAN_MAX_DIRS;
-}
+glob max_dirs_default_: any = _MODULE_SCAN_MAX_DIRS;
 
 def _scan_nested_output_dirs(
     repo_root: Path,
@@ -322,18 +150,15 @@ def _nested_output_ignore_patterns(
 def clear_nested_ignore_cache(repo_root: Path | None = None);
 def _is_binary(path: Path) -> bool;
 
-with entry {
-    _RECURSE_SUBMODULES = os.environ.get("CRG_RECURSE_SUBMODULES", "").lower()
-        in ("1", "true", "yes");
-}
+glob _RECURSE_SUBMODULES: any = os.environ.get("CRG_RECURSE_SUBMODULES", "").lower()
+    in ("1", "true", "yes");
 
 def _git_branch_info(repo_root: Path) -> tuple[str, str];
 def _svn_revision_info(repo_root: Path) -> tuple[str, str];
 
-with entry {
-    _SAFE_GIT_REF = re.compile("^[A-Za-z0-9_.~^/@{}\\-]+$");
-    _SAFE_SVN_REV = re.compile("^r?\\d+(:r?\\d+|:HEAD|:BASE|:COMMITTED)?$", re.IGNORECASE);
-}
+glob _SAFE_GIT_REF: any = re.compile("^[A-Za-z0-9_.~^/@{}\\-]+$");
+
+glob _SAFE_SVN_REV: any = re.compile("^r?\\d+(:r?\\d+|:HEAD|:BASE|:COMMITTED)?$", re.IGNORECASE);
 
 def _decode_name_status_paths(output: bytes) -> list[str];
 def _store_vcs_metadata(repo_root: Path, store: "GraphStore") -> bool;
@@ -368,13 +193,13 @@ def get_staged_and_unstaged(
     repo_root: Path, *, timeout: float | None = None, require_vcs: bool = False
 ) -> list[str];
 
-with entry {
-    DEFAULT_REVIEW_BASE = "HEAD~1";
+glob DEFAULT_REVIEW_BASE: any = "HEAD~1";
 
-    ONE_COMMIT_NOTE = "this repository has one commit; reviewing uncommitted and new files instead.";
-    NO_COMMIT_NOTE = "this repository has no commits yet; reviewing uncommitted and new files instead.";
-    SHALLOW_CLONE_NOTE = "HEAD~1 is not in this shallow clone; reviewing uncommitted and new files instead. Run `git fetch --deepen=1` to review the last commit.";
-}
+glob ONE_COMMIT_NOTE: any = "this repository has one commit; reviewing uncommitted and new files instead.";
+
+glob NO_COMMIT_NOTE: any = "this repository has no commits yet; reviewing uncommitted and new files instead.";
+
+glob SHALLOW_CLONE_NOTE: any = "HEAD~1 is not in this shallow clone; reviewing uncommitted and new files instead. Run `git fetch --deepen=1` to review the last commit.";
 
 def _git_is_shallow(repo_root: Path, timeout: float) -> bool;
 def _git_commit_known(repo_root: Path, ref: str, timeout: float) -> bool | None;
@@ -383,19 +208,13 @@ def _usable_review_base(
     repo_root: Path, base: str, resolved_base: str, timeout: float, notes: list[str] | None
 ) -> str;
 
-glob base_default_: any;
-
-with entry {
-    base_default_ = DEFAULT_REVIEW_BASE;
-}
+glob base_default_: any = DEFAULT_REVIEW_BASE;
 
 def discover_review_changes(
     repo_root: Path, base: str = base_default_, *, notes: list[str] | None = None
 ) -> tuple[list[str], str];
 
-with entry {
-    _FRESHNESS_FILE_LIMIT = 200;
-}
+glob _FRESHNESS_FILE_LIMIT: any = 200;
 
 def graph_holds_commits(
     repo_root: Path, store: GraphStore, built_at: str, *, timeout: float | None = None
@@ -409,9 +228,7 @@ def files_hold_commits(
 ) -> bool;
 def get_all_tracked_files(repo_root: Path, recurse_submodules: bool | None = None) -> list[str];
 
-with entry {
-    INSTALL_MANIFEST = PurePosixPath(".code-review-graph", "install-manifest.json");
-}
+glob INSTALL_MANIFEST: any = PurePosixPath(".code-review-graph", "install-manifest.json");
 
 def install_manifest_paths(repo_root: Path) -> frozenset[str];
 def _without_install_files(repo_root: Path, untracked: list[str]) -> list[str];
@@ -420,11 +237,11 @@ def _get_untracked_files(
 ) -> list[str];
 def _get_svn_all_tracked_files(repo_root: Path) -> list[str];
 
-with entry {
-    FOLLOW_SYMLINKS_ENV = "CRG_FOLLOW_SYMLINKS";
-    _FOLLOWED_FILES_KEY = "symlink_followed_files";
-    _FOLLOWED_DIRS_KEY = "symlink_followed_dirs";
-}
+glob FOLLOW_SYMLINKS_ENV: any = "CRG_FOLLOW_SYMLINKS";
+
+glob _FOLLOWED_FILES_KEY: any = "symlink_followed_files";
+
+glob _FOLLOWED_DIRS_KEY: any = "symlink_followed_dirs";
 
 def follow_symlinks_enabled(explicit: bool | None = None) -> bool;
 def _inventory_candidates(repo_root: Path, recurse_submodules: bool | None = None) -> list[str];
@@ -432,9 +249,7 @@ def _keep_candidate(
     repo_root: Path, rel_path: str, ignore_patterns: list[str], parser: CodeParser
 ) -> bool;
 
-with entry {
-    _reported_links = set[any]();
-}
+glob _reported_links: any = set[any]();
 
 def _report_once(`root: Path, key: str, level: int, message: str, *args_: object);
 def _max_followed_files -> int;
@@ -489,22 +304,17 @@ def _reconcile_stale_files(
 ) -> list[str];
 def _assert_graph_matches_root(repo_root: Path, store: GraphStore);
 
-with entry {
-    _ROOT_PROBE_LIMIT = 25;
-}
+glob _ROOT_PROBE_LIMIT: any = 25;
 
 def assert_graph_serves_root(repo_root: Path, store: GraphStore);
 
-with entry {
-    _MAX_DEPENDENT_HOPS = env_int("CRG_DEPENDENT_HOPS", 2);
-    _MAX_DEPENDENT_FILES = 500;
-}
+glob _MAX_DEPENDENT_HOPS: any = env_int("CRG_DEPENDENT_HOPS", 2);
+
+glob _MAX_DEPENDENT_FILES: any = 500;
 
 def _single_hop_dependents(store: GraphStore, file_path: str) -> set[str];
 
-with entry {
-    _NO_GRAMMAR_LANGUAGES = frozenset({"rescript", "vbnet", "yaml", "properties"});
-}
+glob _NO_GRAMMAR_LANGUAGES: any = frozenset({"rescript", "vbnet", "yaml", "properties"});
 
 def _prewarm_parser_probes(parser: Any, rel_paths: list[str]);
 
@@ -514,11 +324,7 @@ class DependentList(builtins.list) {
     def init(items: list, *, truncated: bool = False);
 }
 
-glob max_hops_default_: any;
-
-with entry {
-    max_hops_default_ = _MAX_DEPENDENT_HOPS;
-}
+glob max_hops_default_: any = _MAX_DEPENDENT_HOPS;
 
 def find_dependents(
     store: GraphStore, file_path: str, max_hops: int = max_hops_default_
@@ -545,9 +351,7 @@ def incremental_update(
     reconcile_followed: bool = False,
 ) -> dict;
 
-with entry {
-    _DEBOUNCE_SECONDS = 1;
-}
+glob _DEBOUNCE_SECONDS: any = 1;
 
 class _WatchDebouncer(threading.Thread) {
     def init(interval: float, callback: Callable[[list[Any]], None]);
@@ -562,26 +366,28 @@ class _WatchDebouncer(threading.Thread) {
 def _raise_watch_update_errors(result: dict, context: str);
 def _raise_watch_postprocess_warnings(result: object);
 
-with entry {
-    _WATCH_PLAN_DEPTH = env_int("CRG_WATCH_PLAN_DEPTH", 3);
-    _MAX_WATCH_SCHEDULES = env_int("CRG_MAX_WATCH_SCHEDULES", 24);
-    _WATCH_SPLIT_MIN_DIRS = env_int("CRG_WATCH_SPLIT_MIN_DIRS", 4);
-    _WATCH_HEALTH_INTERVAL = env_float("CRG_WATCH_HEALTH_INTERVAL", 10.0);
-    _WATCH_STOP_TIMEOUT = 10.0;
-    _WATCH_TICK_SECONDS = 1.0;
-    _WATCH_LOCK_POLL_SECONDS = 0.25;
-    _PROMOTION_RETRY_SECONDS = 30.0;
-    _MAX_UNWATCHED_TRACKED = env_int("CRG_MAX_UNWATCHED_TRACKED", 256);
-}
+glob _WATCH_PLAN_DEPTH: any = env_int("CRG_WATCH_PLAN_DEPTH", 3);
+
+glob _MAX_WATCH_SCHEDULES: any = env_int("CRG_MAX_WATCH_SCHEDULES", 24);
+
+glob _WATCH_SPLIT_MIN_DIRS: any = env_int("CRG_WATCH_SPLIT_MIN_DIRS", 4);
+
+glob _WATCH_HEALTH_INTERVAL: any = env_float("CRG_WATCH_HEALTH_INTERVAL", 10.0);
+
+glob _WATCH_STOP_TIMEOUT: any = 10.0;
+
+glob _WATCH_TICK_SECONDS: any = 1.0;
+
+glob _WATCH_LOCK_POLL_SECONDS: any = 0.25;
+
+glob _PROMOTION_RETRY_SECONDS: any = 30.0;
+
+glob _MAX_UNWATCHED_TRACKED: any = env_int("CRG_MAX_UNWATCHED_TRACKED", 256);
 
 def _watch_child_dirs(directory: Path, cache: dict[Path, list[Path]] | None = None) -> list[Path];
 def _ignored_tree_weight(directory: Path, cap: int) -> int;
 
-glob split_threshold_default_: any;
-
-with entry {
-    split_threshold_default_ = _WATCH_SPLIT_MIN_DIRS;
-}
+glob split_threshold_default_: any = _WATCH_SPLIT_MIN_DIRS;
 
 def _plan_watch_subtree(
     directory: Path,
@@ -593,17 +399,11 @@ def _plan_watch_subtree(
     split_threshold: int = split_threshold_default_,
 ) -> tuple[bool, list[tuple[Path, bool]]];
 
-glob max_depth_default__: any;
+glob max_depth_default__: any = _WATCH_PLAN_DEPTH;
 
-glob max_schedules_default_: any;
+glob max_schedules_default_: any = _MAX_WATCH_SCHEDULES;
 
-glob split_threshold_default__: any;
-
-with entry {
-    max_depth_default__ = _WATCH_PLAN_DEPTH;
-    max_schedules_default_ = _MAX_WATCH_SCHEDULES;
-    split_threshold_default__ = _WATCH_SPLIT_MIN_DIRS;
-}
+glob split_threshold_default__: any = _WATCH_SPLIT_MIN_DIRS;
 
 def _plan_watch_paths(
     repo_root: Path,
@@ -613,17 +413,11 @@ def _plan_watch_paths(
     split_threshold: int = split_threshold_default__,
 ) -> list[tuple[Path, bool]];
 
-glob max_depth_default___: any;
+glob max_depth_default___: any = _WATCH_PLAN_DEPTH;
 
-glob max_schedules_default__: any;
+glob max_schedules_default__: any = _MAX_WATCH_SCHEDULES;
 
-glob split_threshold_default___: any;
-
-with entry {
-    max_depth_default___ = _WATCH_PLAN_DEPTH;
-    max_schedules_default__ = _MAX_WATCH_SCHEDULES;
-    split_threshold_default___ = _WATCH_SPLIT_MIN_DIRS;
-}
+glob split_threshold_default___: any = _WATCH_SPLIT_MIN_DIRS;
 
 def _plan_watch_paths_with_status(
     repo_root: Path,
@@ -642,11 +436,7 @@ class _WatchEntry(NamedTuple) {
     has identity: tuple[int, int, float] | None;
 }
 
-glob max_schedules_default___: any;
-
-with entry {
-    max_schedules_default___ = _MAX_WATCH_SCHEDULES;
-}
+glob max_schedules_default___: any = _MAX_WATCH_SCHEDULES;
 
 obj _WatchSupervisor {
     has _observer: any,

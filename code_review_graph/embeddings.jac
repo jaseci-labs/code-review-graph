@@ -1,30 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import functools;
-
-import hashlib;
-
-import heapq;
-
-import logging;
-
-import os;
-
-import re;
-
-import sqlite3;
-
-import struct;
-
-import sys;
-
-import threading;
-
-import time;
+import builtins, operator, functools, hashlib, heapq, logging, os, re, sqlite3, struct, sys, threading, time;
 
 import from abc { ABC, abstractmethod }
 
@@ -34,34 +10,9 @@ import from typing { Any }
 
 import from urllib.parse { urlparse }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _USER_AGENT: any;
-
-glob LOCAL_DEFAULT_MODEL: any;
-
-glob _MODEL_CACHE: dict[str, Any];
-
-glob _MODEL_INIT_LOCK: any;
-
-glob CLOUD_PROVIDERS: any;
-
-glob _VALID_PROVIDERS: any;
-
-glob _EMBEDDINGS_SCHEMA: any;
-
-glob _SEARCH_CHUNK_ROWS: any;
-
-glob _IDENTIFIER_SPLIT_RE: any;
-
-glob _MAX_EMBEDDED_DOCSTRING_CHARS: any;
-
-glob REFRESH_SKIPPED_WARNING: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _USER_AGENT = f"code-review-graph/{_crg_version} (+https://github.com/tirth8205/code-review-graph)";
-}
+glob _USER_AGENT: any = f"code-review-graph/{_crg_version} (+https://github.com/tirth8205/code-review-graph)";
 
 class EmbeddingProvider(ABC) {
     @abstractmethod
@@ -78,11 +29,11 @@ class EmbeddingProvider(ABC) {
     def name -> str;
 }
 
-with entry {
-    LOCAL_DEFAULT_MODEL = "all-MiniLM-L6-v2";
-    _MODEL_CACHE = {};
-    _MODEL_INIT_LOCK = threading.RLock();
-}
+glob LOCAL_DEFAULT_MODEL: any = "all-MiniLM-L6-v2";
+
+glob _MODEL_CACHE: dict[str, Any] = {};
+
+glob _MODEL_INIT_LOCK: any = threading.RLock();
 
 def clear_model_cache;
 def prewarm_local_embeddings(model_name: str | None = None);
@@ -245,40 +196,31 @@ class VoyageEmbeddingProvider(EmbeddingProvider) {
     }
 }
 
-with entry {
-    CLOUD_PROVIDERS = {"google", "minimax", "openai", "voyage"};
-}
+glob CLOUD_PROVIDERS: any = {"google", "minimax", "openai", "voyage"};
 
 def _is_localhost_url(url: str) -> bool;
 def _warn_cloud_egress(provider_name: str);
 
-with entry {
-    _VALID_PROVIDERS = {"local", "openai", "google", "minimax", "voyage"};
-}
+glob _VALID_PROVIDERS: any = {"local", "openai", "google", "minimax", "voyage"};
 
 def get_provider(provider: str | None = None, model: str | None = None) -> EmbeddingProvider | None;
 def _check_available -> bool;
 
-with entry {
-    _EMBEDDINGS_SCHEMA = "\nCREATE TABLE IF NOT EXISTS embeddings (\n    qualified_name TEXT PRIMARY KEY,\n    vector BLOB NOT NULL,\n    text_hash TEXT NOT NULL,\n    provider TEXT NOT NULL DEFAULT 'unknown'\n);\n";
-}
+glob _EMBEDDINGS_SCHEMA: any = "\nCREATE TABLE IF NOT EXISTS embeddings (\n    qualified_name TEXT PRIMARY KEY,\n    vector BLOB NOT NULL,\n    text_hash TEXT NOT NULL,\n    provider TEXT NOT NULL DEFAULT 'unknown'\n);\n";
 
 def _encode_vector(vec: list[float]) -> bytes;
 def _decode_vector(blob: bytes) -> list[float];
 def _cosine_similarity(a: list[float], b: list[float]) -> float;
 
-with entry {
-    _SEARCH_CHUNK_ROWS = 500;
-}
+glob _SEARCH_CHUNK_ROWS: any = 500;
 
 def _decode_rows(blobs: list[bytes], dims: int) -> Any;
 def _row_norms(matrix: Any) -> Any;
 def _cosine_scores(matrix: Any, norms: Any, query: Any, query_norm: float) -> Any;
 
-with entry {
-    _IDENTIFIER_SPLIT_RE = re.compile("([a-z])([A-Z])|[_./\\-]+");
-    _MAX_EMBEDDED_DOCSTRING_CHARS = 400;
-}
+glob _IDENTIFIER_SPLIT_RE: any = re.compile("([a-z])([A-Z])|[_./\\-]+");
+
+glob _MAX_EMBEDDED_DOCSTRING_CHARS: any = 400;
 
 def _split_identifier(name: str) -> str;
 def _node_to_text(`node: GraphNode) -> str;
@@ -338,9 +280,7 @@ obj EmbeddingStore {
 
 def embed_all_nodes(graph_store: GraphStore, embedding_store: EmbeddingStore) -> int;
 
-with entry {
-    REFRESH_SKIPPED_WARNING = "Embedding refresh skipped: this graph has no embeddings yet. Run `code-review-graph embed` (MCP: embed_graph_tool) once with the same provider and model to create them.";
-}
+glob REFRESH_SKIPPED_WARNING: any = "Embedding refresh skipped: this graph has no embeddings yet. Run `code-review-graph embed` (MCP: embed_graph_tool) once with the same provider and model to create them.";
 
 def has_embeddings(graph_store: GraphStore) -> bool;
 def refresh_embeddings(graph_store: GraphStore, *, provider: str, model: str) -> dict[str, int]

@@ -1,16 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import errno;
-
-import logging;
-
-import os;
-
-import sys;
+import builtins, operator, errno, logging, os, sys;
 
 import from pathlib { Path }
 
@@ -18,16 +8,9 @@ import from typing { Any }
 
 import from weakref { WeakSet }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _open_locks: WeakSet[WriteLock];
-
-glob WRITE_LOCK_NAME: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _open_locks = WeakSet();
-}
+glob _open_locks: WeakSet[WriteLock] = WeakSet();
 
 def _close_inherited_locks;
 
@@ -35,8 +18,9 @@ with entry {
     if hasattr(os, "register_at_fork") {
         os.register_at_fork(after_in_child=_close_inherited_locks);
     }
-    WRITE_LOCK_NAME = "write.lock";
 }
+
+glob WRITE_LOCK_NAME: any = "write.lock";
 
 def write_lock_path(db_path: Path) -> Path;
 

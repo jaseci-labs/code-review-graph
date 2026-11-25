@@ -98,7 +98,6 @@ impl _report_refresh_skipped(result: dict[str, Any], warnings: list[str]) {
 }
 
 impl is_lock_contention(exc: BaseException) -> bool {
-    message: any;
     if not isinstance(exc, sqlite3.OperationalError) {
         return False;
     }
@@ -106,7 +105,7 @@ impl is_lock_contention(exc: BaseException) -> bool {
     if isinstance(errorcode, `int) {
         return errorcode & 255 in _CONTENTION_ERRORCODES;
     }
-    message = `str(exc).lower();
+    message: any = `str(exc).lower();
     return `any(text in message for text in _CONTENTION_MESSAGES);
 }
 
@@ -199,7 +198,7 @@ impl _run_postprocess(
             ret: any;
             (node_id, name, kind, params, ret) = (row[0], row[1], row[2], row[3], row[4]);
             if kind in ("Function", "Test") {
-                sig: any = "def " + format(name, "") + "(" + format(params or "", "") + ")";
+                sig: any = f"def {name}({params or ""})";
                 if ret {
                     sig += f" -> {ret}";
                 }
@@ -639,7 +638,7 @@ impl run_postprocess(
                 ret: any;
                 (node_id, name, kind, params, ret) = (row[0], row[1], row[2], row[3], row[4]);
                 if kind in ("Function", "Test") {
-                    sig: any = "def " + format(name, "") + "(" + format(params or "", "") + ")";
+                    sig: any = f"def {name}({params or ""})";
                     if ret {
                         sig += f" -> {ret}";
                     }

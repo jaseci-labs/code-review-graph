@@ -32,7 +32,6 @@ impl iter_source_files(repo_path: Path) -> Generator[any, any, any] {
 }
 
 impl grep_rank(repo_path: Path, terms: list[str], k: int = k_default_) -> list[tuple[str, int]] {
-    text: any;
     lowered: any = [t.lower() for t in terms if t];
     if not lowered {
         return [];
@@ -41,7 +40,7 @@ impl grep_rank(repo_path: Path, terms: list[str], k: int = k_default_) -> list[t
     scores: list[tuple[str, float]] = [];
     for path in iter_source_files(repo_path) {
         try {
-            text = path.read_text(encoding="utf-8", errors="replace").lower();
+            text: any = path.read_text(encoding="utf-8", errors="replace").lower();
         } except OSError {
             continue;
         }

@@ -1,25 +1,16 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import ipaddress;
+import builtins, ipaddress;
 
 import from starlette.middleware { Middleware }
 
 import from starlette.types { ASGIApp, Receive, Scope, Send }
 
-glob LOOPBACK_HOSTS: any;
+glob LOOPBACK_HOSTS: any = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"});
 
-glob _ALLOWED_ORIGIN_SCHEMES: any;
+glob _ALLOWED_ORIGIN_SCHEMES: any = frozenset({"http", "https"});
 
-glob _FORBIDDEN_AUTHORITY_CHARS: any;
-
-with entry {
-    LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"});
-
-    _ALLOWED_ORIGIN_SCHEMES = frozenset({"http", "https"});
-    _FORBIDDEN_AUTHORITY_CHARS = frozenset("/\\?#@");
-}
+glob _FORBIDDEN_AUTHORITY_CHARS: any = frozenset("/\\?#@");
 
 def is_loopback_host(host: str) -> bool;
 def _normalize_port(value: str) -> str | None;

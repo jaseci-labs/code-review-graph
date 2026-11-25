@@ -4,20 +4,7 @@ impl estimate_tokens(text: str) -> int {
 
 impl compute_naive_tokens(repo_root: Path) -> int {
     total: any = 0;
-    exts: any = (
-        ".py",
-        ".js",
-        ".ts",
-        ".go",
-        ".rs",
-        ".java",
-        ".c",
-        ".cpp",
-        ".rb",
-        ".php",
-        ".swift",
-        ".kt",
-    );
+    exts: any = tuple(".py .js .ts .go .rs .java .c .cpp .rb .php .swift .kt".split());
     for ext in exts {
         for f in repo_root.rglob(f"*{ext}") {
             try {

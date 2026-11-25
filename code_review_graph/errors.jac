@@ -1,8 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import sqlite3;
+import builtins, sqlite3;
 
 obj CodeReviewGraphError(Exception) {
     def __repr__ -> str;

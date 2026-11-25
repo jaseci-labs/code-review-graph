@@ -1,14 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import json;
-
-import os;
-
-import re;
+import builtins, operator, json, os, re;
 
 import from pathlib { Path }
 
@@ -52,47 +44,31 @@ obj NpmAliasResolver {
     def __hash__ -> int;
 }
 
-glob _PACKAGE_NAME: any;
-
-glob _Version: any;
-
-glob _Comparator: any;
-
-glob _TAG_RANGES: any;
-
-glob _STAR_RANGES: any;
-
-glob _FULL_VERSION: any;
-
-glob _PARTIAL_VERSION: any;
-
-glob _OPERATOR: any;
-
-glob _HYPHEN: any;
-
-glob _LOWEST_PRERELEASE: any;
-
-with entry {
-    _PACKAGE_NAME = re.compile("^(?:@[^/@\\s]+/)?[^/@\\s]+$");
-}
+glob _PACKAGE_NAME: any = re.compile("^(?:@[^/@\\s]+/)?[^/@\\s]+$");
 
 def _parse_alias_spec(specification: str) -> Optional[tuple[str, str]];
 
-with entry {
-    _Version = builtins.tuple[int, int, int, builtins.tuple[str, ...]];
-    _Comparator = builtins.tuple[str, _Version];
-    _TAG_RANGES = frozenset({"", "latest"});
-    _STAR_RANGES = frozenset({"*", "x", "X"});
-    _FULL_VERSION = re.compile(
-        "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$"
-    );
-    _PARTIAL_VERSION = re.compile(
-        "^v?(\\d+|[xX*])(?:\\.(\\d+|[xX*]))?(?:\\.(\\d+|[xX*]))?(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$",
-    );
-    _OPERATOR = re.compile("^(<=|>=|<|>|=|~>|~|\\^)?(.*)$");
-    _HYPHEN = re.compile("^(\\S+)\\s+-\\s+(\\S+)$");
-    _LOWEST_PRERELEASE = ("0",);
-}
+glob _Version: any = builtins.tuple[int, int, int, builtins.tuple[str, ...]];
+
+glob _Comparator: any = builtins.tuple[str, _Version];
+
+glob _TAG_RANGES: any = frozenset({"", "latest"});
+
+glob _STAR_RANGES: any = frozenset({"*", "x", "X"});
+
+glob _FULL_VERSION: any = re.compile(
+    "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$"
+);
+
+glob _PARTIAL_VERSION: any = re.compile(
+    "^v?(\\d+|[xX*])(?:\\.(\\d+|[xX*]))?(?:\\.(\\d+|[xX*]))?(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$",
+);
+
+glob _OPERATOR: any = re.compile("^(<=|>=|<|>|=|~>|~|\\^)?(.*)$");
+
+glob _HYPHEN: any = re.compile("^(\\S+)\\s+-\\s+(\\S+)$");
+
+glob _LOWEST_PRERELEASE: any = ("0",);
 
 def version_satisfies(version: object, version_range: str) -> bool;
 

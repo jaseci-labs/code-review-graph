@@ -108,7 +108,7 @@ impl _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> 
         }
     }
     if callers {
-        lines.append("  Called by: " + format(", ".join(callers), ""));
+        lines.append(f"  Called by: {", ".join(callers)}");
     }
     callees: list[str] = [];
     seen.clear();
@@ -122,11 +122,11 @@ impl _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> 
         }
     }
     if callees {
-        lines.append("  Calls: " + format(", ".join(callees), ""));
+        lines.append(f"  Calls: {", ".join(callees)}");
     }
     flow_names: any = _get_flow_names_for_node(conn, `node.id);
     if flow_names {
-        lines.append("  Flows: " + format(", ".join(flow_names), ""));
+        lines.append(f"  Flows: {", ".join(flow_names)}");
     }
     tests: list[str] = [];
     for e in store.get_edges_by_source(qn) {
@@ -138,7 +138,7 @@ impl _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> 
         }
     }
     if tests {
-        lines.append("  Tests: " + format(", ".join(tests), ""));
+        lines.append(f"  Tests: {", ".join(tests)}");
     }
 
     return lines;

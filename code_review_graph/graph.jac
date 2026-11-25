@@ -1,24 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import builtins;
-
-import operator;
-
-import hashlib;
-
-import json;
-
-import logging;
-
-import re;
-
-import sqlite3;
-
-import threading;
-
-import time;
+import importlib, builtins, operator, hashlib, json, logging, re, sqlite3, threading, time;
 
 import from collections.abc { Iterable, Iterator }
 
@@ -30,144 +12,57 @@ import from pathlib { Path, PurePosixPath, PureWindowsPath }
 
 import from typing { TYPE_CHECKING, Any, Optional }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _UPDATE_BATCH: any;
+glob _UPDATE_BATCH: any = 50000;
 
-glob _JAVASCRIPT_LANGUAGE_FAMILY: any;
+glob _JAVASCRIPT_LANGUAGE_FAMILY: any = ("javascript", "typescript", "tsx", "html");
 
-glob _JAVASCRIPT_LANGUAGE_FAMILY_SET: any;
+glob _JAVASCRIPT_LANGUAGE_FAMILY_SET: any = frozenset(_JAVASCRIPT_LANGUAGE_FAMILY);
 
-glob _COLLISION_SUFFIX_RE: any;
+glob _COLLISION_SUFFIX_RE: any = re.compile("^[0-9a-f]{12}(?::(?:[2-9]|[1-9][0-9]+))?$");
 
-glob _COLLISION_IDENTITY_RE: any;
+glob _COLLISION_IDENTITY_RE: any = re.compile(
+    "^(?P<base>.+):S[0-9a-f]{12}(?::(?:[2-9]|[1-9][0-9]+))?$"
+);
 
-glob _COLLISION_ENDPOINT_KEY: any;
+glob _COLLISION_ENDPOINT_KEY: any = "collision_endpoint";
 
-glob _COLLISION_AMBIGUOUS_TIER: any;
+glob _COLLISION_AMBIGUOUS_TIER: any = "AMBIGUOUS";
 
-glob _COLLISION_AMBIGUOUS_SCORE: any;
+glob _COLLISION_AMBIGUOUS_SCORE: any = 0.4;
 
-glob _COLLISION_CALL_KINDS: any;
+glob _COLLISION_CALL_KINDS: any = ("CALLS", "REFERENCES");
 
-glob _COLLISION_CANDIDATE_LIMIT: any;
+glob _COLLISION_CANDIDATE_LIMIT: any = 20;
 
-glob _AMBIGUITY_KEYS: any;
-
-glob _ORDERED_PAIRS_MAX_STEPS: any;
-
-glob MAX_INDEXED_DOCSTRING_CHARS: any;
-
-glob MAX_INDEXED_TOKEN_CHARS: any;
-
-glob _ALNUM_RUN_RE: any;
-
-glob _CAMEL_BOUNDARY_RE: any;
-
-glob _SCHEMA_SQL: any;
-
-glob RESOLUTION_ALL: any;
-
-glob RESOLUTION_DIRECT: any;
-
-glob RESOLUTION_UNRESOLVED: any;
-
-glob QUERY_RESOLUTIONS: any;
-
-glob IMPACT_RESOLUTIONS: any;
-
-glob IMPORT_SCOPE_MAX_ANCESTORS: any;
-
-glob TIER_EXTRACTED: any;
-
-glob TIER_INFERRED: any;
-
-glob TIER_AMBIGUOUS: any;
-
-glob TIER_UNRESOLVED: any;
-
-glob _SCORE_EXTRACTED: any;
-
-glob _SCORE_INFERRED: any;
-
-glob _SCORE_AMBIGUOUS: any;
-
-glob _SCORE_UNRESOLVED: any;
-
-glob _RESOLVER_BOUND_KEYS: any;
-
-glob _SELF_RECEIVERS: any;
-
-glob _SUPER_RECEIVERS: any;
-
-glob _TYPED_RECEIVER_LANGUAGES: any;
-
-glob _UNTYPED_RECEIVER_LANGUAGES: any;
-
-glob _NODE_ENDPOINTS: any;
-
-glob _SYMBOL_SEPARATOR_RE: any;
-
-glob _CERTAINTY_SCORE_SQL: any;
-
-glob IMPACT_FRONTIER_DIRS_SQL: any;
-
-glob _IMPACT_AOP_EXTRA_LIKE: any;
-
-glob _IMPACT_AOP_DIRECTION_CASE: any;
-
-glob _RECOVERY_HINT: any;
-
-glob _SQLITE_HEADER: any;
-
-glob _CORRUPTION_MESSAGES: any;
-
-glob _INCOMPATIBLE_SCHEMA_MESSAGES: any;
-
-glob _NAME_CONTROL_CHARS: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _UPDATE_BATCH = 50000;
-    _JAVASCRIPT_LANGUAGE_FAMILY = ("javascript", "typescript", "tsx", "html");
-    _JAVASCRIPT_LANGUAGE_FAMILY_SET = frozenset(_JAVASCRIPT_LANGUAGE_FAMILY);
-    _COLLISION_SUFFIX_RE = re.compile("^[0-9a-f]{12}(?::(?:[2-9]|[1-9][0-9]+))?$");
-    _COLLISION_IDENTITY_RE = re.compile("^(?P<base>.+):S[0-9a-f]{12}(?::(?:[2-9]|[1-9][0-9]+))?$");
-    _COLLISION_ENDPOINT_KEY = "collision_endpoint";
-    _COLLISION_AMBIGUOUS_TIER = "AMBIGUOUS";
-    _COLLISION_AMBIGUOUS_SCORE = 0.4;
-    _COLLISION_CALL_KINDS = ("CALLS", "REFERENCES");
-    _COLLISION_CANDIDATE_LIMIT = 20;
-    _AMBIGUITY_KEYS = (
-        "ambiguous_targets",
-        "ambiguous_target_count",
-        "ambiguous_targets_truncated",
-        "unresolved_targets",
-        "unresolved_target_count",
-        "unresolved_targets_truncated",
-    );
-}
+glob _AMBIGUITY_KEYS: any = (
+    "ambiguous_targets",
+    "ambiguous_target_count",
+    "ambiguous_targets_truncated",
+    "unresolved_targets",
+    "unresolved_target_count",
+    "unresolved_targets_truncated",
+);
 
 def _load_collision_extra(raw: Optional[str]) -> dict;
 def _plain_collision_name(qualified: str) -> str;
 def _ambiguous_collision_extra(extra: dict, base: str, candidates: list[str]) -> dict;
 def _bound_collision_extra(extra: dict) -> dict;
 
-with entry {
-    _ORDERED_PAIRS_MAX_STEPS = 1000000;
-}
+glob _ORDERED_PAIRS_MAX_STEPS: any = 1000000;
 
 def _ordered_pairs(new_lines: list[int], old_lines: list[int]) -> list[tuple[int, int]];
 def _compatible_edge_languages(language: str) -> tuple[str, ...];
 def _symbol_of(qualified_name: str) -> str;
 
-with entry {
-    MAX_INDEXED_DOCSTRING_CHARS = 400;
-    MAX_INDEXED_TOKEN_CHARS = 200;
+glob MAX_INDEXED_DOCSTRING_CHARS: any = 400;
 
-    _ALNUM_RUN_RE = re.compile("[0-9A-Za-z]+");
-    _CAMEL_BOUNDARY_RE = re.compile("(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])");
-}
+glob MAX_INDEXED_TOKEN_CHARS: any = 200;
+
+glob _ALNUM_RUN_RE: any = re.compile("[0-9A-Za-z]+");
+
+glob _CAMEL_BOUNDARY_RE: any = re.compile("(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])");
 
 def _index_tokens(*values_: str | None) -> str;
 def identifier_words(text: str) -> set[str];
@@ -176,14 +71,17 @@ def _indexed_docstring(extra: dict[str, Any] | None) -> str | None;
 def qualified_name_of(`node: NodeInfo) -> str;
 def _bridge_qualified_name(qualified_name: str) -> str;
 
-with entry {
-    _SCHEMA_SQL = "\nCREATE TABLE IF NOT EXISTS nodes (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    kind TEXT NOT NULL,          -- File, Class, Function, Type, Test\n    name TEXT NOT NULL,\n    qualified_name TEXT NOT NULL UNIQUE,\n    file_path TEXT NOT NULL,\n    line_start INTEGER,\n    line_end INTEGER,\n    language TEXT,\n    parent_name TEXT,\n    params TEXT,\n    return_type TEXT,\n    modifiers TEXT,\n    is_test INTEGER DEFAULT 0,\n    file_hash TEXT,\n    extra TEXT DEFAULT '{}',\n    -- Symbol portion of qualified_name (everything after the first \"::\").\n    -- Stored so a dotted-tail lookup is an indexed equality test instead of a\n    -- substr() scan over every node; see search_nodes_by_qualified_tail.\n    -- idx_nodes_symbol is created by migration v10, not here: _init_schema runs\n    -- before run_migrations, so indexing a column this CREATE TABLE cannot add\n    -- to an existing table would break every pre-existing database on open.\n    symbol TEXT,\n    -- Documentation summary lifted out of extra['docstring'] so the FTS5\n    -- external-content index can reach it (FTS columns must be real columns\n    -- of the content table). See migration v11.\n    docstring TEXT,\n    -- camelCase/PascalCase word splits for name, parent_name and the file\n    -- stem. unicode61 splits on punctuation but keeps hashPassword as one\n    -- token, so \"password\" could never match it. Added by migration v11.\n    name_tokens TEXT,\n    updated_at REAL NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS edges (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    kind TEXT NOT NULL,           -- CALLS, IMPORTS_FROM, INHERITS, REFERENCES, etc.\n    source_qualified TEXT NOT NULL,\n    target_qualified TEXT NOT NULL,\n    file_path TEXT NOT NULL,\n    line INTEGER DEFAULT 0,\n    extra TEXT DEFAULT '{}',\n    confidence REAL DEFAULT 1.0,\n    confidence_tier TEXT DEFAULT 'EXTRACTED',\n    -- 'direct' when target_qualified names an indexed node, 'unresolved' when\n    -- it is a bare name the read path can only match by name. NULL for edge\n    -- kinds where the distinction is meaningless (an IMPORTS_FROM target is a\n    -- file path, not a call target) and for rows written since the last\n    -- refresh_target_resolution() pass. Same rule as nodes.symbol above:\n    -- idx_edges_kind_target_resolution is created by migration v11, not here.\n    target_resolution TEXT,\n    updated_at REAL NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS metadata (\n    key TEXT PRIMARY KEY,\n    value TEXT NOT NULL\n);\n\nCREATE INDEX IF NOT EXISTS idx_nodes_file ON nodes(file_path);\nCREATE INDEX IF NOT EXISTS idx_nodes_kind ON nodes(kind);\nCREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);\nCREATE INDEX IF NOT EXISTS idx_edges_kind ON edges(kind);\nCREATE INDEX IF NOT EXISTS idx_edges_target_kind ON edges(target_qualified, kind);\nCREATE INDEX IF NOT EXISTS idx_edges_source_kind ON edges(source_qualified, kind);\nCREATE INDEX IF NOT EXISTS idx_edges_file ON edges(file_path);\n";
-    RESOLUTION_ALL = "all";
-    RESOLUTION_DIRECT = "direct";
-    RESOLUTION_UNRESOLVED = "unresolved";
-    QUERY_RESOLUTIONS = (RESOLUTION_ALL, RESOLUTION_DIRECT, RESOLUTION_UNRESOLVED);
-    IMPACT_RESOLUTIONS = (RESOLUTION_ALL, RESOLUTION_DIRECT);
-}
+glob _SCHEMA_SQL: any = "\nCREATE TABLE IF NOT EXISTS nodes (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    kind TEXT NOT NULL,          -- File, Class, Function, Type, Test\n    name TEXT NOT NULL,\n    qualified_name TEXT NOT NULL UNIQUE,\n    file_path TEXT NOT NULL,\n    line_start INTEGER,\n    line_end INTEGER,\n    language TEXT,\n    parent_name TEXT,\n    params TEXT,\n    return_type TEXT,\n    modifiers TEXT,\n    is_test INTEGER DEFAULT 0,\n    file_hash TEXT,\n    extra TEXT DEFAULT '{}',\n    -- Symbol portion of qualified_name (everything after the first \"::\").\n    -- Stored so a dotted-tail lookup is an indexed equality test instead of a\n    -- substr() scan over every node; see search_nodes_by_qualified_tail.\n    -- idx_nodes_symbol is created by migration v10, not here: _init_schema runs\n    -- before run_migrations, so indexing a column this CREATE TABLE cannot add\n    -- to an existing table would break every pre-existing database on open.\n    symbol TEXT,\n    -- Documentation summary lifted out of extra['docstring'] so the FTS5\n    -- external-content index can reach it (FTS columns must be real columns\n    -- of the content table). See migration v11.\n    docstring TEXT,\n    -- camelCase/PascalCase word splits for name, parent_name and the file\n    -- stem. unicode61 splits on punctuation but keeps hashPassword as one\n    -- token, so \"password\" could never match it. Added by migration v11.\n    name_tokens TEXT,\n    updated_at REAL NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS edges (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    kind TEXT NOT NULL,           -- CALLS, IMPORTS_FROM, INHERITS, REFERENCES, etc.\n    source_qualified TEXT NOT NULL,\n    target_qualified TEXT NOT NULL,\n    file_path TEXT NOT NULL,\n    line INTEGER DEFAULT 0,\n    extra TEXT DEFAULT '{}',\n    confidence REAL DEFAULT 1.0,\n    confidence_tier TEXT DEFAULT 'EXTRACTED',\n    -- 'direct' when target_qualified names an indexed node, 'unresolved' when\n    -- it is a bare name the read path can only match by name. NULL for edge\n    -- kinds where the distinction is meaningless (an IMPORTS_FROM target is a\n    -- file path, not a call target) and for rows written since the last\n    -- refresh_target_resolution() pass. Same rule as nodes.symbol above:\n    -- idx_edges_kind_target_resolution is created by migration v11, not here.\n    target_resolution TEXT,\n    updated_at REAL NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS metadata (\n    key TEXT PRIMARY KEY,\n    value TEXT NOT NULL\n);\n\nCREATE INDEX IF NOT EXISTS idx_nodes_file ON nodes(file_path);\nCREATE INDEX IF NOT EXISTS idx_nodes_kind ON nodes(kind);\nCREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);\nCREATE INDEX IF NOT EXISTS idx_edges_kind ON edges(kind);\nCREATE INDEX IF NOT EXISTS idx_edges_target_kind ON edges(target_qualified, kind);\nCREATE INDEX IF NOT EXISTS idx_edges_source_kind ON edges(source_qualified, kind);\nCREATE INDEX IF NOT EXISTS idx_edges_file ON edges(file_path);\n";
+
+glob RESOLUTION_ALL: any = "all";
+
+glob RESOLUTION_DIRECT: any = "direct";
+
+glob RESOLUTION_UNRESOLVED: any = "unresolved";
+
+glob QUERY_RESOLUTIONS: any = (RESOLUTION_ALL, RESOLUTION_DIRECT, RESOLUTION_UNRESOLVED);
+
+glob IMPACT_RESOLUTIONS: any = (RESOLUTION_ALL, RESOLUTION_DIRECT);
 
 def _impact_resolution_guard(resolution: str) -> str;
 
@@ -269,44 +167,53 @@ class GraphStats {
     has last_updated: Optional[str];
 }
 
-with entry {
-    IMPORT_SCOPE_MAX_ANCESTORS = 12;
-}
+glob IMPORT_SCOPE_MAX_ANCESTORS: any = 12;
 
 def _edge_import_scope(extra: Optional[str]) -> Optional[str];
 def _edge_extra_is_unresolved(extra: Optional[str]) -> bool;
 
-with entry {
-    TIER_EXTRACTED = "EXTRACTED";
-    TIER_INFERRED = "INFERRED";
-    TIER_AMBIGUOUS = "AMBIGUOUS";
-    TIER_UNRESOLVED = "UNRESOLVED";
-    _SCORE_EXTRACTED = 1.0;
-    _SCORE_INFERRED = 0.8;
-    _SCORE_AMBIGUOUS = 0.4;
-    _SCORE_UNRESOLVED = 0.2;
-    _RESOLVER_BOUND_KEYS = (
-        "bare_call_target",
-        "bare_tested_by_source",
-        "cpp_scoped_target",
-        INHERITED_ENDPOINT_KEY,
-        "rescript_open_module",
-        "scoped_resolved",
-        "spring_resolved",
-        "temporal_resolved",
-    );
-    _SELF_RECEIVERS = frozenset({"this", "$this", "self"});
-    _SUPER_RECEIVERS = frozenset({"super", "base"});
-    _TYPED_RECEIVER_LANGUAGES = frozenset({"csharp", "java", "kotlin", "tsx", "typescript"});
-    _UNTYPED_RECEIVER_LANGUAGES = frozenset({"rust"});
-    _NODE_ENDPOINTS = (
-        ("CALLS", "target_qualified", "bare_call_target"),
-        ("REFERENCES", "target_qualified", "bare_call_target"),
-        ("TESTED_BY", "source_qualified", "bare_tested_by_source"),
-    );
+glob TIER_EXTRACTED: any = "EXTRACTED";
 
-    _SYMBOL_SEPARATOR_RE = re.compile("::|\\.");
-}
+glob TIER_INFERRED: any = "INFERRED";
+
+glob TIER_AMBIGUOUS: any = "AMBIGUOUS";
+
+glob TIER_UNRESOLVED: any = "UNRESOLVED";
+
+glob _SCORE_EXTRACTED: any = 1.0;
+
+glob _SCORE_INFERRED: any = 0.8;
+
+glob _SCORE_AMBIGUOUS: any = 0.4;
+
+glob _SCORE_UNRESOLVED: any = 0.2;
+
+glob _RESOLVER_BOUND_KEYS: any = (
+    "bare_call_target",
+    "bare_tested_by_source",
+    "cpp_scoped_target",
+    INHERITED_ENDPOINT_KEY,
+    "rescript_open_module",
+    "scoped_resolved",
+    "spring_resolved",
+    "temporal_resolved",
+);
+
+glob _SELF_RECEIVERS: any = frozenset({"this", "$this", "self"});
+
+glob _SUPER_RECEIVERS: any = frozenset({"super", "base"});
+
+glob _TYPED_RECEIVER_LANGUAGES: any = frozenset({"csharp", "java", "kotlin", "tsx", "typescript"});
+
+glob _UNTYPED_RECEIVER_LANGUAGES: any = frozenset({"rust"});
+
+glob _NODE_ENDPOINTS: any = (
+    ("CALLS", "target_qualified", "bare_call_target"),
+    ("REFERENCES", "target_qualified", "bare_call_target"),
+    ("TESTED_BY", "source_qualified", "bare_tested_by_source"),
+);
+
+glob _SYMBOL_SEPARATOR_RE: any = re.compile("::|\\.");
 
 def _is_path_qualified(name: str) -> bool;
 def _plain_symbol_name(qualified: str) -> str;
@@ -315,24 +222,20 @@ def _same_owner(parent_name: Optional[str], owner: str) -> bool;
 def _load_edge_extra(extra: Optional[str]) -> dict;
 def _certainty_tier_sql(unbound: str) -> str;
 
-with entry {
-    _CERTAINTY_SCORE_SQL = f"CASE confidence_tier WHEN '{TIER_UNRESOLVED}' THEN {_SCORE_UNRESOLVED} WHEN '{TIER_AMBIGUOUS}' THEN {_SCORE_AMBIGUOUS} ELSE COALESCE(CASE WHEN extra LIKE '%\"confidence\"%' AND json_valid(extra) THEN json_extract(extra, '$.confidence') END, CASE confidence_tier WHEN '{TIER_INFERRED}' THEN {_SCORE_INFERRED} ELSE {_SCORE_EXTRACTED} END) END";
-}
+glob _CERTAINTY_SCORE_SQL: any = f"CASE confidence_tier WHEN '{TIER_UNRESOLVED}' THEN {_SCORE_UNRESOLVED} WHEN '{TIER_AMBIGUOUS}' THEN {_SCORE_AMBIGUOUS} ELSE COALESCE(CASE WHEN extra LIKE '%\"confidence\"%' AND json_valid(extra) THEN json_extract(extra, '$.confidence') END, CASE confidence_tier WHEN '{TIER_INFERRED}' THEN {_SCORE_INFERRED} ELSE {_SCORE_EXTRACTED} END) END";
 
 def _parent_dir(path: Optional[str]) -> Optional[str];
 def import_scope_ancestors(file_path: str) -> list[tuple[str, tuple[str, ...]]];
 
-with entry {
-    IMPACT_FRONTIER_DIRS_SQL = "\nINSERT INTO _impact_frontier_dirs (dir, score)\nSELECT dir, MAX(score) FROM (\n    SELECT crg_parent_dir(n.file_path) AS dir, f.score AS score\n    FROM _impact_frontier f\n    CROSS JOIN nodes n\n      ON n.qualified_name = f.node_qn AND n.kind = 'File'\n)\nWHERE dir IS NOT NULL\nGROUP BY dir\n";
-    _IMPACT_AOP_EXTRA_LIKE = "%\"aop_resolved\"%";
-    _IMPACT_AOP_DIRECTION_CASE = "CASE WHEN e.extra LIKE ? THEN ? ELSE COALESCE(p.direction, ?) END";
-}
+glob IMPACT_FRONTIER_DIRS_SQL: any = "\nINSERT INTO _impact_frontier_dirs (dir, score)\nSELECT dir, MAX(score) FROM (\n    SELECT crg_parent_dir(n.file_path) AS dir, f.score AS score\n    FROM _impact_frontier f\n    CROSS JOIN nodes n\n      ON n.qualified_name = f.node_qn AND n.kind = 'File'\n)\nWHERE dir IS NOT NULL\nGROUP BY dir\n";
+
+glob _IMPACT_AOP_EXTRA_LIKE: any = "%\"aop_resolved\"%";
+
+glob _IMPACT_AOP_DIRECTION_CASE: any = "CASE WHEN e.extra LIKE ? THEN ? ELSE COALESCE(p.direction, ?) END";
 
 def _impact_candidate_sql(resolution_guard: str) -> str;
 
-with entry {
-    _RECOVERY_HINT = "Delete it and run `code-review-graph build` to rebuild the graph.";
-}
+glob _RECOVERY_HINT: any = "Delete it and run `code-review-graph build` to rebuild the graph.";
 
 def _describe_open_failure(db_path: Path, exc: Exception) -> str;
 def _assert_usable_database(conn: sqlite3.Connection, db_path: Path);
@@ -345,45 +248,38 @@ class CorruptGraphDatabaseError(GraphStoreError) {
     def init(db_path: str | Path, reason: object);
 }
 
-with entry {
-    _SQLITE_HEADER = b"SQLite format 3\x00";
+glob _SQLITE_HEADER: any = b"SQLite format 3\x00";
 
-    _CORRUPTION_MESSAGES = (
-        "file is not a database",
-        "database disk image is malformed",
-        "file is encrypted",
-        "malformed database schema",
-    );
-    _INCOMPATIBLE_SCHEMA_MESSAGES = ("no such column", "no such table", "has no column named");
-}
+glob _CORRUPTION_MESSAGES: any = (
+    "file is not a database",
+    "database disk image is malformed",
+    "file is encrypted",
+    "malformed database schema",
+);
+
+glob _INCOMPATIBLE_SCHEMA_MESSAGES: any = (
+    "no such column",
+    "no such table",
+    "has no column named",
+);
 
 def _is_unreadable_database(db_path: Path, exc: sqlite3.DatabaseError) -> bool;
 def _has_incompatible_schema(db_path: Path, exc: sqlite3.DatabaseError) -> bool;
 def discard_corrupt_database(db_path: str | Path) -> bool;
 
-glob max_depth_default_: any;
+glob max_depth_default_: any = CALLER_TEST_ROUTE_DEPTH;
 
-glob max_depth_default__: any;
+glob max_depth_default__: any = MAX_IMPACT_DEPTH;
 
-glob max_nodes_default_: any;
+glob max_nodes_default_: any = MAX_IMPACT_NODES;
 
-glob max_depth_default___: any;
+glob max_depth_default___: any = MAX_IMPACT_DEPTH;
 
-glob max_nodes_default__: any;
+glob max_nodes_default__: any = MAX_IMPACT_NODES;
 
-glob max_depth_default____: any;
+glob max_depth_default____: any = MAX_IMPACT_DEPTH;
 
-glob max_nodes_default___: any;
-
-with entry {
-    max_depth_default_ = CALLER_TEST_ROUTE_DEPTH;
-    max_depth_default__ = MAX_IMPACT_DEPTH;
-    max_nodes_default_ = MAX_IMPACT_NODES;
-    max_depth_default___ = MAX_IMPACT_DEPTH;
-    max_nodes_default__ = MAX_IMPACT_NODES;
-    max_depth_default____ = MAX_IMPACT_DEPTH;
-    max_nodes_default___ = MAX_IMPACT_NODES;
-}
+glob max_nodes_default___: any = MAX_IMPACT_NODES;
 
 class GraphStore(builtins.object) {
     def init(db_path: str | Path, *, read_only: bool | None = None);
@@ -639,9 +535,7 @@ class GraphStore(builtins.object) {
     def _row_to_edge(row: sqlite3.Row) -> GraphEdge;
 }
 
-with entry {
-    _NAME_CONTROL_CHARS = re.compile("[\\x00-\\x08\\x0b-\\x1f]");
-}
+glob _NAME_CONTROL_CHARS: any = re.compile("[\\x00-\\x08\\x0b-\\x1f]");
 
 def _sanitize_name(s: str, max_len: int = 256) -> str;
 

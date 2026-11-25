@@ -49,14 +49,7 @@ impl _banner_commands(bold: str, green: str, reset: str) -> str {
     for (title, rows) in _BANNER_GROUPS {
         lines.append(f"  {bold}{title}:{reset}");
         for (name, text) in rows {
-            lines.append(
-                "    "
-                    + format(green, "")
-                    + format(name, "")
-                    + format(reset, "")
-                    + format(" " * (width - len(name)), "")
-                    + format(text, ""),
-            );
+            lines.append(f"    {green}{name}{reset}{" " * (width - len(name))}{text}");
         }
         lines.append("");
     }
@@ -407,7 +400,7 @@ impl _handle_init(args: argparse.Namespace) {
                     ) {
                         names: any = [f for (f, o) in outcomes.items() if o == label];
                         if names {
-                            print(format(wording, "") + ": " + format(", ".join(names), ""));
+                            print(f"{wording}: {", ".join(names)}");
                         }
                     }
                     _print_instruction_conflicts(outcomes);
@@ -469,23 +462,15 @@ impl _plan_mcp_configs(
         print("No platforms detected.");
     } elif dry_run {
         print(
-            "\n[dry-run] Would configure "
-                + format(len(configured), "")
-                + " platform(s): "
-                + format(", ".join(configured), ""),
+            f"\n[dry-run] Would configure {len(configured)} platform(s): {", ".join(configured)}"
         );
     } else {
-        print(
-            "\nConfigured "
-                + format(len(configured), "")
-                + " platform(s): "
-                + format(", ".join(configured), ""),
-        );
+        print(f"\nConfigured {len(configured)} platform(s): {", ".join(configured)}");
     }
     if target == "all" and platforms is not None {
         missing: any = [key for key in PLATFORMS if key not in `set(platforms)];
         if missing {
-            print("Not found here, so not set up: " + format(", ".join(missing), "") + ".");
+            print(f"Not found here, so not set up: {", ".join(missing)}.");
             print("Add one anyway with: code-review-graph install --platform NAME");
         }
     }
@@ -793,8 +778,7 @@ impl _canonicalize_repo_argument(args: argparse.Namespace) {
 }
 
 impl _find_explicit_repo_root(start: Path) -> "Path | None" {
-    current: any;
-    current = start.resolve();
+    current: any = start.resolve();
     if not current.is_dir() {
         return None;
     }
@@ -982,9 +966,7 @@ impl _exit_if_contended(result: dict) {
     if result.get("status") != "contended" {
         return;
     }
-    print(
-        "Skipped: " + format(result.get("summary", "another write is running"), ""), file=sys.stderr
-    );
+    print(f"Skipped: {result.get("summary", "another write is running")}", file=sys.stderr);
     sys.exit(EXIT_TEMPFAIL);
 }
 
@@ -1066,7 +1048,7 @@ impl _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
         if not args.quiet {
             print(f"Full build: {parsed} files, {nodes} nodes, {edges} edges (postprocess={pp})");
             if result.get("errors") {
-                print("Errors: " + format(len(result["errors"]), ""));
+                print(f"Errors: {len(result["errors"])}");
             }
             if parsed == 0 and not result.get("errors") {
                 sys.stdout.flush();
@@ -1107,7 +1089,7 @@ impl _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
         }
         _exit_if_contended(result);
         if result.get("status") == "error" {
-            print("Error: " + format(result.get("summary", "update failed"), ""), file=sys.stderr);
+            print(f"Error: {result.get("summary", "update failed")}", file=sys.stderr);
             sys.exit(1);
         }
         nodes = result.get("total_nodes", 0);
@@ -1977,18 +1959,7 @@ impl build_parser -> argparse.ArgumentParser {
     search_cmd.add_argument("query", help="Search string");
     search_cmd.add_argument(
         "--kind",
-        choices=[
-            "File",
-            "Class",
-            "Function",
-            "Type",
-            "Test",
-            "YamlPath",
-            "DocSection",
-            "Variable",
-            "Output",
-            "JsonPath",
-        ],
+        choices="File Class Function Type Test YamlPath DocSection Variable Output JsonPath".split(),
         default=None,
     );
     search_cmd.add_argument("--limit", type=_positive_int, default=20);
@@ -2160,7 +2131,7 @@ impl _reject_unknown_command(ap: argparse.ArgumentParser, argv: list[str]) {
         }
         visible: any = [name for name in names if name not in _HIDDEN_COMMANDS];
         close: any = difflib.get_close_matches(word, visible, n=3, cutoff=0.6);
-        hint: any = " Did you mean " + format(" or ".join(close), "") + "?" if close else "";
+        hint: any = f" Did you mean {" or ".join(close)}?" if close else "";
         ap.error(
             f"unknown command '{word}'.{hint} Run code-review-graph --help to see every command."
         );
@@ -2518,10 +2489,8 @@ impl _dispatch {
         if args.command == "register" {
             try {
                 `entry: any = registry.register(args.path, alias=args.alias);
-                alias_info: any = " (alias: " + format(`entry["alias"], "") + ")"
-                    if `entry.get("alias")
-                    else "";
-                print("Registered: " + format(`entry["path"], "") + format(alias_info, ""));
+                alias_info: any = f" (alias: {`entry["alias"]})" if `entry.get("alias") else "";
+                print(f"Registered: {`entry["path"]}{alias_info}");
             } except ValueError as exc {
                 logging.error(`str(exc));
                 sys.exit(1);
@@ -2542,7 +2511,7 @@ impl _dispatch {
                 for `entry in repos {
                     alias: any = `entry.get("alias", "");
                     alias_str: any = f"  ({alias})" if alias else "";
-                    print("  " + format(`entry["path"], "") + format(alias_str, ""));
+                    print(f"  {`entry["path"]}{alias_str}");
                     if registered_data_dir := `entry.get("data_dir") {
                         try {
                             accessible: any = Path(registered_data_dir).is_dir();
@@ -2587,15 +2556,15 @@ impl _dispatch {
         _exit_if_contended(result);
         parts: any = [];
         if result.get("flows_detected") {
-            parts.append(format(result["flows_detected"], "") + " flows");
+            parts.append(f"{result["flows_detected"]} flows");
         }
         if result.get("communities_detected") {
-            parts.append(format(result["communities_detected"], "") + " communities");
+            parts.append(f"{result["communities_detected"]} communities");
         }
         if result.get("fts_indexed") {
-            parts.append(format(result["fts_indexed"], "") + " FTS entries");
+            parts.append(f"{result["fts_indexed"]} FTS entries");
         }
-        print("Post-processing: " + format(", ".join(parts) or "done", ""));
+        print(f"Post-processing: {", ".join(parts) or "done"}");
         if result.get("build_incomplete") {
             print(
                 "Build state: INCOMPLETE - the last build stopped before every file was stored, so files are still missing from the graph. Post-processing cannot add them. Run 'code-review-graph build' to rebuild.",
@@ -2643,16 +2612,8 @@ impl _dispatch {
     } else {
         repo_root = Path(args.repo) if args.repo else find_project_root();
     }
-    _data_dir_cmds: any = (
-        "build",
-        "update",
-        "detect-changes",
-        "status",
-        "forget",
-        "watch",
-        "visualize",
-        "wiki",
-        "dead-code",
+    _data_dir_cmds: any = tuple(
+        ("build update detect-changes status forget watch visualize wiki dead-code").split()
     );
     _read_only_db_cmds: any = frozenset({"status", "detect-changes", "visualize", "wiki", "watch"});
     explicit_data_dir: any = `bool(getattr(args, "data_dir", None));
@@ -2776,8 +2737,8 @@ impl _dispatch {
                 print(f"Nodes: {stats.total_nodes}");
                 print(f"Edges: {stats.total_edges}");
                 print(f"Files: {stats.files_count}");
-                print("Languages: " + format(", ".join(stats.languages), ""));
-                print("Last updated: " + format(stats.last_updated or "never", ""));
+                print(f"Languages: {", ".join(stats.languages)}");
+                print(f"Last updated: {stats.last_updated or "never"}");
                 if interrupted and files_missing {
                     print(
                         "Build state: INCOMPLETE - the last build stopped before every file was stored, so files are missing from the graph. Run 'code-review-graph build' to rebuild it.",
@@ -2914,7 +2875,7 @@ impl _dispatch {
                 print(f"Visualisation ({label}): {html_path}");
                 _print_seed_budget(seed_report);
                 if getattr(args, "sidecar", False) {
-                    print("Payload sidecar: " + format(html_path.parent / "graph.data.js", ""));
+                    print(f"Payload sidecar: {html_path.parent / "graph.data.js"}");
                 }
                 if getattr(args, "serve", False) {
                     import functools;

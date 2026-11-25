@@ -16,10 +16,7 @@ impl refactor_func(
     if mode not in valid_modes {
         return {
             "status": "error",
-            "error": "Invalid mode '"
-                + format(mode, "")
-                + "'. Must be one of: "
-                + format(", ".join(sorted(valid_modes)), ""),
+            "error": f"Invalid mode '{mode}'. Must be one of: {", ".join(sorted(valid_modes))}",
         };
     }
     _validate_positive_int(max_results, "max_results");

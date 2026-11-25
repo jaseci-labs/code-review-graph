@@ -1,27 +1,11 @@
-import operator;
-
-import json;
+import operator, json;
 
 import from dataclasses { dataclass }
 
 import from typing { Any, Iterable, Sequence }
 
-glob __all__: any = [
-    "Element",
-    "Member",
-    "Token",
-    "array_elements",
-    "find_value",
-    "has_comments",
-    "has_unclosed_comment",
-    "object_members",
-    "remove_paths",
-    "removal_ranges",
-    "set_member",
-    "skip_value",
-    "tokenize",
-    "value_has_comments",
-];
+glob __all__: any = ("Element Member Token array_elements find_value has_comments has_unclosed_comment "
+    "object_members remove_paths removal_ranges set_member skip_value tokenize value_has_comments").split();
 
 @dataclass(frozen=True)
 class Token {

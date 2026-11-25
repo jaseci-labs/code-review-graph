@@ -180,7 +180,6 @@ impl resolve_scoped_calls(store: GraphStore, repo_root: Path | None = None) -> d
         candidates: list[str], caller_file: str, class_name: str, language: str
     ) -> Optional[str] {
         candidate: any;
-        tokens: any;
         target: any;
         imported: any = imports_by_file.get(caller_file, set[any]());
         if not imported {
@@ -201,7 +200,7 @@ impl resolve_scoped_calls(store: GraphStore, repo_root: Path | None = None) -> d
         }
         matched_by_suffix: set[str] = set[any]();
         for candidate in candidates {
-            tokens = _path_tokens(file_of.get(candidate, ""));
+            tokens: any = _path_tokens(file_of.get(candidate, ""));
             for target in imported {
                 segments: any = _import_segments(target);
                 if not segments {
@@ -241,11 +240,9 @@ impl resolve_scoped_calls(store: GraphStore, repo_root: Path | None = None) -> d
         }
     }
     def php_namespace_backs(candidate_file: str, caller_file: str, scope: str) -> bool {
-        theirs: any;
-        written: any;
-        theirs = php_namespaces.get(candidate_file, set[any]());
+        theirs: any = php_namespaces.get(candidate_file, set[any]());
         ours: any = php_namespaces.get(caller_file, set[any]());
-        written = scope.strip("\\").rpartition("\\")[0].casefold();
+        written: any = scope.strip("\\").rpartition("\\")[0].casefold();
         if not written {
             return `bool(theirs & ours) or not theirs and not ours;
         }

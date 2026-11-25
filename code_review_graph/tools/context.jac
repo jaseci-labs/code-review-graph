@@ -1,20 +1,10 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import logging;
-
-import sqlite3;
-
-import subprocess;
+import importlib, logging, sqlite3, subprocess;
 
 import from typing { Any }
 
-glob logger: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 def _not_ready(reason: str, summary: str) -> dict[str, Any];
 def get_minimal_context(

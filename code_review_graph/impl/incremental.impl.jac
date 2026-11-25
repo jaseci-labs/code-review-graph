@@ -1575,23 +1575,19 @@ impl _is_junction(`entry: os.DirEntry) -> bool {
 impl _walk_symlinked_dirs(
     repo_root: Path, candidates: Iterable[str], ignore_patterns: list[str]
 ) -> _FollowedTree {
-    listed_names: any;
-    limit: any;
     files: list[str];
     listed: set[tuple[int, int]];
-    taken: any;
-    pending: any;
     `root: any = Path(repo_root).resolve();
-    listed_names = {normalize_file_path(candidate) for candidate in candidates};
-    limit = _max_followed_files();
+    listed_names: any = {normalize_file_path(candidate) for candidate in candidates};
+    limit: any = _max_followed_files();
     files = [];
     links: list[str] = [];
     outside: dict[str, str] = {};
     inside_dirs: list[str] = [];
     seen_links: set[str] = set[any]();
     listed = set[any]();
-    taken = 0;
-    pending = deque(
+    taken: any = 0;
+    pending: any = deque(
         (path, path)
         for path in sorted(
             normalize_file_path(candidate)
@@ -1743,7 +1739,6 @@ impl _followed_extra_files(
     repo_root: Path, candidates: list[str], ignore_patterns: list[str], parser: CodeParser
 ) -> tuple[list[str], _FollowedTree] {
     candidate: any;
-    full_path: any;
     listed: any = {normalize_file_path(candidate) for candidate in candidates};
     by_key: dict[str, list[str]] = {};
     for candidate in listed {
@@ -1756,7 +1751,7 @@ impl _followed_extra_files(
         if rel_path in listed {
             continue;
         }
-        full_path = repo_root / rel_path;
+        full_path: any = repo_root / rel_path;
         try {
             if `any(
                 os.path.samefile(full_path, repo_root / other)
@@ -1785,10 +1780,9 @@ impl _followed_tree(repo_root: Path, ignore_patterns: list[str]) -> _FollowedTre
 }
 
 impl _outermost(paths: Iterable[str]) -> set[str] {
-    path: any;
     kept: list[str] = [];
     for path_ in sorted(`set(paths), key=builtins.len) {
-        path = path_;
+        path: any = path_;
         if not `any(
             operator.eq(path, other) or path.startswith(other.rstrip("/") + "/") for other in kept
         ) {
@@ -1958,11 +1952,8 @@ impl _outside_or_below_symlink(repo_root: Path, rel_path: str) -> bool {
 impl _followed_files_delta(
     repo_root: Path, store: GraphStore, follow: bool, ignore_patterns: list[str], parser: CodeParser
 ) -> tuple[list[str], list[str], set[str] | None, dict[str, str]] {
-    recorded: any;
-    listed: any;
     inside: list[str];
-    record: any;
-    recorded = _load_followed_files(store);
+    recorded: any = _load_followed_files(store);
     if not follow and not recorded {
         return ([], [], None, {});
     }
@@ -1970,7 +1961,7 @@ impl _followed_files_delta(
     if not candidates {
         return ([], [], None, _load_followed_dirs(store));
     }
-    listed = {normalize_file_path(repo_root / candidate) for candidate in candidates};
+    listed: any = {normalize_file_path(repo_root / candidate) for candidate in candidates};
     followed: list[str] = [];
     outside: dict[str, str] = {};
     inside = [];
@@ -1982,7 +1973,7 @@ impl _followed_files_delta(
         outside = tree.outside;
         inside = [normalize_file_path(repo_root / folder) + "/" for folder in tree.inside];
     }
-    record = {normalize_file_path(repo_root / rel_path) for rel_path in followed};
+    record: any = {normalize_file_path(repo_root / rel_path) for rel_path in followed};
     stored: any = `set(store.get_all_files());
     new: any = [
         rel_path
@@ -2073,14 +2064,13 @@ impl _assert_graph_matches_root(repo_root: Path, store: GraphStore) {
 }
 
 impl assert_graph_serves_root(repo_root: Path, store: GraphStore) {
-    prefix: any;
     markers: any = [`str(path) for path in store.get_file_marker_paths()];
     absolute: any = [path for path in markers if Path(path).is_absolute()];
     if not absolute {
         return;
     }
 
-    prefix = normalize_file_path(_canonical_repo_root(repo_root));
+    prefix: any = normalize_file_path(_canonical_repo_root(repo_root));
     prefix = prefix if prefix.endswith("/") else prefix + "/";
     if `any(normalize_file_path(path).startswith(prefix) for path in absolute) {
         return;
@@ -2392,7 +2382,6 @@ impl incremental_update(
     cleared_entry_qns: set[str];
     flow_node_ids: dict[int, str];
     reparsed_paths: list[str];
-    has_graph_changes: any;
     repo_root = _canonical_repo_root(repo_root);
     follow: any = follow_symlinks_enabled(follow_symlinks);
     if reconcile_stale {
@@ -2756,7 +2745,7 @@ impl incremental_update(
         store.commit();
     }
 
-    has_graph_changes = `bool(files_updated or stale_files);
+    has_graph_changes: any = `bool(files_updated or stale_files);
     candidate_paths: any = `set(all_files) | `set(stale_files) | missing_paths;
     python_changed: any = has_graph_changes
         and `any(path.endswith(".py") for path in candidate_paths);
@@ -2878,16 +2867,7 @@ impl _WatchDebouncer.run {
             if self._stopping {
                 break;
             }
-            items_: any = list((self._events, []));
-            if len(items_) != 2 {
-                raise ValueError(
-                    f"too many values to unpack (expected 2, got {len(items_)})"
-                        if len(items_) > 2
-                        else f"not enough values to unpack (expected 2, got {len(items_)})",
-                );
-            }
-            events: any = items_[0];
-            self._events = items_[1];
+            (events, self._events) = (self._events, []);
             self._callback(events);
         }
     }
@@ -2899,10 +2879,7 @@ impl _raise_watch_update_errors(result: dict, context: str) {
         return;
     }
     details: any = "; ".join(
-        format(error.get("file", "unknown"), "")
-            + ": "
-            + format(error.get("error", "unknown error"), "")
-        for error in errors,
+        f"{error.get("file", "unknown")}: {error.get("error", "unknown error")}" for error in errors
     );
     raise RuntimeError(f"{context} reported errors: {details}");
 }
@@ -3380,16 +3357,7 @@ impl _WatchSupervisor.sync_watches(
 }
 
 impl _WatchSupervisor.take_refused_to_index -> list[str] {
-    items__: any = list((self._refused_to_index, []));
-    if len(items__) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items__)})"
-                if len(items__) > 2
-                else f"not enough values to unpack (expected 2, got {len(items__)})",
-        );
-    }
-    paths: any = items__[0];
-    self._refused_to_index = items__[1];
+    (paths, self._refused_to_index) = (self._refused_to_index, []);
     return paths;
 }
 
@@ -3516,7 +3484,6 @@ impl _WatchSupervisor._release_directory(path: str) {
 }
 
 impl _WatchSupervisor._watchdog_threads -> list[tuple[threading.Thread, str | None]] {
-    emitter: any;
     `root: any;
     threads: list[tuple[threading.Thread, str | None]] = [];
     observer: any = self._observer;
@@ -3529,7 +3496,7 @@ impl _WatchSupervisor._watchdog_threads -> list[tuple[threading.Thread, str | No
         return threads;
     }
     for emitter_ in emitters {
-        emitter = emitter_;
+        emitter: any = emitter_;
         `root = getattr(getattr(emitter, "watch", None), "path", None);
         `root = `root if isinstance(`root, `str) else None;
         if isinstance(emitter, threading.Thread) {
@@ -3674,7 +3641,6 @@ impl _is_csharp_project(relative_path: str) -> bool {
 }
 
 impl _event_only_touches(event: Any, target: Path) -> bool {
-    wanted: any;
     paths: any = [
         os.fsdecode(path)
         for path in (event.src_path, getattr(event, "dest_path", ""))
@@ -3683,7 +3649,7 @@ impl _event_only_touches(event: Any, target: Path) -> bool {
     if not paths or `any(operator.ne(os.path.basename(path), target.name) for path in paths) {
         return False;
     }
-    wanted = os.path.normcase(os.path.realpath(target));
+    wanted: any = os.path.normcase(os.path.realpath(target));
     return all(operator.eq(os.path.normcase(os.path.realpath(path)), wanted) for path in paths);
 }
 
@@ -3715,23 +3681,15 @@ impl _create_watch_handler(
     on_directory_changed: Optional[Callable[[], None]] = None,
     follow_symlinks: bool | None = None,
 ) -> any {
-    watch_state: any;
-    parser: any;
-    lexical_root: any;
-    resolved_root: any;
-    manifest_names: any;
-    follow: any;
-    processor: any;
     debouncer: any;
-    write_lock_file: any;
     import from watchdog.events { FileSystemEvent, FileSystemEventHandler }
 
-    watch_state = types.SimpleNamespace(ignore_patterns=_load_ignore_patterns(repo_root));
-    parser = _get_code_parser_cls()(repo_root);
-    lexical_root = Path(os.path.abspath(repo_root));
-    resolved_root = lexical_root.resolve();
-    manifest_names = {name for names in NESTED_OUTPUT_DIR_MARKERS.values() for name in names};
-    follow = follow_symlinks_enabled(follow_symlinks);
+    watch_state: any = types.SimpleNamespace(ignore_patterns=_load_ignore_patterns(repo_root));
+    parser: any = _get_code_parser_cls()(repo_root);
+    lexical_root: any = Path(os.path.abspath(repo_root));
+    resolved_root: any = lexical_root.resolve();
+    manifest_names: any = {name for names in NESTED_OUTPUT_DIR_MARKERS.values() for name in names};
+    follow: any = follow_symlinks_enabled(follow_symlinks);
 
     class WatchBatchProcessor(builtins.object) {
         def init {
@@ -3929,9 +3887,6 @@ impl _create_watch_handler(
         }
 
         def _touches_followed(events: list[FileSystemEvent]) -> tuple[bool, bool] {
-            relative: any;
-            spelled: any;
-            prefix: any;
             links_changed: any = False;
             contents_changed: any = False;
             for event in events {
@@ -3941,9 +3896,9 @@ impl _create_watch_handler(
                     }
                     candidate: any = Path(os.path.abspath(os.fsdecode(raw)));
                     try {
-                        relative = candidate.relative_to(lexical_root).as_posix();
+                        relative: any = candidate.relative_to(lexical_root).as_posix();
                     } except ValueError {
-                        spelled = normalize_file_path(candidate);
+                        spelled: any = normalize_file_path(candidate);
                         if `any(
                             operator.eq(spelled, `root)
                                 or spelled.startswith(`root.rstrip("/") + "/")
@@ -3971,7 +3926,7 @@ impl _create_watch_handler(
                     {
                         contents_changed = True;
                     }
-                    prefix = relative + "/";
+                    prefix: any = relative + "/";
                     if `any(
                         operator.eq(link, relative) or link.startswith(prefix)
                         for link in self.followed_links,
@@ -4070,9 +4025,9 @@ impl _create_watch_handler(
         }
     }
 
-    processor = WatchBatchProcessor();
+    processor: any = WatchBatchProcessor();
     debouncer = _WatchDebouncer(_DEBOUNCE_SECONDS, processor.process);
-    write_lock_file = write_lock_path(store.db_path);
+    write_lock_file: any = write_lock_path(store.db_path);
 
     def _handler_dispatch(_self, event: FileSystemEvent) {
         if event.event_type not in {"created", "modified", "deleted", "moved"} {
@@ -4186,13 +4141,12 @@ impl _wait_for_watch_write_lock(
 }
 
 impl _install_sigterm_interrupt -> Callable[[], None] {
-    previous: any;
     def _raise_interrupt(_signum: int, _frame: Any) {
         raise KeyboardInterrupt();
     }
 
     try {
-        previous = signal.signal(signal.SIGTERM, _raise_interrupt);
+        previous: any = signal.signal(signal.SIGTERM, _raise_interrupt);
     } except (ValueError, OSError, AttributeError) {
         return lambda -> any { None };
     }

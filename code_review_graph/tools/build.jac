@@ -1,38 +1,18 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
-
-import logging;
-
-import sqlite3;
-
-import time;
+import importlib, operator, logging, sqlite3, time;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _PARTIAL_GRAPH_MIN_FILES: any;
+glob _PARTIAL_GRAPH_MIN_FILES: any = 8;
 
-glob _PARTIAL_GRAPH_MAX_COVERAGE: any;
+glob _PARTIAL_GRAPH_MAX_COVERAGE: any = 0.25;
 
-glob _PARTIAL_GRAPH_SUSPECT_TRACKED_COVERAGE: any;
-
-glob _CONTENTION_ERRORCODES: any;
-
-glob _CONTENTION_MESSAGES: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    _PARTIAL_GRAPH_MIN_FILES = 8;
-    _PARTIAL_GRAPH_MAX_COVERAGE = 0.25;
-    _PARTIAL_GRAPH_SUSPECT_TRACKED_COVERAGE = 0.5;
-}
+glob _PARTIAL_GRAPH_SUSPECT_TRACKED_COVERAGE: any = 0.5;
 
 def _should_rebuild_partial_graph(
     repo_root: Path, store: Any, recurse_submodules: bool | None = None
@@ -48,14 +28,13 @@ def _run_embedding_refresh(
 );
 def _report_refresh_skipped(result: dict[str, Any], warnings: list[str]);
 
-with entry {
-    _CONTENTION_ERRORCODES = frozenset({5, 6});
-    _CONTENTION_MESSAGES = (
-        "database is locked",
-        "database table is locked",
-        "database schema is locked",
-    );
-}
+glob _CONTENTION_ERRORCODES: any = frozenset({5, 6});
+
+glob _CONTENTION_MESSAGES: any = (
+    "database is locked",
+    "database table is locked",
+    "database schema is locked",
+);
 
 def is_lock_contention(exc: BaseException) -> bool;
 def _note_contention(build_result: dict[str, Any], exc: BaseException);

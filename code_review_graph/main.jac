@@ -10,21 +10,11 @@ endpoint cannot be driven cross-origin (e.g. via DNS rebinding); see
 ``code_review_graph.http_origin_guard``.
 """
 
-import importlib;
-
-import operator;
+import importlib, operator;
 
 import from jaclang.comptime { target as target_ }
 
-import asyncio;
-
-import logging;
-
-import os;
-
-import sys;
-
-import threading;
+import asyncio, logging, os, sys, threading;
 
 import from collections.abc { Callable }
 
@@ -40,79 +30,34 @@ import from fastmcp.exceptions { ToolError }
 
 import from fastmcp.prompts { Message }
 
-glob _LAZY_TOOL_NAMES: any;
+glob _LAZY_TOOL_NAMES: any = frozenset((
+    "apply_refactor_func build_or_update_graph cross_repo_search_func detect_changes_func "
+    "embed_graph find_large_functions generate_wiki_func get_affected_flows_func "
+    "get_architecture_overview_func get_bridge_nodes_func get_community_func get_docs_section "
+    "get_flow get_hub_nodes_func get_impact_radius get_knowledge_gaps_func get_minimal_context "
+    "get_review_context get_suggested_questions_func get_surprising_connections_func "
+    "get_wiki_page_func list_communities_func list_flows list_graph_stats list_repos_func "
+    "query_graph refactor_func run_postprocess semantic_search_nodes traverse_graph_func "
+    "with_provenance"
+).split());
 
-glob _LAZY_PROMPT_NAMES: any;
-
-glob logger: any;
-
-glob _default_repo_root: str | None;
-
-glob _multi_repo: bool;
-
-glob _TIMEOUT_HINT: any;
-
-glob _DETECT_CHANGES_TIMEOUT_HINT: any;
-
-glob SERVER_INSTRUCTIONS: any;
-
-glob MULTI_REPO_INSTRUCTIONS: any;
-
-glob mcp: any;
-
-with entry {
-    _LAZY_TOOL_NAMES = frozenset({
-        "apply_refactor_func",
-        "build_or_update_graph",
-        "cross_repo_search_func",
-        "detect_changes_func",
-        "embed_graph",
-        "find_large_functions",
-        "generate_wiki_func",
-        "get_affected_flows_func",
-        "get_architecture_overview_func",
-        "get_bridge_nodes_func",
-        "get_community_func",
-        "get_docs_section",
-        "get_flow",
-        "get_hub_nodes_func",
-        "get_impact_radius",
-        "get_knowledge_gaps_func",
-        "get_minimal_context",
-        "get_review_context",
-        "get_suggested_questions_func",
-        "get_surprising_connections_func",
-        "get_wiki_page_func",
-        "list_communities_func",
-        "list_flows",
-        "list_graph_stats",
-        "list_repos_func",
-        "query_graph",
-        "refactor_func",
-        "run_postprocess",
-        "semantic_search_nodes",
-        "traverse_graph_func",
-        "with_provenance",
-    });
-
-    _LAZY_PROMPT_NAMES = frozenset({
-        "architecture_map_prompt",
-        "debug_issue_prompt",
-        "onboard_developer_prompt",
-        "pre_merge_check_prompt",
-        "review_changes_prompt",
-    });
-}
+glob _LAZY_PROMPT_NAMES: any = frozenset({
+    "architecture_map_prompt",
+    "debug_issue_prompt",
+    "onboard_developer_prompt",
+    "pre_merge_check_prompt",
+    "review_changes_prompt",
+});
 
 def _resolve_attr(name: str) -> any;
 
 def __getattr__(name: str) -> any;
 
-with entry {
-    logger = logging.getLogger(__name__);
-    _default_repo_root = None;
-    _multi_repo = False;
-}
+glob logger: any = logging.getLogger(__name__);
+
+glob _default_repo_root: str | None = None;
+
+glob _multi_repo: bool = False;
 
 """Resolve repo_root for a tool call.
 
@@ -145,10 +90,9 @@ def _resolve_repo_root(repo_root: Optional[str]) -> Optional[str];
     """
 def _registered_repo_root(repo_root: Optional[str]) -> str;
 
-with entry {
-    _TIMEOUT_HINT = "Narrow the request with whichever of changed_files, max_depth or max_results this tool accepts, or increase CRG_TOOL_TIMEOUT.";
-    _DETECT_CHANGES_TIMEOUT_HINT = "Reduce scope with CRG_MAX_CHANGED_FUNCS / CRG_MAX_TRANSITIVE_FRONTIER, or increase CRG_TOOL_TIMEOUT.";
-}
+glob _TIMEOUT_HINT: any = "Narrow the request with whichever of changed_files, max_depth or max_results this tool accepts, or increase CRG_TOOL_TIMEOUT.";
+
+glob _DETECT_CHANGES_TIMEOUT_HINT: any = "Reduce scope with CRG_MAX_CHANGED_FUNCS / CRG_MAX_TRANSITIVE_FRONTIER, or increase CRG_TOOL_TIMEOUT.";
 
 """Run *work* on a worker thread, on the same limiter FastMCP uses.
 
@@ -167,11 +111,7 @@ with entry {
     """
 async def _run_off_loop(work: Callable[[], dict]) -> dict;
 
-glob timeout_hint_default_: any;
-
-with entry {
-    timeout_hint_default_ = _TIMEOUT_HINT;
-}
+glob timeout_hint_default_: any = _TIMEOUT_HINT;
 
 """Run one blocking tool body off the event loop, optionally bounded.
 
@@ -233,12 +173,11 @@ async def _offload(
     timeout_hint: str = timeout_hint_default_,
 ) -> dict;
 
-with entry {
-    SERVER_INSTRUCTIONS = "Code knowledge graph of this repo (Tree-sitter AST + call / import / test edges). Use it whenever the question is about RELATIONSHIPS between pieces of code, in any phase of work - coding, debugging, planning, brainstorming, refactoring, review - not only code review:\n- who calls / references symbol X -> query_graph_tool pattern=callers_of / references_to\n- which files import module or file X -> query_graph_tool pattern=importers_of\n- which tests cover X -> query_graph_tool pattern=tests_for\n- what breaks if X changes (blast radius) -> get_impact_radius_tool\n- what a diff or branch touches -> detect_changes_tool, get_review_context_tool\n- how modules depend on each other -> get_architecture_overview_tool, list_communities_tool\n- follow an execution flow -> list_flows_tool, get_flow_tool\nGraph answers include dependents reached through re-exports and barrel files that never spell the name, which text search silently misses.\nFor plain text - string literals, log messages, env var names, comments, config keys - use Grep; the graph does not index text.";
-    MULTI_REPO_INSTRUCTIONS = "\nThis server serves several repositories: pass repo_root, the absolute path of a registered repository, on every call. list_repos_tool lists them.";
+glob SERVER_INSTRUCTIONS: any = "Code knowledge graph of this repo (Tree-sitter AST + call / import / test edges). Use it whenever the question is about RELATIONSHIPS between pieces of code, in any phase of work - coding, debugging, planning, brainstorming, refactoring, review - not only code review:\n- who calls / references symbol X -> query_graph_tool pattern=callers_of / references_to\n- which files import module or file X -> query_graph_tool pattern=importers_of\n- which tests cover X -> query_graph_tool pattern=tests_for\n- what breaks if X changes (blast radius) -> get_impact_radius_tool\n- what a diff or branch touches -> detect_changes_tool, get_review_context_tool\n- how modules depend on each other -> get_architecture_overview_tool, list_communities_tool\n- follow an execution flow -> list_flows_tool, get_flow_tool\nGraph answers include dependents reached through re-exports and barrel files that never spell the name, which text search silently misses.\nFor plain text - string literals, log messages, env var names, comments, config keys - use Grep; the graph does not index text.";
 
-    mcp = FastMCP("code-review-graph", version=__version__, instructions=SERVER_INSTRUCTIONS);
-}
+glob MULTI_REPO_INSTRUCTIONS: any = "\nThis server serves several repositories: pass repo_root, the absolute path of a registered repository, on every call. list_repos_tool lists them.";
+
+glob mcp: any = FastMCP("code-review-graph", version=__version__, instructions=SERVER_INSTRUCTIONS);
 
 """Build or incrementally update the code knowledge graph.
 
@@ -337,11 +276,7 @@ async def get_minimal_context_tool(
     base: str = "HEAD~1",
 ) -> dict;
 
-glob max_results_default_: any;
-
-with entry {
-    max_results_default_ = MAX_IMPACT_NODES;
-}
+glob max_results_default_: any = MAX_IMPACT_NODES;
 
 """Analyze the blast radius of changed files in the codebase.
 

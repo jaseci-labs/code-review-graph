@@ -1,66 +1,34 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
+import builtins, operator;
 
 import from jaclang.comptime { target as target_ }
 
-import atexit;
-
-import json;
-
-import logging;
-
-import os;
-
-import signal;
-
-import subprocess;
-
-import sys;
-
-import threading;
-
-import uuid;
+import atexit, json, logging, os, signal, subprocess, sys, threading, uuid;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _MAX_FRAME_BYTES: any;
+glob _MAX_FRAME_BYTES: any = 4 * 1024 * 1024;
 
-glob _MAX_CHILD_FRAME_BYTES: any;
+glob _MAX_CHILD_FRAME_BYTES: any = 64 * 1024 * 1024;
 
-glob _MAX_CHILDREN: any;
+glob _MAX_CHILDREN: any = 32;
 
-glob _MAX_INFLIGHT_REQUESTS: any;
+glob _MAX_INFLIGHT_REQUESTS: any = 256;
 
-glob _CHILD_START_TIMEOUT: any;
+glob _CHILD_START_TIMEOUT: any = 60.0;
 
-glob _CHILD_STOP_TIMEOUT: any;
+glob _CHILD_STOP_TIMEOUT: any = 10.0;
 
-glob _GIT_TIMEOUT: any;
+glob _GIT_TIMEOUT: any = 10.0;
 
-glob _PACKAGE_ROOT: any;
+glob _PACKAGE_ROOT: any = Path(__file__).resolve().parents[1];
 
-glob _CHILD_ENV_DROPPED: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    _MAX_FRAME_BYTES = 4 * 1024 * 1024;
-    _MAX_CHILD_FRAME_BYTES = 64 * 1024 * 1024;
-    _MAX_CHILDREN = 32;
-    _MAX_INFLIGHT_REQUESTS = 256;
-    _CHILD_START_TIMEOUT = 60.0;
-    _CHILD_STOP_TIMEOUT = 10.0;
-    _GIT_TIMEOUT = 10.0;
-    _PACKAGE_ROOT = Path(__file__).resolve().parents[1];
-    _CHILD_ENV_DROPPED = frozenset({"CRG_DATA_DIR", "CRG_REPO_ROOT"});
-}
+glob _CHILD_ENV_DROPPED: any = frozenset({"CRG_DATA_DIR", "CRG_REPO_ROOT"});
 
 obj MultiWorktreeError(RuntimeError) {
     def __repr__ -> str;

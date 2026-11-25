@@ -48,7 +48,7 @@ impl _compute_signatures(store: GraphStore, result: dict[str, Any], warnings: li
             ret: any;
             (node_id, name, kind, params, ret) = (row[0], row[1], row[2], row[3], row[4]);
             if kind in ("Function", "Test") {
-                sig: any = "def " + format(name, "") + "(" + format(params or "", "") + ")";
+                sig: any = f"def {name}({params or ""})";
                 if ret {
                     sig += f" -> {ret}";
                 }

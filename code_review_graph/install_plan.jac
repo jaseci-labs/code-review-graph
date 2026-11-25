@@ -1,22 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import contextlib;
-
-import difflib;
-
-import errno;
-
-import io;
-
-import os;
-
-import shutil;
-
-import stat;
+import builtins, operator, contextlib, difflib, errno, io, os, shutil, stat;
 
 import from contextvars { ContextVar }
 
@@ -26,19 +10,11 @@ import from pathlib { Path }
 
 import from typing { Iterable, Iterator, Union }
 
-glob PathLike: any;
+glob PathLike: any = Union[str, "os.PathLike[str]"];
 
-glob DIFF_LINE_LIMIT: any;
+glob DIFF_LINE_LIMIT: any = 60;
 
-glob _MIN_CUT: any;
-
-glob _ACTIVE: ContextVar[Plan | None];
-
-with entry {
-    PathLike = Union[str, "os.PathLike[str]"];
-    DIFF_LINE_LIMIT = 60;
-    _MIN_CUT = 5;
-}
+glob _MIN_CUT: any = 5;
 
 @dataclass
 class FileChange {
@@ -109,9 +85,7 @@ obj Plan {
 
 def _unchanged_on_disk(change: FileChange) -> bool;
 
-with entry {
-    _ACTIVE = ContextVar("code_review_graph_install_plan", default=None);
-}
+glob _ACTIVE: ContextVar[Plan | None] = ContextVar("code_review_graph_install_plan", default=None);
 
 def active -> Plan | None;
 @contextlib.contextmanager
@@ -138,11 +112,7 @@ def describe(change: FileChange) -> str;
 
 def _lines(data: bytes | None) -> list[str] | None;
 
-glob limit_default_: any;
-
-with entry {
-    limit_default_ = DIFF_LINE_LIMIT;
-}
+glob limit_default_: any = DIFF_LINE_LIMIT;
 
 def render(
     changes: Iterable[FileChange], repo_root: PathLike | None = None, limit: int = limit_default_

@@ -350,10 +350,9 @@ impl build_fts_queries(query: str) -> list[str] {
 }
 
 impl _covered_word_count(query_words: set[str], symbol_words: set[str]) -> int {
-    word: any;
     covered: any = 0;
     for word_ in query_words {
-        word = word_;
+        word: any = word_;
         if word in symbol_words {
             covered += 1;
         } elif len(word) >= _MIN_PREFIX_ALNUM
@@ -588,7 +587,6 @@ impl hybrid_search(
     _out_ids: Optional[list[int]] = None,
 ) -> list[dict[str, Any]] {
     node_id: any;
-    qn_lo: any;
     if not query or not query.strip() {
         if _out_mode is not None {
             _out_mode.append("none");
@@ -686,7 +684,7 @@ impl hybrid_search(
         }
         idents: any = kind_boosts.get("_qualified_identifiers");
         if idents {
-            qn_lo = qualified_name.lower();
+            qn_lo: any = qualified_name.lower();
             if `any(ident in qn_lo for ident in idents) {
                 boost *= 2.0;
             }

@@ -110,23 +110,10 @@ impl get_docs_section(section_name: str, repo_root: str | None = None) -> dict[s
         }
     }
 
-    available: any = [
-        "usage",
-        "review-delta",
-        "review-pr",
-        "commands",
-        "legal",
-        "watch",
-        "embeddings",
-        "languages",
-        "troubleshooting",
-    ];
+    available: any = ("usage review-delta review-pr commands legal watch embeddings languages troubleshooting").split();
     return {
         "status": "not_found",
-        "error": "Section '"
-            + format(section_name, "")
-            + "' not found. Available: "
-            + format(", ".join(available), ""),
+        "error": f"Section '{section_name}' not found. Available: {", ".join(available)}",
     };
 }
 

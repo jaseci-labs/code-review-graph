@@ -1,30 +1,14 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import builtins;
-
-import operator;
-
-import json;
-
-import logging;
-
-import os;
+import importlib, builtins, operator, json, logging, os;
 
 import from pathlib { Path }
 
 import from typing { Iterable, Optional }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _SELF_NAMES: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    _SELF_NAMES = frozenset({"self", "cls", "super"});
-}
+glob _SELF_NAMES: any = frozenset({"self", "cls", "super"});
 
 def enrich_jedi_calls(store, repo_root: Path, files: Optional[Iterable[str]] = None) -> dict;
 

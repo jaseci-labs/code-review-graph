@@ -111,13 +111,12 @@ impl GoogleEmbeddingProvider.embed(texts: list[str]) -> list[list[float]] {
 }
 
 impl GoogleEmbeddingProvider._call_with_retry(fn, max_retries: int = 3) -> any {
-    err_str: any;
     retryable_statuses: any = ("429", "500", "503");
     for attempt in range(max_retries) {
         try {
             return fn();
         } except Exception as e {
-            err_str = `str(e);
+            err_str: any = `str(e);
             is_retryable: any = `any(status in err_str for status in retryable_statuses);
             if not is_retryable {
                 logger.debug("Non-retryable Gemini API error: %s", `type(e).__name__);
@@ -194,9 +193,7 @@ impl MiniMaxEmbeddingProvider._call_api(texts: list[str], task_type: str) -> lis
 
             base_resp: any = body.get("base_resp", {});
             if base_resp.get("status_code", 0) != 0 {
-                raise RuntimeError(
-                    "MiniMax API error: " + format(base_resp.get("status_msg", "unknown"), "")
-                );
+                raise RuntimeError(f"MiniMax API error: {base_resp.get("status_msg", "unknown")}");
             }
 
             return body["vectors"];
@@ -1041,7 +1038,6 @@ impl EmbeddingStore._stream_scores(
 }
 
 impl EmbeddingStore._cached_vectors(provider_name: str, dims: int) -> tuple[Any, ...] | None {
-    evicted: any;
     if os.environ.get("CRG_VECTOR_CACHE", "").strip() != "1" {
         return None;
     }
@@ -1077,7 +1073,7 @@ impl EmbeddingStore._cached_vectors(provider_name: str, dims: int) -> tuple[Any,
         cls._vector_cache[key] = `entry;
 
         while len(cls._vector_cache) > cls._VECTOR_CACHE_MAX_ENTRIES {
-            evicted = next(iter(cls._vector_cache));
+            evicted: any = next(iter(cls._vector_cache));
             del cls._vector_cache[evicted];
             if all(operator.ne(other[0], evicted[0]) for other in cls._vector_cache) {
                 cls._close_vector_cache_watcher(evicted[0]);

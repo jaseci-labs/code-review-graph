@@ -215,13 +215,12 @@ impl array_elements(tokens: Sequence[Token], index: int) -> list[Element] {
 }
 
 impl find_value(tokens: Sequence[Token], path: Sequence[str | int]) -> int {
-    component: any;
     if not tokens {
         raise ValueError("empty JSON document");
     }
     current: any = 0;
     for component_ in path {
-        component = component_;
+        component: any = component_;
         if isinstance(component, `str) {
             member: any = next(
                 (item for item in object_members(tokens, current) if item.key == component), None
@@ -242,12 +241,11 @@ impl find_value(tokens: Sequence[Token], path: Sequence[str | int]) -> int {
 }
 
 impl removal_ranges(tokens: Sequence[Token], path: Sequence[str | int]) -> list[tuple[int, int]] {
-    component: any;
     if not path {
         raise ValueError("refusing to remove the JSON document root");
     }
     parent_index: any = find_value(tokens, path[:-1]);
-    component = path[-1];
+    component: any = path[-1];
     if isinstance(component, `str) {
         members: any = object_members(tokens, parent_index);
         sibling_index: any = next(
@@ -309,7 +307,6 @@ impl _in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool {
 }
 
 impl remove_paths(raw: str, paths: Iterable[Sequence[str | int]]) -> str {
-    offset: any;
     tokens: any = tokenize(raw);
     ranges: any = [
         source_range
@@ -343,7 +340,7 @@ impl remove_paths(raw: str, paths: Iterable[Sequence[str | int]]) -> str {
             and token.start not in original_trailing
     ];
     for offset_ in reversed(exposed) {
-        offset = offset_;
+        offset: any = offset_;
         rewritten_offset: any = offset
             - sum(end - start for (start, end) in merged if end <= offset);
         raw = raw[:rewritten_offset] + raw[rewritten_offset + 1:];
@@ -397,7 +394,6 @@ impl value_has_comments(raw: str, path: Sequence[str | int]) -> bool {
 }
 
 impl set_member(raw: str, path: Sequence[str], value: Any) -> str {
-    key: any;
     if not path {
         raise ValueError("refusing to replace the JSON document root");
     }
@@ -406,7 +402,7 @@ impl set_member(raw: str, path: Sequence[str], value: Any) -> str {
     if tokens[parent_index].kind != "{" {
         raise ValueError("parent of the target member is not a JSON object");
     }
-    key = path[-1];
+    key: any = path[-1];
     members: any = object_members(tokens, parent_index);
     existing: any = next((item for item in members if item.key == key), None);
     if existing is not None {

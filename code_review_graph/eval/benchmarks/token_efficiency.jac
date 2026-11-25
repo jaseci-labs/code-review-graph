@@ -1,22 +1,10 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import json;
-
-import logging;
-
-import statistics;
-
-import subprocess;
+import importlib, json, logging, statistics, subprocess;
 
 import from pathlib { Path }
 
-glob logger: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 def _count_tokens(text: str) -> int;
 def _get_changed_files(repo_path: Path, sha: str) -> list[str];

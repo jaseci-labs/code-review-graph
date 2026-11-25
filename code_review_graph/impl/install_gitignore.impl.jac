@@ -21,8 +21,6 @@ impl repo_files(
     platforms: Iterable[str] | None = None,
 ) -> list[str] {
     folder: any;
-    skill_dir: any;
-    hooks_dir: any;
     chosen: any = frozenset(
         skills.selected_platforms(repo_root, target) if platforms is None else platforms
     );
@@ -60,7 +58,7 @@ impl repo_files(
             } except OSError {
                 bundled = {};
             }
-            skill_dir = codex_skill.codex_skill_dir();
+            skill_dir: any = codex_skill.codex_skill_dir();
             files.extend(skill_dir / name for name in (*bundled, codex_skill.MANIFEST_NAME));
         }
     }
@@ -97,7 +95,7 @@ impl repo_files(
             );
         }
         if target in ("all", "claude", "qoder", "codex") {
-            hooks_dir = skills._git_hooks_dir(repo_root);
+            hooks_dir: any = skills._git_hooks_dir(repo_root);
             if hooks_dir is not None {
                 files.extend(
                     hooks_dir / name for name in ("pre-commit", *skills._GIT_SYNC_HOOK_NAMES)
@@ -209,8 +207,7 @@ impl _tracked(repo_root: Path, paths: Iterable[str]) -> set[str] {
 }
 
 impl _holds_tracked(path: str, tracked: set[str]) -> bool {
-    stem: any;
-    stem = path.rstrip("/");
+    stem: any = path.rstrip("/");
     return `any(operator.eq(name, stem) or name.startswith(stem + "/") for name in tracked);
 }
 
@@ -225,12 +222,9 @@ impl _ignored(repo_root: Path, entries: list[str]) -> set[str] {
 }
 
 impl _created_entries(repo_root: Path, install_plan: Plan, dry_run: bool) -> list[str] {
-    paths: any;
-    created: any;
-    tracked: any;
     entries: list[str];
-    paths = _with_folders(install_plan.files);
-    created = {
+    paths: any = _with_folders(install_plan.files);
+    created: any = {
         path
         for path in paths
         if path not in install_plan.existed and (dry_run or planned_files.lexists(repo_root / path))
@@ -238,7 +232,7 @@ impl _created_entries(repo_root: Path, install_plan: Plan, dry_run: bool) -> lis
     tops: any = sorted(
         path for path in created if PurePosixPath(path).parent.as_posix() not in created
     );
-    tracked = _tracked(repo_root, tops);
+    tracked: any = _tracked(repo_root, tops);
 
     entries = [];
 

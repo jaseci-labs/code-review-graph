@@ -610,12 +610,10 @@ impl _as_graph_node(qualified_name: str, info: NodeInfo) -> GraphNode {
 }
 
 impl _removed_symbol_users(store: GraphStore, removed: GraphNode) -> _RemovedUsers {
-    qualified_name: any;
     users: dict[str, dict[str, Any]];
-    found: any;
-    qualified_name = removed.qualified_name;
+    qualified_name: any = removed.qualified_name;
     users = {};
-    found = _RemovedUsers(users=[], call_sources=[], caller_ids=set[any]());
+    found: any = _RemovedUsers(users=[], call_sources=[], caller_ids=set[any]());
 
     def add(source: str, relation: str, line: int) {
         `node: any = store.get_node(source) if source != qualified_name else None;
@@ -893,7 +891,7 @@ impl _removed_summary_lines(review: _DeletionReview) -> list[str] {
                     + ")",
             );
         }
-        lines.append("  - Removed but still used: " + format("; ".join(named), ""));
+        lines.append(f"  - Removed but still used: {"; ".join(named)}");
     }
     return lines;
 }
@@ -979,8 +977,6 @@ impl _risk_signals_from(
     caller_qns: list[str],
     cross_community: int,
 ) -> dict[str, dict[str, float]] {
-    name_lower: any;
-    qn_lower: any;
     signals: dict[str, dict[str, float]] = {};
     if flow_criticalities {
         signals["flows"] = {
@@ -1002,8 +998,8 @@ impl _risk_signals_from(
         test_count: any = len(transitive_tests);
         signals["tests"] = {"score": 0.3 - min(test_count / 5.0, 1.0) * 0.25, "count": test_count};
     }
-    name_lower = `node.name.lower();
-    qn_lower = `node.qualified_name.lower();
+    name_lower: any = `node.name.lower();
+    qn_lower: any = `node.qualified_name.lower();
     sensitive: any = `any(kw in name_lower or kw in qn_lower for kw in _SECURITY_KEYWORDS);
     signals["security"] = {"score": 0.2 if sensitive else 0.0, "count": `int(sensitive)};
     caller_count: any = len(caller_qns);
@@ -1048,7 +1044,6 @@ impl analyze_changes(
 ) -> dict[str, Any] {
     `node: any;
     fp: any;
-    directly_tested: any;
     ranges_unavailable: any = "";
     if changed_ranges is None and repo_root is not None {
         root_path: any = Path(repo_root);
@@ -1149,7 +1144,9 @@ impl analyze_changes(
             and not is_test_gap_exempt(`node, gap_root)
             and not `node.extra.get("typescript_kind")
     ];
-    directly_tested = store.get_directly_tested(`node.qualified_name for `node in gap_candidates);
+    directly_tested: any = store.get_directly_tested(
+        `node.qualified_name for `node in gap_candidates
+    );
     caller_routes: any = store.get_caller_test_routes(
         (`node.qualified_name
         for `node in gap_candidates
@@ -1209,7 +1206,7 @@ impl analyze_changes(
         *([f"  - {len(changed_yaml_paths)} changed YAML path(s)"] if changed_yaml_paths else []),
         *([f"  - {len(changed_json_paths)} changed JSON path(s)"] if changed_json_paths else []),
         *_removed_summary_lines(deletion_review),
-        "  - " + format(affected["total"], "") + " affected flow(s)",
+        f"  - {affected["total"]} affected flow(s)",
         gap_line,
         _OVERALL_RISK_LINE.format(overall_risk),
     ];
@@ -1232,11 +1229,11 @@ impl analyze_changes(
 
     if uncovered_count {
         unreached_gaps: any = [g for g in test_gaps if g["coverage"] != "indirect"];
-        summary_parts.append("  - Untested: " + format(", ".join(_gap_names(unreached_gaps)), ""));
+        summary_parts.append(f"  - Untested: {", ".join(_gap_names(unreached_gaps))}");
     }
     if indirect_count {
         summary_parts.append(
-            "  - Reached only through a caller: " + format(", ".join(_gap_names(indirect_gaps)), "")
+            f"  - Reached only through a caller: {", ".join(_gap_names(indirect_gaps))}"
         );
     }
     if `any(
@@ -1325,7 +1322,7 @@ impl _brief_priority_line(
             file_path = Path(file_path).relative_to(Path(repo_root)).as_posix();
         } except ValueError {}
     }
-    where: any = format(file_path, "") + ":" + format(priority["line_start"], "")
+    where: any = f"{file_path}:{priority["line_start"]}"
         if priority.get("line_start")
         else file_path;
     score: any = `float(priority.get("risk_score") or 0.0);

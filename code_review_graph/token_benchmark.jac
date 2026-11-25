@@ -1,27 +1,20 @@
 import from __future__ { annotations }
 
-import logging;
-
-import sqlite3;
+import logging, sqlite3;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _SAMPLE_QUESTIONS: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _SAMPLE_QUESTIONS = [
-        "how does authentication work",
-        "what is the main entry point",
-        "how are database connections managed",
-        "what error handling patterns are used",
-        "how do tests verify core functionality",
-    ];
-}
+glob _SAMPLE_QUESTIONS: any = [
+    "how does authentication work",
+    "what is the main entry point",
+    "how are database connections managed",
+    "what error handling patterns are used",
+    "how do tests verify core functionality",
+];
 
 def estimate_tokens(text: str) -> int;
 def compute_naive_tokens(repo_root: Path) -> int;

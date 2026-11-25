@@ -1,32 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import builtins;
-
-import operator;
-
-import ast;
-
-import functools;
-
-import io;
-
-import logging;
-
-import re;
-
-import sys;
-
-import threading;
-
-import time;
-
-import tokenize;
-
-import uuid;
-
-import warnings;
+import importlib, builtins, operator, ast, functools, io, logging, re, sys, threading, time, tokenize, uuid, warnings;
 
 import from collections { deque }
 
@@ -34,152 +8,101 @@ import from pathlib { Path, PurePosixPath }
 
 import from typing { Any, Optional, Union }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _FRAMEWORK_BASE_CLASSES: any;
+glob _FRAMEWORK_BASE_CLASSES: any = frozenset(
+    ("Base DeclarativeBase Model BaseModel BaseSettings db.Model TableBase Stack NestedStack "
+        "Construct Resource").split(),
+);
 
-glob _CDK_CLASS_SUFFIXES: any;
+glob _CDK_CLASS_SUFFIXES: any = ("Stack", "Construct", "Pipeline", "Resources", "Layer");
 
-glob _MOCK_NAME_RE: any;
+glob _MOCK_NAME_RE: any = re.compile(
+    "^(mock[A-Z_]|Mock[A-Z]|createMock[A-Z])|(Mock|Stub|Fake|Spy)$", re.IGNORECASE
+);
 
-glob _refactor_lock: any;
+glob _refactor_lock: any = threading.Lock();
 
-glob _pending_refactors: dict[str, dict[str, Any]];
+glob _pending_refactors: dict[str, dict[str, Any]] = {};
 
-glob _followed_edit_files: dict[str, Any];
+glob _followed_edit_files: dict[str, Any] = {};
 
-glob REFACTOR_EXPIRY_SECONDS: any;
-
-glob _DEF_SEARCH_LINES: any;
-
-glob _PY_SUFFIXES: any;
-
-glob _PY_MODULE_ENDINGS: any;
-
-glob _JS_FAMILY: any;
-
-glob _STAR_IMPORT_RE: any;
-
-glob _DEF_KEYWORD_RE: any;
-
-glob _JS_NAME_LEAVES: any;
-
-glob _JS_DECLARATION_FIELDS: dict[str, tuple[str, ...]];
-
-glob _JS_DECLARATION_PARENTS: any;
-
-glob _JS_FUNCTION_SCOPES: any;
-
-glob _JS_BLOCK_SCOPES: any;
-
-glob _JS_NAMED_EXPRESSIONS: any;
-
-glob _Occurrence: any;
-
-glob _MIN_PKG_SEGMENT_LEN: any;
-
-glob _TYPE_IDENT_RE: any;
-
-glob _ASCII_FOLD: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _FRAMEWORK_BASE_CLASSES = frozenset({
-        "Base",
-        "DeclarativeBase",
-        "Model",
-        "BaseModel",
-        "BaseSettings",
-        "db.Model",
-        "TableBase",
-        "Stack",
-        "NestedStack",
-        "Construct",
-        "Resource",
-    });
-    _CDK_CLASS_SUFFIXES = ("Stack", "Construct", "Pipeline", "Resources", "Layer");
-    _MOCK_NAME_RE = re.compile(
-        "^(mock[A-Z_]|Mock[A-Z]|createMock[A-Z])|(Mock|Stub|Fake|Spy)$", re.IGNORECASE
-    );
-
-    _refactor_lock = threading.Lock();
-    _pending_refactors = {};
-    _followed_edit_files = {};
-    REFACTOR_EXPIRY_SECONDS = 600;
-}
+glob REFACTOR_EXPIRY_SECONDS: any = 600;
 
 def _cleanup_expired -> int;
 
-with entry {
-    _DEF_SEARCH_LINES = 20;
+glob _DEF_SEARCH_LINES: any = 20;
 
-    _PY_SUFFIXES = (".py", ".pyi", ".pyw");
-    _PY_MODULE_ENDINGS = (".py", ".pyi", ".pyw", "/__init__.py", "/__init__.pyi");
-    _JS_FAMILY = frozenset({"javascript", "typescript", "tsx"});
-    _STAR_IMPORT_RE = re.compile(b"\\bimport\\s+\\*");
-    _DEF_KEYWORD_RE = re.compile("(?:async\\s+)?def\\s+|class\\s+");
-    _JS_NAME_LEAVES = frozenset({
-        "identifier",
-        "type_identifier",
-        "shorthand_property_identifier",
-        "shorthand_property_identifier_pattern",
+glob _PY_SUFFIXES: any = (".py", ".pyi", ".pyw");
+
+glob _PY_MODULE_ENDINGS: any = (".py", ".pyi", ".pyw", "/__init__.py", "/__init__.pyi");
+
+glob _JS_FAMILY: any = frozenset({"javascript", "typescript", "tsx"});
+
+glob _STAR_IMPORT_RE: any = re.compile(b"\\bimport\\s+\\*");
+
+glob _DEF_KEYWORD_RE: any = re.compile("(?:async\\s+)?def\\s+|class\\s+");
+
+glob _JS_NAME_LEAVES: any = frozenset({
+    "identifier",
+    "type_identifier",
+    "shorthand_property_identifier",
+    "shorthand_property_identifier_pattern",
+});
+
+glob _JS_DECLARATION_FIELDS: dict[str, tuple[str, ...]] = {
+    "variable_declarator": ("name",),
+    "function_declaration": ("name",),
+    "function_signature": ("name",),
+    "generator_function_declaration": ("name",),
+    "function_expression": ("name",),
+    "function": ("name",),
+    "generator_function": ("name",),
+    "class_declaration": ("name",),
+    "abstract_class_declaration": ("name",),
+    "class": ("name",),
+    "interface_declaration": ("name",),
+    "type_alias_declaration": ("name",),
+    "enum_declaration": ("name",),
+    "type_parameter": ("name",),
+    "required_parameter": ("pattern",),
+    "optional_parameter": ("pattern",),
+    "arrow_function": ("parameter",),
+    "catch_clause": ("parameter",),
+    "assignment_pattern": ("left",),
+    "pair_pattern": ("value",),
+    "for_in_statement": ("left",),
+};
+
+glob _JS_DECLARATION_PARENTS: any = frozenset({
+    "formal_parameters",
+    "array_pattern",
+    "rest_pattern",
+    "import_clause",
+    "namespace_import",
+});
+
+glob _JS_FUNCTION_SCOPES: any = frozenset(
+    ("program function_declaration function_expression function arrow_function method_definition "
+        "generator_function_declaration generator_function").split(),
+);
+
+glob _JS_BLOCK_SCOPES: any = _JS_FUNCTION_SCOPES
+    | frozenset({
+        "statement_block",
+        "for_statement",
+        "for_in_statement",
+        "catch_clause",
+        "class_body",
+        "switch_body",
     });
-    _JS_DECLARATION_FIELDS = {
-        "variable_declarator": ("name",),
-        "function_declaration": ("name",),
-        "function_signature": ("name",),
-        "generator_function_declaration": ("name",),
-        "function_expression": ("name",),
-        "function": ("name",),
-        "generator_function": ("name",),
-        "class_declaration": ("name",),
-        "abstract_class_declaration": ("name",),
-        "class": ("name",),
-        "interface_declaration": ("name",),
-        "type_alias_declaration": ("name",),
-        "enum_declaration": ("name",),
-        "type_parameter": ("name",),
-        "required_parameter": ("pattern",),
-        "optional_parameter": ("pattern",),
-        "arrow_function": ("parameter",),
-        "catch_clause": ("parameter",),
-        "assignment_pattern": ("left",),
-        "pair_pattern": ("value",),
-        "for_in_statement": ("left",),
-    };
-    _JS_DECLARATION_PARENTS = frozenset({
-        "formal_parameters",
-        "array_pattern",
-        "rest_pattern",
-        "import_clause",
-        "namespace_import",
-    });
-    _JS_FUNCTION_SCOPES = frozenset({
-        "program",
-        "function_declaration",
-        "function_expression",
-        "function",
-        "arrow_function",
-        "method_definition",
-        "generator_function_declaration",
-        "generator_function",
-    });
-    _JS_BLOCK_SCOPES = _JS_FUNCTION_SCOPES
-        | frozenset({
-            "statement_block",
-            "for_statement",
-            "for_in_statement",
-            "catch_clause",
-            "class_body",
-            "switch_body",
-        });
-    _JS_NAMED_EXPRESSIONS = frozenset({
-        "function_expression",
-        "function",
-        "generator_function",
-        "class",
-    });
-}
+
+glob _JS_NAMED_EXPRESSIONS: any = frozenset({
+    "function_expression",
+    "function",
+    "generator_function",
+    "class",
+});
 
 def _ident_pattern(name: str) -> re.Pattern[str];
 def _decode_source(data: bytes) -> Optional[tuple[str, bool]];
@@ -246,9 +169,7 @@ obj _Sources {
     def __hash__ -> int;
 }
 
-with entry {
-    _Occurrence = builtins.tuple[int, int, str, Optional[str]];
-}
+glob _Occurrence: any = builtins.tuple[int, int, str, Optional[str]];
 
 def _import_targets_by_line(store: GraphStore, file_path: str) -> dict[int, set[str]];
 def _importer_files(store: GraphStore, module_file: str) -> list[str];
@@ -488,22 +409,16 @@ def _rename_edits(
 ) -> Optional[list[dict[str, Any]]];
 def _is_entry_point(`node: Any) -> bool;
 
-with entry {
-    _MIN_PKG_SEGMENT_LEN = 4;
-}
+glob _MIN_PKG_SEGMENT_LEN: any = 4;
 
 @functools.lru_cache(maxsize=4096)
 def _path_segments(file_path: str) -> tuple[str, ...];
 
-with entry {
-    _TYPE_IDENT_RE = re.compile("[A-Z][A-Za-z0-9_]*");
-}
+glob _TYPE_IDENT_RE: any = re.compile("[A-Z][A-Za-z0-9_]*");
 
 def _collect_type_referenced_names(store: GraphStore) -> set[str];
 
-with entry {
-    _ASCII_FOLD = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz");
-}
+glob _ASCII_FOLD: any = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz");
 
 def _ascii_fold(text: str) -> str;
 def _csharp_member_scopes(conn: Any) -> dict[str, set[str]];

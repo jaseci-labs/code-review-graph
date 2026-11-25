@@ -310,8 +310,6 @@ impl _remove_dsh_patch_entry(
 impl _remove_yaml_entry(
     path: Path, key: str, boundary: Path, `report: UninstallReport, *, dry_run: bool
 ) {
-    lines: any;
-    entry_prefix: any;
     import yaml;
 
     if not path.exists() or not _safe_path(path, boundary, `report) {
@@ -335,7 +333,7 @@ impl _remove_yaml_entry(
         return;
     }
 
-    lines = raw.splitlines(keepends=True);
+    lines: any = raw.splitlines(keepends=True);
     bounds: any = skills._yaml_section_bounds(lines, key);
     if bounds is None {
         `report.skipped_paths.append(f"{path} ({key} is not a block mapping; left unchanged)");
@@ -345,7 +343,7 @@ impl _remove_yaml_entry(
     section_end: any;
     (header, section_end) = bounds as any;
     child_indent: any = skills._yaml_block_indent(lines, header + 1, section_end);
-    entry_prefix = format(" " * child_indent, "") + format(_ENTRY_NAME, "") + ":";
+    entry_prefix: any = f"{" " * child_indent}{_ENTRY_NAME}:";
     start: any = next(
         (index
         for index in range(header + 1, section_end)
@@ -477,8 +475,7 @@ impl _clean_hook_data(
     owns: Callable[[str], bool] | None = None,
     scoped_owns: tuple[Callable[[str], bool], tuple[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], list[tuple[str | int, ...]]] {
-    scoped: any;
-    scoped = scoped_commands or {};
+    scoped: any = scoped_commands or {};
 
     def owned(command: Any, event: str, matcher: Any) -> bool {
         if not isinstance(command, `str) {

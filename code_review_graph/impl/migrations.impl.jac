@@ -4,8 +4,7 @@ impl _progress(msg: str, *args_: object) {
 }
 
 impl _matches(exc: sqlite3.Error, needles: tuple[str, ...]) -> bool {
-    message: any;
-    message = `str(exc).lower();
+    message: any = `str(exc).lower();
     return `any(needle in message for needle in needles);
 }
 
@@ -357,8 +356,7 @@ impl _is_new_database(conn: sqlite3.Connection, current: int) -> bool {
 }
 
 impl run_migrations(conn: sqlite3.Connection) {
-    current: any;
-    current = get_schema_version(conn);
+    current: any = get_schema_version(conn);
     if current >= LATEST_VERSION {
         return;
     }

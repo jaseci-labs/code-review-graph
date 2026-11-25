@@ -4,17 +4,7 @@ import operator;
 
 import from jaclang.comptime { target }
 
-import contextlib;
-
-import contextvars;
-
-import json;
-
-import logging;
-
-import os;
-
-import sys;
+import contextlib, contextvars, json, logging, os, sys;
 
 import from dataclasses { dataclass }
 
@@ -24,37 +14,25 @@ import from pathlib { Path }
 
 import from typing { Any, Iterable, Iterator }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob HISTORY_ENV: any;
+glob HISTORY_ENV: any = "CRG_CONTEXT_HISTORY";
 
-glob HISTORY_FILE: any;
+glob HISTORY_FILE: any = "context-history.jsonl";
 
-glob LOCK_FILE: any;
+glob LOCK_FILE: any = "context-history.lock";
 
-glob SCHEMA_VERSION: any;
+glob SCHEMA_VERSION: any = 1;
 
-glob MAX_BYTES: any;
+glob MAX_BYTES: any = 1024 * 1024;
 
-glob _TS_FORMAT: any;
+glob _TS_FORMAT: any = "%Y-%m-%dT%H:%M:%SZ";
 
-glob _TOKEN_KEYS: any;
+glob _TOKEN_KEYS: any = ("baseline_tokens", "returned_tokens", "saved_tokens");
 
-glob _label: contextvars.ContextVar[str | None];
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    HISTORY_ENV = "CRG_CONTEXT_HISTORY";
-    HISTORY_FILE = "context-history.jsonl";
-    LOCK_FILE = "context-history.lock";
-    SCHEMA_VERSION = 1;
-    MAX_BYTES = 1024 * 1024;
-
-    _TS_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
-    _TOKEN_KEYS = ("baseline_tokens", "returned_tokens", "saved_tokens");
-    _label = contextvars.ContextVar("crg_context_history_label", default=None);
-}
+glob _label: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "crg_context_history_label", default=None
+);
 
 @dataclass(frozen=True)
 class CallInfo {

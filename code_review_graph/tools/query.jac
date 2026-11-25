@@ -1,14 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import typing;
-
-import logging;
-
-import re;
+import builtins, operator, typing, logging, re;
 
 import from collections { defaultdict, deque }
 
@@ -16,105 +8,59 @@ import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
-
-glob _MAX_IMPACT_NODES_SHOWN: any;
-
-glob _MAX_IMPACT_EDGES: any;
-
-glob _MAX_IMPACT_FILES: any;
-
-glob _MAX_SEARCH_RESULTS_STANDARD: any;
-
-glob _MAX_SEARCH_RESULTS_MINIMAL: any;
-
-glob _MAX_LARGE_FUNCTIONS_STANDARD: any;
-
-glob _MAX_LARGE_FUNCTIONS_MINIMAL: any;
-
-glob _MAX_TRAVERSAL_TOKEN_BUDGET: any;
-
-glob _SEARCH_WINDOW_FACTOR: any;
-
-glob _MAX_SEARCH_SOURCE_LINES: any;
-
-glob _MAX_SEARCH_SOURCE_LINES_PER_NODE: any;
-
-glob _MAX_EXPANDED_SOURCE_LINES: any;
-
-glob _MAX_EXPANDED_HITS: any;
-
-glob _MAX_NEIGHBORS_PER_HIT: any;
-
-glob _MAX_SEARCH_SOURCE_CHARS: any;
-
-glob _MAX_SEARCH_SOURCE_CHARS_PER_NODE: any;
-
-glob _SANITIZED_NAME_MAX: any;
-
-glob _QUERY_PATTERNS: any;
-
-glob _JAVA_FQN_PART: any;
-
-glob _TEST_BLOCK_NAME: any;
-
-glob _MAX_DOTTED_TARGET_CANDIDATES: any;
-
-glob _MAX_BARE_TARGET_CANDIDATES: any;
-
-glob _CALL_SITE_PATTERNS: any;
-
-glob _HOP_CERTAINTY: any;
-
 glob _HOP_DIRECT: any;
 
 glob _HOP_UNIQUE_NAME: any;
 
 glob _HOP_SHARED_NAME: any;
 
-glob _ROUTE_EDGE_KINDS: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _NAME_MATCH_EDGE_KINDS: any;
+glob _MAX_IMPACT_NODES_SHOWN: any = 100;
 
-glob _MAX_NAME_MATCH_CANDIDATES: any;
+glob _MAX_IMPACT_EDGES: any = 150;
 
-glob _MAX_ROUTE_VISITS: any;
+glob _MAX_IMPACT_FILES: any = 200;
 
-glob _MAX_ROUTE_HOPS: any;
+glob _MAX_SEARCH_RESULTS_STANDARD: any = 100;
 
-glob _Hop: any;
+glob _MAX_SEARCH_RESULTS_MINIMAL: any = 5;
 
-glob _Route: any;
+glob _MAX_LARGE_FUNCTIONS_STANDARD: any = 100;
 
-glob _CANDIDATE_KEYS: any;
+glob _MAX_LARGE_FUNCTIONS_MINIMAL: any = 25;
 
-with entry {
-    logger = logging.getLogger(__name__);
-    _MAX_IMPACT_NODES_SHOWN = 100;
-    _MAX_IMPACT_EDGES = 150;
-    _MAX_IMPACT_FILES = 200;
-    _MAX_SEARCH_RESULTS_STANDARD = 100;
-    _MAX_SEARCH_RESULTS_MINIMAL = 5;
-    _MAX_LARGE_FUNCTIONS_STANDARD = 100;
-    _MAX_LARGE_FUNCTIONS_MINIMAL = 25;
-    _MAX_TRAVERSAL_TOKEN_BUDGET = 10000;
-    _SEARCH_WINDOW_FACTOR = 3;
-    _MAX_SEARCH_SOURCE_LINES = 240;
-    _MAX_SEARCH_SOURCE_LINES_PER_NODE = 60;
-    _MAX_EXPANDED_SOURCE_LINES = 700;
-    _MAX_EXPANDED_HITS = 3;
-    _MAX_NEIGHBORS_PER_HIT = 4;
-    _MAX_SEARCH_SOURCE_CHARS = 80000;
-    _MAX_SEARCH_SOURCE_CHARS_PER_NODE = 12000;
-    _SANITIZED_NAME_MAX = 256;
-    _QUERY_PATTERNS = QUERY_PATTERNS;
+glob _MAX_TRAVERSAL_TOKEN_BUDGET: any = 10000;
 
-    _JAVA_FQN_PART = re.compile("^[A-Za-z_$][A-Za-z0-9_$]*$");
-    _TEST_BLOCK_NAME = re.compile("@L\\d+$");
-    _MAX_DOTTED_TARGET_CANDIDATES = 100;
-    _MAX_BARE_TARGET_CANDIDATES = 20;
-    _CALL_SITE_PATTERNS = frozenset({"callers_of", "callees_of", "references_to"});
-}
+glob _SEARCH_WINDOW_FACTOR: any = 3;
+
+glob _MAX_SEARCH_SOURCE_LINES: any = 240;
+
+glob _MAX_SEARCH_SOURCE_LINES_PER_NODE: any = 60;
+
+glob _MAX_EXPANDED_SOURCE_LINES: any = 700;
+
+glob _MAX_EXPANDED_HITS: any = 3;
+
+glob _MAX_NEIGHBORS_PER_HIT: any = 4;
+
+glob _MAX_SEARCH_SOURCE_CHARS: any = 80000;
+
+glob _MAX_SEARCH_SOURCE_CHARS_PER_NODE: any = 12000;
+
+glob _SANITIZED_NAME_MAX: any = 256;
+
+glob _QUERY_PATTERNS: any = QUERY_PATTERNS;
+
+glob _JAVA_FQN_PART: any = re.compile("^[A-Za-z_$][A-Za-z0-9_$]*$");
+
+glob _TEST_BLOCK_NAME: any = re.compile("@L\\d+$");
+
+glob _MAX_DOTTED_TARGET_CANDIDATES: any = 100;
+
+glob _MAX_BARE_TARGET_CANDIDATES: any = 20;
+
+glob _CALL_SITE_PATTERNS: any = frozenset({"callers_of", "callees_of", "references_to"});
 
 def _attach_call_site(result: dict[str, Any], `edge: GraphEdge) -> dict[str, Any];
 def _interleave_call_sites(
@@ -141,29 +87,37 @@ def _compact_impact_response(
     unresolved_call_sites: int,
 ) -> dict[str, Any];
 
-with entry {
-    _HOP_CERTAINTY = ("direct", "unique_name", "shared_name");
-    (_HOP_DIRECT, _HOP_UNIQUE_NAME, _HOP_SHARED_NAME) = range(len(_HOP_CERTAINTY)) as any;
-    _ROUTE_EDGE_KINDS = frozenset({
-        "CALLS",
-        "REFERENCES",
-        "INHERITS",
-        "IMPLEMENTS",
-        "IMPORTS_FROM",
-        "CONTAINS",
-    });
-    _NAME_MATCH_EDGE_KINDS = frozenset({"CALLS", "REFERENCES", "INHERITS", "IMPLEMENTS"});
-    _MAX_NAME_MATCH_CANDIDATES = 10;
-    _MAX_ROUTE_VISITS = 200000;
-    _MAX_ROUTE_HOPS = 30;
+glob _HOP_CERTAINTY: any = ("direct", "unique_name", "shared_name");
 
-    _Hop = builtins.tuple[str, int, GraphEdge];
-    _Route = typing.List[typing.Tuple[str, str, int, GraphEdge]];
-    _CANDIDATE_KEYS = (
-        ("ambiguous_targets", "ambiguous_target_count"),
-        ("unresolved_targets", "unresolved_target_count"),
-    );
+with entry {
+    (_HOP_DIRECT, _HOP_UNIQUE_NAME, _HOP_SHARED_NAME) = range(len(_HOP_CERTAINTY)) as any;
 }
+
+glob _ROUTE_EDGE_KINDS: any = frozenset({
+    "CALLS",
+    "REFERENCES",
+    "INHERITS",
+    "IMPLEMENTS",
+    "IMPORTS_FROM",
+    "CONTAINS",
+});
+
+glob _NAME_MATCH_EDGE_KINDS: any = frozenset({"CALLS", "REFERENCES", "INHERITS", "IMPLEMENTS"});
+
+glob _MAX_NAME_MATCH_CANDIDATES: any = 10;
+
+glob _MAX_ROUTE_VISITS: any = 200000;
+
+glob _MAX_ROUTE_HOPS: any = 30;
+
+glob _Hop: any = builtins.tuple[str, int, GraphEdge];
+
+glob _Route: any = typing.List[typing.Tuple[str, str, int, GraphEdge]];
+
+glob _CANDIDATE_KEYS: any = (
+    ("ambiguous_targets", "ambiguous_target_count"),
+    ("unresolved_targets", "unresolved_target_count"),
+);
 
 obj _RouteGraph {
     has _store: any,
@@ -215,14 +169,9 @@ def _query_route(
     store: GraphStore, `root: Path, target: str, to: str, minimal: bool
 ) -> dict[str, Any];
 
-glob max_results_default_: any;
+glob max_results_default_: any = MAX_IMPACT_NODES;
 
-glob resolution_default_: any;
-
-with entry {
-    max_results_default_ = MAX_IMPACT_NODES;
-    resolution_default_ = RESOLUTION_ALL;
-}
+glob resolution_default_: any = RESOLUTION_ALL;
 
 def get_impact_radius(
     changed_files: list[str] | None = None,
@@ -235,11 +184,7 @@ def get_impact_radius(
     max_files: int = 25,
 ) -> dict[str, Any];
 
-glob resolution_default__: any;
-
-with entry {
-    resolution_default__ = RESOLUTION_ALL;
-}
+glob resolution_default__: any = RESOLUTION_ALL;
 
 def query_graph(
     pattern: str,
@@ -282,11 +227,7 @@ def _neighbor_entry(`node: GraphNode) -> dict[str, Any];
 def _stored_qualified_name(store: GraphStore, hit: dict[str, Any]) -> str | None;
 def _attach_neighbors(results: list[dict[str, Any]], store: GraphStore, budget: _SourceBudget);
 
-glob max_source_lines_default_: any;
-
-with entry {
-    max_source_lines_default_ = _MAX_SEARCH_SOURCE_LINES_PER_NODE;
-}
+glob max_source_lines_default_: any = _MAX_SEARCH_SOURCE_LINES_PER_NODE;
 
 def semantic_search_nodes(
     query: str,

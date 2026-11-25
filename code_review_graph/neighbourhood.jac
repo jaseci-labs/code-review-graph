@@ -1,10 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import builtins;
-
-import fnmatch;
+import importlib, builtins, fnmatch;
 
 import from collections { deque }
 
@@ -13,42 +9,21 @@ import from dataclasses { dataclass }
 import from typing { Iterable, Sequence }
 def _sanitize_name(value: str) -> str;
 
-glob __all__: any = [
-    "DEFAULT_DEPTH",
-    "DEFAULT_MAX_NODES",
-    "DEFAULT_RENDER_DEPTH",
-    "PATH_EDGE_KINDS",
-    "STRUCTURAL_EDGE_KINDS",
-    "NeighbourhoodSpec",
-    "ResolvedSeeds",
-    "SeedResolutionError",
-    "extract",
-    "hop_distances",
-    "resolve_seeds",
-    "shortest_path",
-];
+glob __all__: any = ("DEFAULT_DEPTH DEFAULT_MAX_NODES DEFAULT_RENDER_DEPTH PATH_EDGE_KINDS STRUCTURAL_EDGE_KINDS "
+    "NeighbourhoodSpec ResolvedSeeds SeedResolutionError extract hop_distances resolve_seeds "
+    "shortest_path").split();
 
-glob STRUCTURAL_EDGE_KINDS: tuple[str, ...];
+glob STRUCTURAL_EDGE_KINDS: tuple[str, ...] = ("CONTAINS",);
 
-glob PATH_EDGE_KINDS: tuple[str, ...];
+glob PATH_EDGE_KINDS: tuple[str, ...] = ("CALLS", "IMPORTS_FROM", "INHERITS");
 
-glob DEFAULT_DEPTH: any;
+glob DEFAULT_DEPTH: any = 2;
 
-glob DEFAULT_RENDER_DEPTH: any;
+glob DEFAULT_RENDER_DEPTH: any = 1;
 
-glob DEFAULT_MAX_NODES: any;
+glob DEFAULT_MAX_NODES: any = 1500;
 
-glob _MAX_PATH_VISITS: any;
-
-with entry {
-    STRUCTURAL_EDGE_KINDS = ("CONTAINS",);
-    PATH_EDGE_KINDS = ("CALLS", "IMPORTS_FROM", "INHERITS");
-
-    DEFAULT_DEPTH = 2;
-    DEFAULT_RENDER_DEPTH = 1;
-    DEFAULT_MAX_NODES = 1500;
-    _MAX_PATH_VISITS = 2000000;
-}
+glob _MAX_PATH_VISITS: any = 2000000;
 
 obj SeedResolutionError(ValueError) {
     def __repr__ -> str;
@@ -58,14 +33,9 @@ obj SeedResolutionError(ValueError) {
     def __hash__ -> int;
 }
 
-glob depth_default_: any;
+glob depth_default_: any = DEFAULT_DEPTH;
 
-glob max_nodes_default_: any;
-
-with entry {
-    depth_default_ = DEFAULT_DEPTH;
-    max_nodes_default_ = DEFAULT_MAX_NODES;
-}
+glob max_nodes_default_: any = DEFAULT_MAX_NODES;
 
 @dataclass(frozen=True)
 class NeighbourhoodSpec {
@@ -126,11 +96,7 @@ def hop_distances(
     adjacency: dict[str, set[str]], seeds: Iterable[str], depth: int
 ) -> dict[str, int];
 
-glob kinds_default_: any;
-
-with entry {
-    kinds_default_ = PATH_EDGE_KINDS;
-}
+glob kinds_default_: any = PATH_EDGE_KINDS;
 
 def shortest_path(
     edges: Iterable[dict], source: str, target: str, kinds: Sequence[str] = kinds_default_

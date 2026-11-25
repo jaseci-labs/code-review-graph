@@ -183,7 +183,7 @@ impl _update_repo(repo_root: Path) {
         sys.exit(1);
     }
     if result.get("status") == "error" {
-        print("Error: " + format(result.get("summary", "update failed"), ""), file=sys.stderr);
+        print(f"Error: {result.get("summary", "update failed")}", file=sys.stderr);
         sys.exit(1);
     }
 }

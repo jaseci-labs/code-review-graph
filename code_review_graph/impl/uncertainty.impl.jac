@@ -89,9 +89,6 @@ impl _live_git_head(`root: Path) -> str | None {
 }
 
 impl _untracked_sources(`root: Path, store: GraphStore) -> int | None {
-    indexed_files: any;
-    indexed_suffixes: any;
-    ignore_patterns: any;
     try {
         result: any = subprocess.run(
             ["git", "ls-files", "--others", "--exclude-standard", "-z", "--", "."],
@@ -110,8 +107,8 @@ impl _untracked_sources(`root: Path, store: GraphStore) -> int | None {
     if not candidates {
         return 0;
     }
-    indexed_files = {normalize_file_path(`root / stored) for stored in store.get_all_files()};
-    indexed_suffixes = {
+    indexed_files: any = {normalize_file_path(`root / stored) for stored in store.get_all_files()};
+    indexed_suffixes: any = {
         suffix
         for suffix in (Path(stored).suffix.lower() for stored in indexed_files)
         if suffix
@@ -119,7 +116,7 @@ impl _untracked_sources(`root: Path, store: GraphStore) -> int | None {
     if not indexed_suffixes {
         return 0;
     }
-    ignore_patterns = _load_ignore_patterns(`root);
+    ignore_patterns: any = _load_ignore_patterns(`root);
     return sum(
         1
         for relative in candidates

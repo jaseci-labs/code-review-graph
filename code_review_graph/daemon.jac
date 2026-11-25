@@ -1,34 +1,10 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import builtins;
-
-import operator;
+import importlib, builtins, operator;
 
 import from jaclang.comptime { target as target_ }
 
-import hashlib;
-
-import json;
-
-import logging;
-
-import os;
-
-import shutil;
-
-import signal;
-
-import subprocess;
-
-import sys;
-
-import threading;
-
-import types;
-
-import time;
+import hashlib, json, logging, os, shutil, signal, subprocess, sys, threading, types, time;
 
 import from collections.abc { Callable }
 
@@ -40,38 +16,6 @@ import from typing { Any }
 
 glob tomllib: any;
 
-glob logger: any;
-
-glob _LAZY_PATHS: any;
-
-glob _HEALTH_CHECK_INTERVAL: any;
-
-glob _RESTART_BACKOFF_BASE: any;
-
-glob _RESTART_BACKOFF_MAX: any;
-
-glob _RESTART_HEALTHY_SECONDS: any;
-
-glob _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION: any;
-
-glob _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: any;
-
-glob _TOML_SHORT_ESCAPES: any;
-
-glob _lock_handles: dict[str, Any];
-
-glob _PROCESS_QUERY_LIMITED_INFORMATION: any;
-
-glob _SYNCHRONIZE: any;
-
-glob _ERROR_ACCESS_DENIED: any;
-
-glob _WAIT_OBJECT_0: any;
-
-glob _WAIT_FAILED: any;
-
-glob _WATCH_HEALTH_STALE_SECONDS: any;
-
 with entry {
     if sys.version_info >= (3, 11) {
         import tomllib;
@@ -82,35 +26,35 @@ with entry {
             tomllib = None;
         }
     }
-
-    logger = logging.getLogger(__name__);
 }
+
+glob logger: any = logging.getLogger(__name__);
 
 def default_config_path -> Path;
 def default_pid_path -> Path;
 def default_state_path -> Path;
 def default_log_dir -> Path;
 
-with entry {
-    _LAZY_PATHS = {
-        "CONFIG_PATH": default_config_path,
-        "PID_PATH": default_pid_path,
-        "STATE_PATH": default_state_path,
-    };
-}
+glob _LAZY_PATHS: any = {
+    "CONFIG_PATH": default_config_path,
+    "PID_PATH": default_pid_path,
+    "STATE_PATH": default_state_path,
+};
 
 def __getattr__(name: str) -> Path;
 def __dir__ -> list[str];
 
-with entry {
-    _HEALTH_CHECK_INTERVAL = 30;
-    _RESTART_BACKOFF_BASE = env_float("CRG_RESTART_BACKOFF", 30.0);
-    _RESTART_BACKOFF_MAX = env_float("CRG_RESTART_BACKOFF_MAX", 900.0);
-    _RESTART_HEALTHY_SECONDS = env_float("CRG_RESTART_HEALTHY_AFTER", 600.0);
+glob _HEALTH_CHECK_INTERVAL: any = 30;
 
-    _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION = 9;
-    _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 8192;
-}
+glob _RESTART_BACKOFF_BASE: any = env_float("CRG_RESTART_BACKOFF", 30.0);
+
+glob _RESTART_BACKOFF_MAX: any = env_float("CRG_RESTART_BACKOFF_MAX", 900.0);
+
+glob _RESTART_HEALTHY_SECONDS: any = env_float("CRG_RESTART_HEALTHY_AFTER", 600.0);
+
+glob _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION: any = 9;
+
+glob _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: any = 8192;
 
 obj _WindowsJob {
     has _ctypes: any,
@@ -148,17 +92,15 @@ class DaemonConfig {
 
 def load_config(path: Path | None = None) -> DaemonConfig;
 
-with entry {
-    _TOML_SHORT_ESCAPES = {
-        "\\": "\\\\",
-        "\"": "\\\"",
-        "\x08": "\\b",
-        "\t": "\\t",
-        "\n": "\\n",
-        "\x0c": "\\f",
-        "\r": "\\r",
-    };
-}
+glob _TOML_SHORT_ESCAPES: any = {
+    "\\": "\\\\",
+    "\"": "\\\"",
+    "\x08": "\\b",
+    "\t": "\\t",
+    "\n": "\\n",
+    "\x0c": "\\f",
+    "\r": "\\r",
+};
 
 def _toml_str(value: object) -> str;
 def _serialize_toml(config: DaemonConfig) -> str;
@@ -168,9 +110,7 @@ def add_repo_to_config(
 ) -> DaemonConfig;
 def remove_repo_from_config(path_or_alias: str, config_path: Path | None = None) -> DaemonConfig;
 
-with entry {
-    _lock_handles = {};
-}
+glob _lock_handles: dict[str, Any] = {};
 
 obj DaemonAlreadyRunningError(RuntimeError) {
     has pid: any,
@@ -199,13 +139,15 @@ def write_pid(pid: int | None = None, path: Path | None = None);
 def read_pid(path: Path | None = None) -> int | None;
 def clear_pid(path: Path | None = None);
 
-with entry {
-    _PROCESS_QUERY_LIMITED_INFORMATION = 4096;
-    _SYNCHRONIZE = 1048576;
-    _ERROR_ACCESS_DENIED = 5;
-    _WAIT_OBJECT_0 = 0;
-    _WAIT_FAILED = 4294967295;
-}
+glob _PROCESS_QUERY_LIMITED_INFORMATION: any = 4096;
+
+glob _SYNCHRONIZE: any = 1048576;
+
+glob _ERROR_ACCESS_DENIED: any = 5;
+
+glob _WAIT_OBJECT_0: any = 0;
+
+glob _WAIT_FAILED: any = 4294967295;
 
 def _pid_alive_windows(
     pid: int, kernel32: Any, get_last_error: Callable[[], int] | None = None
@@ -223,18 +165,12 @@ def reap_orphaned_watchers(
 def _clear_health_left_by(repo_path: str, pid: Any);
 def _signal_until_dead(pid: int, *, timeout: float = 5.0) -> bool;
 
-with entry {
-    _WATCH_HEALTH_STALE_SECONDS = env_float("CRG_WATCH_HEALTH_STALE", 90.0);
-}
+glob _WATCH_HEALTH_STALE_SECONDS: any = env_float("CRG_WATCH_HEALTH_STALE", 90.0);
 
 def watch_health_dir -> Path;
 def watch_health_path(repo_root: str | Path) -> Path;
 
-glob stale_after_default_: any;
-
-with entry {
-    stale_after_default_ = _WATCH_HEALTH_STALE_SECONDS;
-}
+glob stale_after_default_: any = _WATCH_HEALTH_STALE_SECONDS;
 
 def read_watch_health(
     repo_root: str | Path, *, stale_after: float = stale_after_default_

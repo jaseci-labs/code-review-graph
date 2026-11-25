@@ -1,32 +1,10 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import html;
-
-import json;
-
-import logging;
-
-import os;
-
-import re;
-
-import tempfile;
+import builtins, html, json, logging, os, re, tempfile;
 
 import from pathlib { Path }
 
-glob logger: any;
-
-glob GRAPHML_NS: any;
-
-glob GRAPHML_SCHEMA: any;
-
-glob _XML_ILLEGAL: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 obj MissingOptionalDependencyError(ImportError) {
     def __repr__ -> str;
@@ -38,11 +16,11 @@ obj MissingOptionalDependencyError(ImportError) {
 
 def export_json(store: GraphStore, output_path: Path) -> Path;
 
-with entry {
-    GRAPHML_NS = "http://graphml.graphdrawing.org/xmlns";
-    GRAPHML_SCHEMA = "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd";
-    _XML_ILLEGAL = re.compile("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]");
-}
+glob GRAPHML_NS: any = "http://graphml.graphdrawing.org/xmlns";
+
+glob GRAPHML_SCHEMA: any = "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd";
+
+glob _XML_ILLEGAL: any = re.compile("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]");
 
 def _xml_text(value: object) -> str;
 def export_graphml(store: GraphStore, output_path: Path) -> Path;

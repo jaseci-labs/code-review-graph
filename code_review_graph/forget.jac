@@ -1,23 +1,14 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import hashlib;
-
-import logging;
+import importlib, hashlib, logging;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _SQL_PARAM_CHUNK: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _SQL_PARAM_CHUNK = 400;
-}
+glob _SQL_PARAM_CHUNK: any = 400;
 
 def _referrer_files(
     store: GraphStore, deleted_qualified_names: set[str], forgotten: set[str]

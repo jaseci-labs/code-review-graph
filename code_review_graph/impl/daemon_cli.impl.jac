@@ -227,7 +227,7 @@ impl _handle_status(_args: argparse.Namespace) {
     if running {
         state: any = load_state();
         header: any = "  "
-            + format("Alias", "<" + format(alias_width, ""))
+            + format("Alias", f"<{alias_width}")
             + "  "
             + format("Status", "<8")
             + "  "
@@ -238,20 +238,7 @@ impl _handle_status(_args: argparse.Namespace) {
             + format("Event", "<6")
             + "  Path";
         print(header);
-        print(
-            "  "
-                + format("-" * alias_width, "")
-                + "  "
-                + format("-" * 8, "")
-                + "  "
-                + format("-" * 8, "")
-                + "  "
-                + format("-" * 8, "")
-                + "  "
-                + format("-" * 6, "")
-                + "  "
-                + format("-" * 40, ""),
-        );
+        print(f"  {"-" * alias_width}  {"-" * 8}  {"-" * 8}  {"-" * 8}  {"-" * 6}  {"-" * 40}");
         stalled: any = False;
         degraded: any = False;
         repo: any;
@@ -271,7 +258,7 @@ impl _handle_status(_args: argparse.Namespace) {
                 else "-";
             print(
                 "  "
-                    + format(repo.alias, "<" + format(alias_width, ""))
+                    + format(repo.alias, f"<{alias_width}")
                     + "  "
                     + format(status_str, "<8")
                     + "  "
@@ -302,30 +289,21 @@ impl _handle_status(_args: argparse.Namespace) {
         by_alias: any = {orphan["alias"]: orphan for orphan in orphans};
         print(
             "  "
-                + format("Alias", "<" + format(alias_width, ""))
+                + format("Alias", f"<{alias_width}")
                 + "  "
                 + format("Status", "<8")
                 + "  "
                 + format("PID", "<8")
                 + "  Path",
         );
-        print(
-            "  "
-                + format("-" * alias_width, "")
-                + "  "
-                + format("-" * 8, "")
-                + "  "
-                + format("-" * 8, "")
-                + "  "
-                + format("-" * 40, ""),
-        );
+        print(f"  {"-" * alias_width}  {"-" * 8}  {"-" * 8}  {"-" * 40}");
         for repo in config.repos {
             orphan = by_alias.get(repo.alias);
             status_str = "orphan" if orphan else "-";
             pid_str = `str(orphan["pid"]) if orphan else "-";
             print(
                 "  "
-                    + format(repo.alias, "<" + format(alias_width, ""))
+                    + format(repo.alias, f"<{alias_width}")
                     + "  "
                     + format(status_str, "<8")
                     + "  "

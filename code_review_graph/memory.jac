@@ -1,20 +1,12 @@
 import from __future__ { annotations }
 
-import logging;
-
-import re;
-
-import time;
+import logging, re, time;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 def save_result(
     question: str,

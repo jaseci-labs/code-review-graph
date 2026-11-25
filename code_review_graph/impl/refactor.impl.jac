@@ -406,7 +406,6 @@ impl _PyRenameScan.run(tree: ast.Module) -> tuple[list[_Occurrence], bool] {
 }
 
 impl _PyRenameScan._names_exporter(dotted: Optional[str]) -> bool {
-    path: any;
     if dotted is None {
         return False;
     }
@@ -417,12 +416,12 @@ impl _PyRenameScan._names_exporter(dotted: Optional[str]) -> bool {
     _: any;
     rest: any;
     (`root, _, rest) = dotted.partition(".") as any;
-    path = self.module_paths.get(`root);
+    path: any = self.module_paths.get(`root);
     if path is None {
         return False;
     }
     if rest {
-        path = format(path, "") + "/" + format(rest.replace(".", "/"), "");
+        path = f"{path}/{rest.replace(".", "/")}";
     }
     return `any(_py_module_matches(e, path, True) for e in self.exporters);
 }
@@ -619,7 +618,6 @@ impl _PyRenameScan._visit(`node: ast.AST, scope: _PyScope) {
 }
 
 impl _PyRenameScan._bind_import_module(`node: ast.Assign) {
-    module_path: any;
     call: any = `node.value;
     if not (
         len(`node.targets) == 1
@@ -633,7 +631,7 @@ impl _PyRenameScan._bind_import_module(`node: ast.Assign) {
     ) {
         return;
     }
-    module_path = call.args[0].value.replace(".", "/");
+    module_path: any = call.args[0].value.replace(".", "/");
     if not module_path.startswith("/")
         and `any(_py_module_matches(e, module_path, False) for e in self.exporters)
     {
@@ -747,11 +745,10 @@ impl _PyRenameScan._alias_asname_col(alias: ast.alias) -> tuple[int, int] {
 }
 
 impl _PyRenameScan._visit_import(`node: ast.Import, scope: _PyScope) {
-    module_path: any;
     targets: any = self.import_targets.get(`node.lineno, set[any]());
     exporting: any = targets & self.exporters;
     for alias in `node.names {
-        module_path = alias.name.replace(".", "/");
+        module_path: any = alias.name.replace(".", "/");
         if `any(_py_module_matches(t, module_path, False) for t in exporting)
             or exporting and len(`node.names) == 1
         {
@@ -761,9 +758,7 @@ impl _PyRenameScan._visit_import(`node: ast.Import, scope: _PyScope) {
         base: any = _py_module_base(alias.name, targets);
         if base is not None {
             module: any = alias.name if alias.asname else bound;
-            self.module_paths[bound] = format(base, "")
-                + "/"
-                + format(module.replace(".", "/"), "");
+            self.module_paths[bound] = f"{base}/{module.replace(".", "/")}";
         }
         if bound == self.name {
             scope.bind();
@@ -778,12 +773,10 @@ impl _PyRenameScan._visit_import(`node: ast.Import, scope: _PyScope) {
 }
 
 impl _PyRenameScan._visit_import_from(`node: ast.ImportFrom, scope: _PyScope) {
-    module_path: any;
-    exact: any;
     alias: any;
     targets: any = self.import_targets.get(`node.lineno, set[any]());
-    module_path = (`node.module or "").replace(".", "/");
-    exact = operator.gt(`node.level, 0);
+    module_path: any = (`node.module or "").replace(".", "/");
+    exact: any = operator.gt(`node.level, 0);
     if exact {
         base: any = PurePosixPath(self.src.path).parent;
         for _ in range(`node.level - 1) {
@@ -801,7 +794,9 @@ impl _PyRenameScan._visit_import_from(`node: ast.ImportFrom, scope: _PyScope) {
     if not module_targets {
         imported_names: any = [alias.name for alias in `node.names];
         module_targets = {
-            t for t in targets if not _any_submodule(submodule_of, t, imported_names)
+            t
+            for t in targets
+            if not _any_submodule(submodule_of, t, imported_names)
         };
     }
     from_exporter: any = `bool(module_targets & self.exporters);
@@ -890,13 +885,10 @@ impl _py_find_definition(tree: ast.Module, name: str, line: int) -> tuple[Option
 impl _python_rename_sites(
     store: GraphStore, `node: GraphNode, sources: _Sources, call_files: set[str]
 ) -> Optional[dict[str, list[_Occurrence]]] {
-    name: any;
-    home: any;
     target_def: any;
     results: dict[str, list[_Occurrence]];
-    exporters: any;
-    name = `node.name;
-    home = `node.file_path;
+    name: any = `node.name;
+    home: any = `node.file_path;
     if not home.endswith(_PY_SUFFIXES) {
         return None;
     }
@@ -912,7 +904,7 @@ impl _python_rename_sites(
     }
 
     results = {};
-    exporters = {home};
+    exporters: any = {home};
     marker: any = name.encode("utf-8");
 
     def scan(path: str) -> Optional[bool] {
@@ -1017,11 +1009,10 @@ impl _js_module_call_spec(`node: Any) -> Any {
 }
 
 impl _js_is_declaration(leaf: Any) -> bool {
-    parent: any;
     if leaf.type == "shorthand_property_identifier_pattern" {
         return True;
     }
-    parent = leaf.parent;
+    parent: any = leaf.parent;
     if parent is None {
         return False;
     }
@@ -1478,7 +1469,6 @@ impl _js_rename_sites(
     exporters: set[str];
     results: dict[str, _JsScan];
     pending: deque[str];
-    queued: any;
     path: any;
     home: any = `node.file_path;
     if sources.tree(home) is None or sources.get(home) is None {
@@ -1490,7 +1480,7 @@ impl _js_rename_sites(
     exporters = set[any]();
     results = {};
     pending = deque([home]);
-    queued = {home};
+    queued: any = {home};
 
     def enqueue(paths: Any) {
         for path in paths {
@@ -1588,7 +1578,6 @@ impl _lexical_sites(
     new_name: str,
     mode: str = "any",
 ) -> list[_Occurrence] {
-    start: any;
     line: any;
     col: any;
     found: list[_Occurrence] = [];
@@ -1605,7 +1594,7 @@ impl _lexical_sites(
             ];
             calls: any = source.python_call_names(name);
             for start_ in lines {
-                start = start_;
+                start: any = start_;
                 hits.extend(
                     (line, col, attr, lines[start]) for (line, col, attr) in calls.get(start, ())
                 );
@@ -1724,7 +1713,6 @@ impl _rename_target(store: GraphStore, old_name: str) -> Optional[GraphNode] {
 }
 
 impl rename_preview(store: GraphStore, old_name: str, new_name: str) -> Optional[dict[str, Any]] {
-    followed: any;
     `node: any = _rename_target(store, old_name);
     if `node is None {
         logger.warning("rename_preview: node %r not found", old_name);
@@ -1761,7 +1749,7 @@ impl rename_preview(store: GraphStore, old_name: str, new_name: str) -> Optional
 
     followed_files = lazy("incremental", "followed_files");
 
-    followed = followed_files(store);
+    followed: any = followed_files(store);
     with _refactor_lock {
         _cleanup_expired();
         _pending_refactors[refactor_id] = preview;
@@ -1993,19 +1981,16 @@ impl find_dead_code(
     file_pattern: Optional[str] = None,
     `root: Optional[Union[str, Path]] = None,
 ) -> list[dict[str, Any]] {
-    test_root: any;
     bare_files_by_language: dict[tuple[str, str, str | None], set[str]];
     bare_files_all: dict[tuple[str, str], set[str]];
-    class_names: any;
     importer_files: dict[str, set[str]];
-    lowered_target: any;
     end: any;
     name_counts: dict[str, int];
     `node: any;
     candidates: any = store.get_nodes_by_kind(
         kinds=[kind] if kind else ["Function", "Class"], file_pattern=file_pattern
     );
-    test_root = `root or store.get_repo_root();
+    test_root: any = `root or store.get_repo_root();
     def _package_segments(file_path: str) -> tuple[str, ...] {
         return _path_segments(_repo_relative(file_path, test_root) or file_path);
     }
@@ -2019,7 +2004,7 @@ impl find_dead_code(
     suffix_call_files: dict[str, set[str]] = {};
     tested_files: dict[str, set[str]] = {};
     member_call_names: set[str] = set[any]();
-    class_names = {_ascii_fold(`node.name) for `node in candidates if `node.kind == "Class"};
+    class_names: any = {_ascii_fold(`node.name) for `node in candidates if `node.kind == "Class"};
     max_class_name_length: any = max((len(class_name) for class_name in class_names), default=0);
     class_bases: dict[str, list[str]] = {};
     base_targets: dict[str, set[str]] = {};
@@ -2060,7 +2045,7 @@ impl find_dead_code(
                 named.add(claimed);
             }
             if isinstance(through, `str) {
-                named.add(format(through, "") + "." + format(target.rsplit(".", 1)[-1], ""));
+                named.add(f"{through}.{target.rsplit(".", 1)[-1]}");
             }
             for written_target in named {
                 if "::" in written_target {
@@ -2068,7 +2053,7 @@ impl find_dead_code(
                         _ascii_fold(written_target.rsplit("::", 1)[-1]), set[any]()
                     ).add(file_path);
                 }
-                lowered_target = _ascii_fold(written_target);
+                lowered_target: any = _ascii_fold(written_target);
                 character: any;
                 for item__ in enumerate(lowered_target) {
                     (end, character) = item__;
@@ -2380,11 +2365,7 @@ impl suggest_refactorings(store: GraphStore) -> list[dict[str, Any]] {
     for d in dead {
         suggestions.append({
             "type": "remove",
-            "description": "Remove unused "
-                + format(d["kind"].lower(), "")
-                + " '"
-                + format(d["name"], "")
-                + "'",
+            "description": f"Remove unused {d["kind"].lower()} '{d["name"]}'",
             "symbols": [d["qualified_name"]],
             "rationale": "No callers, no test references, no importers, not an entry point.",
         });
@@ -2454,7 +2435,6 @@ impl suggest_refactorings(store: GraphStore) -> list[dict[str, Any]] {
 
 impl _apply_file_edits(text: str, file_edits: list[dict[str, Any]]) -> tuple[str, int, int] {
     claimed: dict[tuple[int, int], tuple[str, str]];
-    index: any;
     lines: any = text.split("\n");
     claimed = {};
     value__: any = 0;
@@ -2464,7 +2444,7 @@ impl _apply_file_edits(text: str, file_edits: list[dict[str, Any]]) -> tuple[str
     for edit in ordered {
         old_text: any = `str(edit.get("old", ""));
         new_text: any = `str(edit.get("new", ""));
-        index = `int(edit.get("line") or 0) - 1;
+        index: any = `int(edit.get("line") or 0) - 1;
         if not old_text or not 0 <= index < len(lines) {
             skipped += 1;
             continue;
@@ -2568,7 +2548,7 @@ impl apply_refactor(refactor_id: str, repo_root: Path, dry_run: bool = False) ->
             );
             return {
                 "status": "error",
-                "error": "Edit path '" + format(edit["file"], "") + "' is outside repo root.",
+                "error": f"Edit path '{edit["file"]}' is outside repo root.",
             };
         }
     }

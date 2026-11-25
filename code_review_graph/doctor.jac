@@ -1,28 +1,10 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import builtins;
-
-import operator;
+import importlib, builtins, operator;
 
 import from jaclang.comptime { target }
 
-import json;
-
-import os;
-
-import re;
-
-import shutil;
-
-import sqlite3;
-
-import subprocess;
-
-import sys;
-
-import tempfile;
+import json, os, re, shutil, sqlite3, subprocess, sys, tempfile;
 
 import from dataclasses { asdict, dataclass, field }
 
@@ -40,56 +22,41 @@ glob FAIL: any = "fail";
 
 glob _PROBE_TIMEOUT_SECONDS: any = 30.0;
 
-glob _NAMED_VERSION_RE: any;
+glob _NAMED_VERSION_RE: any = re.compile(
+    "code-review-graph\\s+v?(\\d+\\.\\d+\\.\\d+[0-9A-Za-z.+-]*)"
+);
 
-glob _VERSION_RE: any;
+glob _VERSION_RE: any = re.compile("(\\d+\\.\\d+\\.\\d+[0-9A-Za-z.+-]*)");
 
-glob _UV_TOOL_LINE_RE: any;
+glob _UV_TOOL_LINE_RE: any = re.compile("^code-review-graph v(\\S+)", re.MULTILINE);
 
-glob _PINNED_SPEC_RE: any;
+glob _PINNED_SPEC_RE: any = re.compile(
+    "^code-review-graph(?:\\[[^\\]]*\\])?(?:==|@)(\\d[^\\s,;]*)$"
+);
 
-glob _PYTHON_RE: any;
+glob _PYTHON_RE: any = re.compile("\\Apythonw?[0-9]*(?:\\.[0-9]+)*\\Z");
 
-glob _ABSOLUTE_PROGRAM_RE: any;
+glob _ABSOLUTE_PROGRAM_RE: any = re.compile(
+    "(?:^|[\\s\"'])((?:/|[A-Za-z]:[\\\\/])[^\\s\"']*code-review-graph(?:\\.exe)?)(?=[\"'\\s]|$)",
+    re.MULTILINE,
+);
 
-glob _ABSOLUTE_PYTHON_RE: any;
+glob _ABSOLUTE_PYTHON_RE: any = re.compile(
+    "(?:^|[\\s\"'])((?:/|[A-Za-z]:[\\\\/])[^\\s\"']*pythonw?[0-9.]*(?:\\.exe)?)[\"']?\\s+-m\\s+code_review_graph\\b",
+    re.MULTILINE,
+);
 
-glob _QUOTED_PYTHON_RE: any;
+glob _QUOTED_PYTHON_RE: any = re.compile(
+    "'((?:/|[A-Za-z]:[\\\\/])[^']*pythonw?[0-9.]*(?:\\.exe)?)'\\s+-m\\s+code_review_graph\\b"
+);
 
-glob _UVX_HOOK_RE: any;
+glob _UVX_HOOK_RE: any = re.compile("(?:^|[\\s;&|({])uvx\\s+code-review-graph\\b", re.MULTILINE);
 
-glob _GIT_HOOK_NAMES: any;
+glob _GIT_HOOK_NAMES: any = ("pre-commit", "post-checkout", "post-merge", "post-rewrite");
 
-glob _HOOK_MARKERS: any;
+glob _HOOK_MARKERS: any = ("code-review-graph", "code_review_graph", "crg-");
 
-glob _UPGRADE_ANY: any;
-
-glob _NOT_RUN: any;
-
-with entry {
-    _NAMED_VERSION_RE = re.compile("code-review-graph\\s+v?(\\d+\\.\\d+\\.\\d+[0-9A-Za-z.+-]*)");
-    _VERSION_RE = re.compile("(\\d+\\.\\d+\\.\\d+[0-9A-Za-z.+-]*)");
-    _UV_TOOL_LINE_RE = re.compile("^code-review-graph v(\\S+)", re.MULTILINE);
-    _PINNED_SPEC_RE = re.compile("^code-review-graph(?:\\[[^\\]]*\\])?(?:==|@)(\\d[^\\s,;]*)$");
-    _PYTHON_RE = re.compile("\\Apythonw?[0-9]*(?:\\.[0-9]+)*\\Z");
-    _ABSOLUTE_PROGRAM_RE = re.compile(
-        "(?:^|[\\s\"'])((?:/|[A-Za-z]:[\\\\/])[^\\s\"']*code-review-graph(?:\\.exe)?)(?=[\"'\\s]|$)",
-        re.MULTILINE,
-    );
-    _ABSOLUTE_PYTHON_RE = re.compile(
-        "(?:^|[\\s\"'])((?:/|[A-Za-z]:[\\\\/])[^\\s\"']*pythonw?[0-9.]*(?:\\.exe)?)[\"']?\\s+-m\\s+code_review_graph\\b",
-        re.MULTILINE,
-    );
-    _QUOTED_PYTHON_RE = re.compile(
-        "'((?:/|[A-Za-z]:[\\\\/])[^']*pythonw?[0-9.]*(?:\\.exe)?)'\\s+-m\\s+code_review_graph\\b"
-    );
-    _UVX_HOOK_RE = re.compile("(?:^|[\\s;&|({])uvx\\s+code-review-graph\\b", re.MULTILINE);
-
-    _GIT_HOOK_NAMES = ("pre-commit", "post-checkout", "post-merge", "post-rewrite");
-    _HOOK_MARKERS = ("code-review-graph", "code_review_graph", "crg-");
-
-    _UPGRADE_ANY = "pip install -U code-review-graph, pipx upgrade code-review-graph or uv tool upgrade code-review-graph, whichever installed it";
-}
+glob _UPGRADE_ANY: any = "pip install -U code-review-graph, pipx upgrade code-review-graph or uv tool upgrade code-review-graph, whichever installed it";
 
 @dataclass
 class Finding {
@@ -191,9 +158,7 @@ class _Resolved {
 
 def _program_doctor_may_run(exe: str, `root: Path) -> str | None;
 
-with entry {
-    _NOT_RUN = "doctor does not run a program inside the repository or named by a relative path, because the repository chose it";
-}
+glob _NOT_RUN: any = "doctor does not run a program inside the repository or named by a relative path, because the repository chose it";
 
 def resolve_mcp_entry(tokens: list[str], `root: Path, prober: _Prober) -> _Resolved;
 
@@ -219,11 +184,7 @@ def check_hooks(
 
 def check_path_copies(prober: _Prober) -> tuple[list[Copy], list[Finding]];
 
-glob run_default_: any;
-
-with entry {
-    run_default_ = _run_quietly;
-}
+glob run_default_: any = _run_quietly;
 
 def diagnose(
     repo_root: Path, run: Callable[[list[str], Path | None], str | None] = run_default_

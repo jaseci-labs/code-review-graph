@@ -24,21 +24,17 @@ glob _SECTION_11: any = "<!-- code-review-graph MCP tools -->\n## MCP Tools: cod
 
 glob _SECTION_12: any = "---\napplyTo: '**'\ndescription: >-\n  Use code-review-graph MCP tools for token-efficient\n  codebase exploration and code review.\n---\n\n<!-- code-review-graph MCP tools -->\n## MCP Tools: code-review-graph\n\n**This project has a knowledge graph. Start with the code-review-graph\nMCP tools to narrow scope, then read the source.** The graph is cheaper than scanning files and\ngives you structural context (callers, dependents, test coverage) that file search cannot.\n\n### When to use graph tools FIRST\n\n- **Exploring code**: `semantic_search_nodes_tool` or `query_graph_tool`\n- **Understanding impact**: `get_impact_radius_tool`\n- **Code review**: `detect_changes_tool` + `get_review_context_tool`\n- **Finding relationships**: `query_graph_tool` callers_of/callees_of\n- **Architecture questions**: `get_architecture_overview_tool`\n\n### Verify in the source\n\n- Narrow scope with the graph, then read the source. Do not change code from graph output alone.\n- For any non-trivial change, read the implementation and the relevant tests before concluding.\n- Verify the exact source when touching behavior, database logic, migrations, retries, fallbacks,\n  recovery, or compatibility code.\n- When the graph and the source disagree, the source wins. The graph may be stale or may not\n  model that relationship.\n- An empty graph result can mean \"not indexed\" or \"not statically visible\", not \"does not exist\".\n\n### Key Tools\n\n| Tool | Use when |\n| ------ | ---------- |\n| `detect_changes_tool` | Risk-scored change analysis |\n| `get_review_context_tool` | Token-efficient source snippets |\n| `get_impact_radius_tool` | Blast radius of a change |\n| `get_affected_flows_tool` | Impacted execution paths |\n| `query_graph_tool` | Trace callers, callees, imports, tests |\n| `semantic_search_nodes_tool` | Find functions/classes by keyword |\n| `get_architecture_overview_tool` | High-level structure |\n| `refactor_tool` | Rename planning, dead code |\n\n### Workflow\n\n1. The graph auto-updates on file changes (via hooks).\n2. Use `detect_changes_tool` for code review.\n3. Use `get_affected_flows_tool` to understand impact.\n4. Use `query_graph_tool` pattern=\"tests_for\" to check coverage.\n<!-- /code-review-graph MCP tools -->\n";
 
-glob LEGACY_INSTRUCTION_SECTIONS: tuple[str, ...];
-
-with entry {
-    LEGACY_INSTRUCTION_SECTIONS = (
-        _SECTION_01,
-        _SECTION_02,
-        _SECTION_03,
-        _SECTION_04,
-        _SECTION_05,
-        _SECTION_06,
-        _SECTION_07,
-        _SECTION_08,
-        _SECTION_09,
-        _SECTION_10,
-        _SECTION_11,
-        _SECTION_12,
-    );
-}
+glob LEGACY_INSTRUCTION_SECTIONS: tuple[str, ...] = (
+    _SECTION_01,
+    _SECTION_02,
+    _SECTION_03,
+    _SECTION_04,
+    _SECTION_05,
+    _SECTION_06,
+    _SECTION_07,
+    _SECTION_08,
+    _SECTION_09,
+    _SECTION_10,
+    _SECTION_11,
+    _SECTION_12,
+);

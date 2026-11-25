@@ -1,34 +1,18 @@
 import from __future__ { annotations }
 
-import operator;
-
-import hashlib;
-
-import json;
-
-import logging;
-
-import os;
+import operator, hashlib, json, logging, os;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob CODEX_SKILL_NAME: any;
+glob CODEX_SKILL_NAME: any = "code-review-graph";
 
-glob MANIFEST_NAME: any;
+glob MANIFEST_NAME: any = ".code-review-graph-managed.json";
 
-glob _RESOURCE_ROOT: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-
-    CODEX_SKILL_NAME = "code-review-graph";
-    MANIFEST_NAME = ".code-review-graph-managed.json";
-    _RESOURCE_ROOT = Path(__file__).resolve().parent / "assets" / "code-review-graph";
-}
+glob _RESOURCE_ROOT: any = Path(__file__).resolve().parent / "assets" / "code-review-graph";
 
 def codex_home -> Path;
 def codex_skill_dir -> Path;

@@ -1,14 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
-
-import logging;
-
-import re;
-
-import sqlite3;
+import importlib, operator, logging, re, sqlite3;
 
 import from collections.abc { Sequence }
 
@@ -16,102 +8,52 @@ import from pathlib { Path }
 
 import from typing { Any, NamedTuple, Optional }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _UNSEARCHED_KIND: any;
+glob _UNSEARCHED_KIND: any = "Output";
 
-glob _FTS_COLUMN_WEIGHTS: dict[str, float];
+glob _FTS_COLUMN_WEIGHTS: dict[str, float] = {
+    "name": 10.0,
+    "qualified_name": 6.0,
+    "file_path": 1.0,
+    "signature": 2.0,
+    "docstring": 1.5,
+    "name_tokens": 4.0,
+};
 
-glob _FTS_DEFAULT_WEIGHT: any;
+glob _FTS_DEFAULT_WEIGHT: any = 1.0;
 
-glob _EXACT_NAME_BOOST: any;
+glob _EXACT_NAME_BOOST: any = 4.0;
 
-glob _EXACT_SYMBOL_BOOST: any;
+glob _EXACT_SYMBOL_BOOST: any = 3.0;
 
-glob _NAME_COVERAGE_BOOST: any;
+glob _NAME_COVERAGE_BOOST: any = 1.0;
 
-glob _NAME_EXACT_COVERAGE_BOOST: any;
+glob _NAME_EXACT_COVERAGE_BOOST: any = 2.0;
 
-glob _TEST_RANK_PENALTY: any;
+glob _TEST_RANK_PENALTY: any = 0.4;
 
-glob _TEST_INTENT_WORDS: any;
+glob _TEST_INTENT_WORDS: any = frozenset(
+    ("test tests tested testing spec specs fixture fixtures mock mocks stub stubs coverage").split()
+);
 
-glob _JSON_RANK_PENALTY: any;
+glob _JSON_RANK_PENALTY: any = 0.25;
 
-glob _FTS_STATE_TABLE: any;
+glob _FTS_STATE_TABLE: any = NODES_FTS_STATE_TABLE;
 
-glob _FTS_STATE_METADATA_KEY: any;
+glob _FTS_STATE_METADATA_KEY: any = FTS_STATE_METADATA_KEY;
 
-glob _FTS_STATE_VERSION: any;
+glob _FTS_STATE_VERSION: any = FTS_STATE_VERSION;
 
-glob _FTS_COLUMN_SQL: any;
+glob _FTS_COLUMN_SQL: any = ", ".join(NODES_FTS_COLUMNS);
 
-glob _FTS_COLUMN_PLACEHOLDERS: any;
+glob _FTS_COLUMN_PLACEHOLDERS: any = ", ".join("?" * len(NODES_FTS_COLUMNS));
 
-glob _FTS_DELTA_MAX_RATIO: any;
+glob _FTS_DELTA_MAX_RATIO: any = 0.35;
 
-glob _FTS_DELTA_MIN_ROWS: any;
+glob _FTS_DELTA_MIN_ROWS: any = 500;
 
-glob _FTS_SQL_BATCH: any;
-
-glob _EXACT_IDENT_QUERY_RE: any;
-
-glob _DOTTED_IDENT_RE: any;
-
-glob _SNAKE_IDENT_RE: any;
-
-glob _PASCAL_IDENT_RE: any;
-
-glob _EXPLICIT_PHRASE_RE: any;
-
-glob _HAS_ALNUM_RE: any;
-
-glob _MIN_PREFIX_ALNUM: any;
-
-glob _MAX_FTS_TERMS: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _UNSEARCHED_KIND = "Output";
-    _FTS_COLUMN_WEIGHTS = {
-        "name": 10.0,
-        "qualified_name": 6.0,
-        "file_path": 1.0,
-        "signature": 2.0,
-        "docstring": 1.5,
-        "name_tokens": 4.0,
-    };
-    _FTS_DEFAULT_WEIGHT = 1.0;
-    _EXACT_NAME_BOOST = 4.0;
-    _EXACT_SYMBOL_BOOST = 3.0;
-    _NAME_COVERAGE_BOOST = 1.0;
-    _NAME_EXACT_COVERAGE_BOOST = 2.0;
-    _TEST_RANK_PENALTY = 0.4;
-    _TEST_INTENT_WORDS = frozenset({
-        "test",
-        "tests",
-        "tested",
-        "testing",
-        "spec",
-        "specs",
-        "fixture",
-        "fixtures",
-        "mock",
-        "mocks",
-        "stub",
-        "stubs",
-        "coverage",
-    });
-    _JSON_RANK_PENALTY = 0.25;
-    _FTS_STATE_TABLE = NODES_FTS_STATE_TABLE;
-    _FTS_STATE_METADATA_KEY = FTS_STATE_METADATA_KEY;
-    _FTS_STATE_VERSION = FTS_STATE_VERSION;
-    _FTS_COLUMN_SQL = ", ".join(NODES_FTS_COLUMNS);
-    _FTS_COLUMN_PLACEHOLDERS = ", ".join("?" * len(NODES_FTS_COLUMNS));
-    _FTS_DELTA_MAX_RATIO = 0.35;
-    _FTS_DELTA_MIN_ROWS = 500;
-    _FTS_SQL_BATCH = 450;
-}
+glob _FTS_SQL_BATCH: any = 450;
 
 def _ensure_fts_state_table(conn: sqlite3.Connection);
 
@@ -129,23 +71,25 @@ def update_fts_index(
     _out_mode: Optional[list[str]] = None,
 ) -> int;
 
-with entry {
-    _EXACT_IDENT_QUERY_RE = re.compile("^[A-Za-z_][\\w.]*$");
-    _DOTTED_IDENT_RE = re.compile("\\b[A-Za-z_][\\w]*(?:\\.[A-Za-z_][\\w]*)+\\b");
-    _SNAKE_IDENT_RE = re.compile("\\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\\b");
-    _PASCAL_IDENT_RE = re.compile("\\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+\\b");
-}
+glob _EXACT_IDENT_QUERY_RE: any = re.compile("^[A-Za-z_][\\w.]*$");
+
+glob _DOTTED_IDENT_RE: any = re.compile("\\b[A-Za-z_][\\w]*(?:\\.[A-Za-z_][\\w]*)+\\b");
+
+glob _SNAKE_IDENT_RE: any = re.compile("\\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\\b");
+
+glob _PASCAL_IDENT_RE: any = re.compile("\\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+\\b");
 
 def extract_query_identifiers(query: str) -> list[str];
 def detect_query_kind_boost(query: str) -> dict[str, Any];
 def rrf_merge(*result_lists_: list[tuple[int, float]], k: int = 60) -> list[tuple[int, float]];
 
-with entry {
-    _EXPLICIT_PHRASE_RE = re.compile("\"([^\"]*)\"");
-    _HAS_ALNUM_RE = re.compile("[0-9A-Za-z]");
-    _MIN_PREFIX_ALNUM = 3;
-    _MAX_FTS_TERMS = 12;
-}
+glob _EXPLICIT_PHRASE_RE: any = re.compile("\"([^\"]*)\"");
+
+glob _HAS_ALNUM_RE: any = re.compile("[0-9A-Za-z]");
+
+glob _MIN_PREFIX_ALNUM: any = 3;
+
+glob _MAX_FTS_TERMS: any = 12;
 
 def _quote_term(text: str) -> str;
 

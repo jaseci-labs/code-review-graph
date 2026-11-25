@@ -121,7 +121,7 @@ impl _extract_warnings(result: dict[str, Any]) -> list[str] {
     test_gaps: any = result.get("test_gaps");
     if isinstance(test_gaps, `list) and test_gaps {
         names: any = [g.get("name", g) if isinstance(g, `dict) else `str(g) for g in test_gaps[:5]];
-        warnings.append("Test coverage gaps: " + format(", ".join(names), ""));
+        warnings.append(f"Test coverage gaps: {", ".join(names)}");
     }
     risk: any = result.get("risk_score");
     if isinstance(risk, (`int, `float)) and risk > 0.7 {

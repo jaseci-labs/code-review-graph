@@ -56,8 +56,8 @@ impl InheritanceIndex.init(
         package: any = extra.get("java_package");
         if language == "java" and isinstance(package, `str) and package {
             self._java_package.setdefault(row["file_path"], package);
-            outer: any = format(row["parent_name"], "") + "." if row["parent_name"] else "";
-            fqcn: any = format(package, "") + "." + format(outer, "") + format(row["name"], "");
+            outer: any = f"{row["parent_name"]}." if row["parent_name"] else "";
+            fqcn: any = f"{package}.{outer}{row["name"]}";
             self._java_fqcn[fqcn] = qualified if fqcn not in self._java_fqcn else None;
         }
     }

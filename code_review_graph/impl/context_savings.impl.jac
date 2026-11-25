@@ -201,7 +201,6 @@ impl format_context_savings_panel(
     title: str = "Token Savings",
     width: int = 64,
 ) -> str | None {
-    inner_w: any;
     s: any;
     if not estimate {
         return None;
@@ -249,7 +248,7 @@ impl format_context_savings_panel(
         inner_lines.append(bd_line);
     }
     content_width: any = max(len(s) for s in inner_lines);
-    inner_w = max(width - 2, content_width + 2);
+    inner_w: any = max(width - 2, content_width + 2);
     title_str: any = f" {title} ";
     dash_total: any = inner_w - len(title_str);
     if dash_total < 4 {
@@ -265,7 +264,7 @@ impl format_context_savings_panel(
         if pad < 0 {
             pad = 0;
         }
-        return "│ " + format(content, "") + format(" " * pad, "") + " │";
+        return f"│ {content}{" " * pad} │";
     }
 
     lines: any = [top];

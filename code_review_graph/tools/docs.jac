@@ -1,23 +1,14 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
-
-import logging;
+import importlib, operator, logging;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _MAX_WIKI_CHARS: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _MAX_WIKI_CHARS = 80000;
-}
+glob _MAX_WIKI_CHARS: any = 80000;
 
 def embed_graph(
     repo_root: str | None = None,

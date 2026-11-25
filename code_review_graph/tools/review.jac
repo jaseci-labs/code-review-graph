@@ -1,83 +1,54 @@
 import from __future__ { annotations }
 
-import operator;
-
-import logging;
-
-import sqlite3;
+import operator, logging, sqlite3;
 
 import from pathlib { Path, PurePath }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _MAX_REVIEW_NODES: any;
+glob _MAX_REVIEW_NODES: any = 100;
 
-glob _MAX_REVIEW_EDGES: any;
+glob _MAX_REVIEW_EDGES: any = 150;
 
-glob _MAX_REVIEW_FILES: any;
+glob _MAX_REVIEW_FILES: any = 200;
 
-glob _MAX_REVIEW_SOURCE_LINES: any;
+glob _MAX_REVIEW_SOURCE_LINES: any = 800;
 
-glob _MAX_LINES_PER_FILE: any;
+glob _MAX_LINES_PER_FILE: any = 500;
 
-glob _MAX_CHANGED_FUNCTIONS: any;
+glob _MAX_CHANGED_FUNCTIONS: any = 100;
 
-glob _MAX_DETECT_SOURCE_LINES: any;
+glob _MAX_DETECT_SOURCE_LINES: any = 600;
 
-glob _MAX_REMOVED_SYMBOLS: any;
+glob _MAX_REMOVED_SYMBOLS: any = 25;
 
-glob _MAX_SOURCE_SHARE_PER_FILE: any;
+glob _MAX_SOURCE_SHARE_PER_FILE: any = 0.4;
 
-glob _REGION_CONTEXT: any;
+glob _REGION_CONTEXT: any = 4;
 
-glob _MAX_WIDEN_SPAN: any;
+glob _MAX_WIDEN_SPAN: any = 40;
 
-glob _MAX_REGION_LINES: any;
+glob _MAX_REGION_LINES: any = 120;
 
-glob _FALLBACK_HEAD_LINES: any;
+glob _FALLBACK_HEAD_LINES: any = 50;
 
-glob _MAX_RISK_NODES_PER_FILE: any;
+glob _MAX_RISK_NODES_PER_FILE: any = 8;
 
-glob _MAX_RISK_SCORED_NODES: any;
+glob _MAX_RISK_SCORED_NODES: any = 400;
 
-glob _RISK_SCORED_KINDS: any;
+glob _RISK_SCORED_KINDS: any = ("Function", "Test", "Class");
 
-glob _MAX_AFFECTED_FLOWS_STANDARD: any;
+glob _MAX_AFFECTED_FLOWS_STANDARD: any = 25;
 
-glob _MAX_AFFECTED_FLOWS_MINIMAL: any;
+glob _MAX_AFFECTED_FLOWS_MINIMAL: any = 500;
 
-glob _MAX_AFFECTED_FLOW_STEPS: any;
+glob _MAX_AFFECTED_FLOW_STEPS: any = 400;
 
-glob _MAX_DETECT_FLOWS: any;
+glob _MAX_DETECT_FLOWS: any = 200;
 
-glob _DETECT_FLOW_FIELDS: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _MAX_REVIEW_NODES = 100;
-    _MAX_REVIEW_EDGES = 150;
-    _MAX_REVIEW_FILES = 200;
-    _MAX_REVIEW_SOURCE_LINES = 800;
-    _MAX_LINES_PER_FILE = 500;
-    _MAX_CHANGED_FUNCTIONS = 100;
-    _MAX_DETECT_SOURCE_LINES = 600;
-    _MAX_REMOVED_SYMBOLS = 25;
-    _MAX_SOURCE_SHARE_PER_FILE = 0.4;
-    _REGION_CONTEXT = 4;
-    _MAX_WIDEN_SPAN = 40;
-    _MAX_REGION_LINES = 120;
-    _FALLBACK_HEAD_LINES = 50;
-    _MAX_RISK_NODES_PER_FILE = 8;
-    _MAX_RISK_SCORED_NODES = 400;
-    _RISK_SCORED_KINDS = ("Function", "Test", "Class");
-    _MAX_AFFECTED_FLOWS_STANDARD = 25;
-    _MAX_AFFECTED_FLOWS_MINIMAL = 500;
-    _MAX_AFFECTED_FLOW_STEPS = 400;
-    _MAX_DETECT_FLOWS = 200;
-    _DETECT_FLOW_FIELDS = ("id", "name", "criticality", "depth", "node_count", "file_count");
-}
+glob _DETECT_FLOW_FIELDS: any = ("id", "name", "criticality", "depth", "node_count", "file_count");
 
 def _project(rows: list[dict[str, Any]], fields: tuple[str, ...]) -> list[dict[str, Any]];
 def _bound_flow_steps(flows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], bool];

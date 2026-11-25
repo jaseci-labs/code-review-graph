@@ -1,34 +1,12 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
-
-import builtins;
-
-import sys;
-
-glob logger: any;
-
-glob _PLATFORM_CHOICES: any;
-
-glob _GITIGNORE_HELP: any;
-
-glob _BANNER_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...];
-
-glob _HIDDEN_COMMANDS: any;
-
-glob _STEERING_HELP: any;
-
-glob _GRAPH_TOOL_COMMANDS: any;
-
-glob _PATH_REPO_COMMANDS: any;
-
-glob EXIT_TEMPFAIL: any;
-
-glob _BUILD_NEXT_STEP: any;
-
-glob _SUBCOMMANDS: dict[str, argparse.ArgumentParser];
+import importlib, operator, builtins, sys;
+import argparse, contextlib, difflib, fnmatch, io, json, logging, os, sqlite3;
+import from functools { partial }
+import from importlib.metadata { PackageNotFoundError }
+import from importlib.metadata { version as pkg_version }
+import from pathlib { Path }
+import from typing { TYPE_CHECKING, Callable, Iterable, TypedDict }
 
 with entry {
     if sys.version_info < (3, 10) {
@@ -38,61 +16,14 @@ with entry {
         print("Install Python 3.10+: https://www.python.org/downloads/");
         sys.exit(1);
     }
-
-    logger = logging.getLogger(__name__);
-    _PLATFORM_CHOICES = [
-        "codex",
-        "claude",
-        "claude-code",
-        "cursor",
-        "windsurf",
-        "zed",
-        "continue",
-        "opencode",
-        "mimo",
-        "antigravity",
-        "gemini-cli",
-        "qwen",
-        "kiro",
-        "qoder",
-        "copilot",
-        "copilot-cli",
-        "codebuddy",
-        "hermes",
-        "dsh",
-        "all",
-    ];
-
-    _GITIGNORE_HELP = "Also add the files and folders this run creates, and git does not track, to a marked block in .gitignore. Off by default; uninstall removes the block";
 }
 
-import argparse;
+glob logger: any = logging.getLogger(__name__);
 
-import contextlib;
+glob _PLATFORM_CHOICES: any = ("codex claude claude-code cursor windsurf zed continue opencode mimo antigravity gemini-cli "
+    "qwen kiro qoder copilot copilot-cli codebuddy hermes dsh all").split();
 
-import difflib;
-
-import fnmatch;
-
-import io;
-
-import json;
-
-import logging;
-
-import os;
-
-import sqlite3;
-
-import from functools { partial }
-
-import from importlib.metadata { PackageNotFoundError }
-
-import from importlib.metadata { version as pkg_version }
-
-import from pathlib { Path }
-
-import from typing { TYPE_CHECKING, Callable, Iterable, TypedDict }
+glob _GITIGNORE_HELP: any = "Also add the files and folders this run creates, and git does not track, to a marked block in .gitignore. Off by default; uninstall removes the block";
 
 class _EmbeddingRefreshKwargs(TypedDict, total=False) {
     has embedding_provider: str;
@@ -108,69 +39,68 @@ def _get_version -> str;
 def _supports_color -> bool;
 def _print_banner;
 
-with entry {
-    _BANNER_GROUPS = (
+glob _BANNER_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
+    (
+        "Set up",
         (
-            "Set up",
-            (
-                ("install", "Set up the MCP server, hooks and skills for your AI tools"),
-                ("init", "Same as install"),
-                ("uninstall", "Remove what install added"),
-                ("doctor", "Check which copies run, the graph and the hooks"),
-            ),
+            ("install", "Set up the MCP server, hooks and skills for your AI tools"),
+            ("init", "Same as install"),
+            ("uninstall", "Remove what install added"),
+            ("doctor", "Check which copies run, the graph and the hooks"),
         ),
+    ),
+    (
+        "Build the graph",
         (
-            "Build the graph",
-            (
-                ("build", "Parse every file into a new graph"),
-                ("update", "Parse only the files that changed"),
-                ("watch", "Update the graph as files change"),
-                ("status", "Show graph counts"),
-                ("postprocess", "Redo flows, communities and the search index"),
-                ("embed", "Add vectors for search by meaning"),
-                ("forget", "Drop files from the graph"),
-            ),
+            ("build", "Parse every file into a new graph"),
+            ("update", "Parse only the files that changed"),
+            ("watch", "Update the graph as files change"),
+            ("status", "Show graph counts"),
+            ("postprocess", "Redo flows, communities and the search index"),
+            ("embed", "Add vectors for search by meaning"),
+            ("forget", "Drop files from the graph"),
         ),
+    ),
+    (
+        "Review",
         (
-            "Review",
-            (
-                ("detect-changes", "Score the risk of your changes (read-only)"),
-                ("impact", "Show what a change can reach"),
-                ("dead-code", "Find code that nothing calls or tests"),
-                ("refactor", "Preview a rename, dead code or suggestions"),
-            ),
+            ("detect-changes", "Score the risk of your changes (read-only)"),
+            ("impact", "Show what a change can reach"),
+            ("dead-code", "Find code that nothing calls or tests"),
+            ("refactor", "Preview a rename, dead code or suggestions"),
         ),
+    ),
+    (
+        "Explore",
         (
-            "Explore",
-            (
-                ("query", "Callers, callees, imports, tests and more"),
-                ("search", "Find code by name or keyword"),
-                ("architecture", "Show the main parts of the code"),
-                ("flows", "List execution flows"),
-                ("flow", "Show one execution flow"),
-                ("communities", "List groups of related code"),
-                ("community", "Show one group"),
-                ("large-functions", "Find very long functions and classes"),
-                ("visualize", "Draw the graph as an interactive page"),
-                ("wiki", "Write a Markdown wiki from the graph"),
-                ("context-history", "Show the saved-context log"),
-            ),
+            ("query", "Callers, callees, imports, tests and more"),
+            ("search", "Find code by name or keyword"),
+            ("architecture", "Show the main parts of the code"),
+            ("flows", "List execution flows"),
+            ("flow", "Show one execution flow"),
+            ("communities", "List groups of related code"),
+            ("community", "Show one group"),
+            ("large-functions", "Find very long functions and classes"),
+            ("visualize", "Draw the graph as an interactive page"),
+            ("wiki", "Write a Markdown wiki from the graph"),
+            ("context-history", "Show the saved-context log"),
         ),
+    ),
+    (
+        "Serve and more",
         (
-            "Serve and more",
-            (
-                ("serve", "Start the MCP server (stdio, or --http on localhost)"),
-                ("mcp", "Same as serve"),
-                ("daemon", "Watch many repositories in the background"),
-                ("register", "Add a repository to the multi-repo list"),
-                ("unregister", "Remove a repository from that list"),
-                ("repos", "Show the listed repositories"),
-                ("eval", "Run the benchmarks"),
-            ),
+            ("serve", "Start the MCP server (stdio, or --http on localhost)"),
+            ("mcp", "Same as serve"),
+            ("daemon", "Watch many repositories in the background"),
+            ("register", "Add a repository to the multi-repo list"),
+            ("unregister", "Remove a repository from that list"),
+            ("repos", "Show the listed repositories"),
+            ("eval", "Run the benchmarks"),
         ),
-    );
-    _HIDDEN_COMMANDS = frozenset({"enrich", "hook-update", "hook-status"});
-}
+    ),
+);
+
+glob _HIDDEN_COMMANDS: any = frozenset({"enrich", "hook-update", "hook-status"});
 
 def _banner_commands(bold: str, green: str, reset: str) -> str;
 def _instruction_files_to_modify(
@@ -187,9 +117,7 @@ def _match_files_to_forget(
     stored_files: Iterable[str], patterns: Iterable[str], repo_root: Path
 ) -> list[str];
 
-with entry {
-    _STEERING_HELP = "Claude Code only: add (or, with --no-steering, remove) a hook that puts graph context beside each search and read. Off unless asked for; it uses a few hundred tokens at most on each call";
-}
+glob _STEERING_HELP: any = "Claude Code only: add (or, with --no-steering, remove) a hook that puts graph context beside each search and read. Off unless asked for; it uses a few hundred tokens at most on each call";
 
 def _say_nothing(*_args_: object, **_kwargs: object);
 def _apply_steering_choice(
@@ -222,42 +150,31 @@ def _non_negative_int(value: str) -> int;
 def _positive_int(value: str) -> int;
 def _detail_sections_arg(value: str) -> tuple[str, ...];
 
-with entry {
-    _GRAPH_TOOL_COMMANDS = {
-        "query",
-        "impact",
-        "search",
-        "flows",
-        "flow",
-        "communities",
-        "community",
-        "architecture",
-        "large-functions",
-        "refactor",
-    };
+glob _GRAPH_TOOL_COMMANDS: any = set(
+    ("query impact search flows flow communities community architecture large-functions refactor").split(),
+);
 
-    _PATH_REPO_COMMANDS = frozenset({
-        "context-history",
-        "doctor",
-        "install",
-        "init",
-        "uninstall",
-        "build",
-        "update",
-        "postprocess",
-        "embed",
-        "watch",
-        "status",
-        "forget",
-        "visualize",
-        "wiki",
-        "detect-changes",
-        "dead-code",
-        "serve",
-        "mcp",
-        *_GRAPH_TOOL_COMMANDS,
-    });
-}
+glob _PATH_REPO_COMMANDS: any = frozenset({
+    "context-history",
+    "doctor",
+    "install",
+    "init",
+    "uninstall",
+    "build",
+    "update",
+    "postprocess",
+    "embed",
+    "watch",
+    "status",
+    "forget",
+    "visualize",
+    "wiki",
+    "detect-changes",
+    "dead-code",
+    "serve",
+    "mcp",
+    *_GRAPH_TOOL_COMMANDS,
+});
 
 def _canonicalize_repo_argument(args: argparse.Namespace);
 def _find_explicit_repo_root(start: Path) -> "Path | None";
@@ -265,9 +182,7 @@ def _handle_doctor(args);
 def _handle_context_history(args);
 def _run_graph_tool_command(args, repo_root: Path);
 
-with entry {
-    EXIT_TEMPFAIL = getattr(os, "EX_TEMPFAIL", 75);
-}
+glob EXIT_TEMPFAIL: any = getattr(os, "EX_TEMPFAIL", 75);
 
 def _exit_if_contended(result: dict);
 def _warn_failed_files(result: dict);
@@ -276,9 +191,7 @@ def _require_repo_folder(repo_root: Path);
 def _ensure_project_marker(repo_root: Path);
 def _enrich_kwargs(args) -> dict;
 
-with entry {
-    _BUILD_NEXT_STEP = "Next: code-review-graph detect-changes --brief, or ask your assistant \"Review my changes\".";
-}
+glob _BUILD_NEXT_STEP: any = "Next: code-review-graph detect-changes --brief, or ask your assistant \"Review my changes\".";
 
 def _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs);
 def _print_savings_panel(
@@ -287,9 +200,7 @@ def _print_savings_panel(
 def _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = False);
 def main;
 
-with entry {
-    _SUBCOMMANDS = {};
-}
+glob _SUBCOMMANDS: dict[str, argparse.ArgumentParser] = {};
 
 def _is_seeded(args: argparse.Namespace) -> bool;
 def _check_visualize_flags(args: argparse.Namespace, fmt: str);

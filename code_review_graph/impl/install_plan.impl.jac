@@ -207,16 +207,7 @@ impl Plan.changes_since(saved: dict[Path, tuple[bytes | None, int | None]]) -> l
 impl Plan.rollback(saved: dict[Path, tuple[bytes | None, int | None]]) {
     for key in `list(self._files) {
         if key in saved {
-            items_: any = list(saved[key] as any);
-            if len(items_) != 2 {
-                raise ValueError(
-                    f"too many values to unpack (expected 2, got {len(items_)})"
-                        if len(items_) > 2
-                        else f"not enough values to unpack (expected 2, got {len(items_)})",
-                );
-            }
-            self._files[key].after = items_[0];
-            self._files[key].mode = items_[1];
+            (self._files[key].after, self._files[key].mode) = (saved[key]);
         } else {
             del self._files[key];
         }

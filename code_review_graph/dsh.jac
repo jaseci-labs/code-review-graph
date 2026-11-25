@@ -1,8 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
+import builtins, operator;
 
 import from collections.abc { Callable }
 
@@ -18,14 +16,9 @@ glob PLUGIN: any = "@deepseek-ai/dsh-mcp-client";
 
 glob SERVER_NAME: any = "code-review-graph";
 
-glob _ROW_FIELDS: any;
+glob _ROW_FIELDS: any = frozenset({"id", "name", "config"});
 
-glob _CONFIG_FIELDS: any;
-
-with entry {
-    _ROW_FIELDS = frozenset({"id", "name", "config"});
-    _CONFIG_FIELDS = frozenset({"serverName", "transport", "command", "args"});
-}
+glob _CONFIG_FIELDS: any = frozenset({"serverName", "transport", "command", "args"});
 
 def server_row(`entry: dict[str, Any]) -> dict[str, Any];
 

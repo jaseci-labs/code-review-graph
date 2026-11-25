@@ -66,7 +66,7 @@ impl resolve_spring_di_calls(store: GraphStore) -> dict {
     for row in conn.execute(
         "SELECT name, qualified_name, parent_name, file_path FROM nodes WHERE kind IN ('Function', 'Test') AND language = 'java' AND parent_name IS NOT NULL",
     ).fetchall() {
-        class_qual = format(row["file_path"], "") + "::" + format(row["parent_name"], "");
+        class_qual = f"{row["file_path"]}::{row["parent_name"]}";
         method_to_qual[class_qual, row["name"]] = row["qualified_name"];
         bare_key: any = (row["parent_name"].split(".")[-1], row["name"]);
         previous: any = method_to_qual.get(bare_key);

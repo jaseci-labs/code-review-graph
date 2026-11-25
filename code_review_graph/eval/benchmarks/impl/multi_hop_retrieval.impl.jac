@@ -10,7 +10,6 @@ impl _name_set(rows: list[dict[str, Any]]) -> set[str] {
 }
 
 impl run(repo_path: Path, store, config: dict) -> list[dict] {
-    names: any;
     hybrid_search = lazy("search", "hybrid_search");
     query_graph = lazy("tools.query", "query_graph");
 
@@ -76,7 +75,7 @@ impl run(repo_path: Path, store, config: dict) -> list[dict] {
         }
 
         rows: any = trav.get("data") or trav.get("results") or [];
-        names = _name_set(rows);
+        names: any = _name_set(rows);
         matched: any = sum(1 for e in expected if e in names);
         recall: any = matched / len(expected) if expected else 0.0;
 

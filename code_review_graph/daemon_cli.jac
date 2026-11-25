@@ -1,28 +1,8 @@
 import from __future__ { annotations }
 
-import importlib;
+import importlib, operator, argparse, logging, os, signal, subprocess, sys, time;
 
-import operator;
-
-import argparse;
-
-import logging;
-
-import os;
-
-import signal;
-
-import subprocess;
-
-import sys;
-
-import time;
-
-glob logger: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 def _process_already_gone(error: OSError) -> bool;
 def _handle_start(args: argparse.Namespace);

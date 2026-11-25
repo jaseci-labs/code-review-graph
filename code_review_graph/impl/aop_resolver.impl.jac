@@ -119,7 +119,6 @@ impl _parse_execution_expression(expr: str) -> Optional[tuple[_DottedPattern, bo
 }
 
 impl _resolve_pointcut_expr(expr: str, pointcuts: dict[str, str]) -> Optional[str] {
-    resolved: any;
     if `any(op in expr for op in _COMPOUND_OPERATORS) {
         return None;
     }
@@ -127,7 +126,7 @@ impl _resolve_pointcut_expr(expr: str, pointcuts: dict[str, str]) -> Optional[st
     ref: any = _NAMED_POINTCUT_REF.match(expr);
     if ref {
         name: any = ref.group(1);
-        resolved = pointcuts.get(name);
+        resolved: any = pointcuts.get(name);
         if resolved is None or `any(op in resolved for op in _COMPOUND_OPERATORS) {
             return None;
         }
@@ -152,7 +151,6 @@ impl _load_extra(raw: Optional[str]) -> dict {
 impl resolve_aop_advice(store: "GraphStore") -> dict {
     row: any;
     aspect: any;
-    bare_name: any;
     candidate: any;
     conn: any = store._conn;
 
@@ -265,7 +263,7 @@ impl resolve_aop_advice(store: "GraphStore") -> dict {
             ann_match: any = _ANNOTATION_POINTCUT.match(expr);
             if ann_match {
                 fqcn: any = ann_match.group(1).strip();
-                bare_name = fqcn.rsplit(".", 1)[-1].strip();
+                bare_name: any = fqcn.rsplit(".", 1)[-1].strip();
                 if not bare_name {
                     continue;
                 }
@@ -292,12 +290,10 @@ impl resolve_aop_advice(store: "GraphStore") -> dict {
                         if not candidate["parent_name"] {
                             continue;
                         }
-                        class_part: any = format(candidate["java_package"], "")
-                            + "."
-                            + format(candidate["parent_name"], "")
+                        class_part: any = f"{candidate["java_package"]}.{candidate["parent_name"]}"
                             if candidate["java_package"]
                             else candidate["parent_name"];
-                        subject: any = format(class_part, "") + "." + format(candidate["name"], "");
+                        subject: any = f"{class_part}.{candidate["name"]}";
                     } else {
                         subject = candidate["name"];
                     }

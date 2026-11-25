@@ -1,34 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import ast;
-
-import hashlib;
-
-import html;
-
-import importlib;
-
-import importlib.util;
-
-import json;
-
-import logging;
-
-import math;
-
-import os;
-
-import re;
-
-import subprocess;
-
-import sys;
-
-import threading;
+import builtins, operator, ast, hashlib, html, importlib, importlib.util, json, logging, math, os, re, subprocess, sys, threading;
 
 import from bisect { bisect_left, bisect_right }
 
@@ -44,9 +16,7 @@ import from pathlib { Path, PurePath }
 
 import from typing { Any, NamedTuple, Optional }
 
-import tomllib;
-
-import yaml as _yaml;
+import tomllib, yaml as _yaml;
 
 import from yaml { MappingNode as _YamlMapping }
 
@@ -64,346 +34,50 @@ class CellInfo(NamedTuple) {
     has source: str;
 }
 
-glob _SQL_TABLE_RE: any;
+glob _SQL_TABLE_RE: any = re.compile(
+    "(?:FROM|JOIN|INTO|CREATE\\s+(?:OR\\s+REPLACE\\s+)?(?:TABLE|VIEW)(?:\\s+IF\\s+NOT\\s+EXISTS)?|INSERT\\s+OVERWRITE)\\s+((?:`[^`]+`|\\w+)(?:\\.(?:`[^`]+`|\\w+))*)",
+    re.IGNORECASE,
+);
 
-glob _DBT_REF_RE: any;
+glob _DBT_REF_RE: any = re.compile(
+    "\\{\\{-?\\s*(ref|source)\\s*\\(\\s*['\\\"]([^'\\\"]+)['\\\"](?:\\s*,\\s*['\\\"]([^'\\\"]+)['\\\"])?\\s*\\)",
+);
 
-glob _PYTHON_STAR_CACHE_MAX: any;
+glob _PYTHON_STAR_CACHE_MAX: any = 15000;
 
-glob _PYTHON_STAR_EXPORT_CACHE: dict[tuple[str, int, int], dict[str, str]];
+glob _PYTHON_STAR_EXPORT_CACHE: dict[tuple[str, int, int], dict[str, str]] = {};
 
-glob _PYTHON_STAR_EXPORT_CACHE_LOCK: any;
+glob _PYTHON_STAR_EXPORT_CACHE_LOCK: any = threading.RLock();
 
-glob _PYTHON_MODULE_ALIAS_CACHE: dict[tuple[str, int, int], Optional[str]];
+glob _PYTHON_MODULE_ALIAS_CACHE: dict[tuple[str, int, int], Optional[str]] = {};
 
-glob _PYTHON_MODULE_ALIAS_CACHE_LOCK: any;
+glob _PYTHON_MODULE_ALIAS_CACHE_LOCK: any = threading.Lock();
 
-glob _PYTHON_RETURN_ANNOTATION_CACHE: dict[tuple[str, int, int], dict[str, str]];
+glob _PYTHON_RETURN_ANNOTATION_CACHE: dict[tuple[str, int, int], dict[str, str]] = {};
 
-glob _PYTHON_RETURN_ANNOTATION_CACHE_LOCK: any;
+glob _PYTHON_RETURN_ANNOTATION_CACHE_LOCK: any = threading.RLock();
 
-glob _PYTHON_PROPERTY_RETURN_ANNOTATION_CACHE: dict[tuple[str, int, int], dict[tuple[str, str], str]];
+glob _PYTHON_PROPERTY_RETURN_ANNOTATION_CACHE: dict[tuple[str, int, int], dict[tuple[str, str], str]] = {};
 
-glob _PYTHON_MODULE_CLASS_IDENTITY_CACHE: dict[tuple[str, int, int], dict[str, tuple[str, str]]];
+glob _PYTHON_MODULE_CLASS_IDENTITY_CACHE: dict[tuple[str, int, int], dict[str, tuple[str, str]]] = {};
 
-glob _PYTHON_MODULE_CLASS_IDENTITY_CACHE_LOCK: any;
+glob _PYTHON_MODULE_CLASS_IDENTITY_CACHE_LOCK: any = threading.RLock();
 
-glob _PY_EXPR_RECEIVER_KEY: any;
+glob _PY_EXPR_RECEIVER_KEY: any = "\x00expr:";
 
-glob _PY_CLASS_IDENTITY_PREFIX: any;
+glob _PY_CLASS_IDENTITY_PREFIX: any = "\x00python-class\x00";
 
-glob _PY_TUPLE_ANNOTATION_NAMES: any;
+glob _PY_TUPLE_ANNOTATION_NAMES: any = frozenset({"Tuple", "tuple"});
 
-glob _PY_TARGET_PATTERN_TYPES: any;
+glob _PY_TARGET_PATTERN_TYPES: any = frozenset({
+    "list",
+    "list_pattern",
+    "pattern_list",
+    "tuple",
+    "tuple_pattern",
+});
 
-glob _PY_SPLAT_PATTERN_TYPES: any;
-
-glob _TRY_STMT_TYPES: tuple[Any, ...];
-
-glob _MATCH_STMT_TYPES: tuple[Any, ...];
-
-glob _SQL_KEYWORDS: frozenset[str];
-
-glob logger: any;
-
-glob _DEFAULT_PARSER_LOAD_TIMEOUT_SECONDS: any;
-
-glob _PARSER_PROBE_RESULTS: dict[str, bool];
-
-glob _PARSER_PROBE_FAILURE_DETAILS: dict[str, str];
-
-glob _PARSER_PROBE_LOCK: any;
-
-glob _PARSER_PROBE_GRAMMAR_LOCKS: dict[str, threading.Lock];
-
-glob _EXPECTED_PARSER_LOAD_ERRORS: any;
-
-glob _PhpPsr4Mappings: any;
-
-glob _GO_MODULE_LINE_RE: any;
-
-glob _GO_REPLACE_LINE_RE: any;
-
-glob _RUBY_REQUIRE_PATHS_RE: any;
-
-glob _RUBY_LOAD_PATH_RE: any;
-
-glob _RUBY_IMPORT_METHODS: any;
-
-glob _RUBY_IMPORT_PATH_ARGUMENT: any;
-
-glob _GO_MOD_MAX_LINES: any;
-
-glob EXTENSION_TO_LANGUAGE: dict[str, str];
-
-glob _CPP_HEADER_EVIDENCE_TYPES: any;
-
-glob _CPP_HEADER_EVIDENCE_QUALIFIERS: any;
-
-glob _CPP_HEADER_NON_CODE_RE: any;
-
-glob _CPP_HEADER_TEXT_EVIDENCE_RE: any;
-
-glob _CPP_QT_STRUCTURAL_MACRO_REPLACEMENTS: any;
-
-glob SHEBANG_INTERPRETER_TO_LANGUAGE: dict[str, str];
-
-glob _SHEBANG_PROBE_BYTES: any;
-
-glob _ANSIBLE_PATH_COMPONENTS: frozenset[str];
-
-glob _ANSIBLE_PLAYBOOK_NAMES: frozenset[str];
-
-glob _ANSIBLE_PLAY_KEYS: frozenset[str];
-
-glob _ANSIBLE_MODULE_KEYS: frozenset[str];
-
-glob _TASK_META_KEYS: frozenset[str];
-
-glob _CLASS_TYPES: dict[str, list[str]];
-
-glob _TS_HERITAGE_CLAUSES: any;
-
-glob _TS_TYPE_DECLARATIONS: any;
-
-glob _FUNCTION_TYPES: dict[str, list[str]];
-
-glob _IMPORT_TYPES: dict[str, list[str]];
-
-glob _CALL_TYPES: dict[str, list[str]];
-
-glob _TEST_PATTERNS: any;
-
-glob _SEP: any;
-
-glob _ABSOLUTE_PATH_RE: any;
-
-glob _TEST_DIR_PATTERNS: any;
-
-glob _SINGULAR_TEST_DIR_RE: any;
-
-glob _TEST_HELPER_DIR_PATTERNS: any;
-
-glob _STORYBOOK_FILE_RE: any;
-
-glob _TEST_NAME_PATTERNS: any;
-
-glob _TEST_RUNNER_NAMES: any;
-
-glob _RUBY_TEST_BLOCK_NAMES: any;
-
-glob _RUBY_MEMO_BLOCK_NAMES: any;
-
-glob _RUBY_DESCRIBING_BLOCK_NAMES: any;
-
-glob _RUBY_CONSTANT_PATH_RE: any;
-
-glob _RubyClassRef: any;
-
-glob _JAVA_PACKAGE_QUALIFIED_TYPE: any;
-
-glob _TEST_ANNOTATIONS: any;
-
-glob _SPRING_STEREOTYPE_ANNOTATIONS: any;
-
-glob _SPRING_INJECT_ANNOTATIONS: any;
-
-glob _SPRING_PLACEHOLDER_RE: any;
-
-glob _TEMPORAL_INTERFACE_ANNOTATIONS: any;
-
-glob _TEMPORAL_METHOD_ANNOTATIONS: any;
-
-glob _KAFKA_LISTENER_ANNOTATIONS: any;
-
-glob _KAFKA_CONSUMER_TYPES: any;
-
-glob _KAFKA_PRODUCER_TYPES: any;
-
-glob _SPRING_SCHEDULED_ANNOTATIONS: any;
-
-glob _SPRING_EVENT_LISTENER_ANNOTATIONS: any;
-
-glob _SPRING_EVENT_PUBLISH_METHODS: any;
-
-glob _JAVA_PACKAGE_KEY: any;
-
-glob _JAVA_WILDCARD_KEY: any;
-
-glob _SPRING_REQUEST_PREFIX_KEY: any;
-
-glob _JS_IMPORT_ORIGINAL_PREFIX_KEY: any;
-
-glob _PY_MODULE_BINDING_KEY: any;
-
-glob _RUST_INLINE_MODULE_KEY: any;
-
-glob _PY_LITERAL_VALUE_TYPES: any;
-
-glob _SPRING_REQUEST_MAPPINGS: any;
-
-glob _SPRING_WEBFLUX_HTTP_VERBS: any;
-
-glob _HTTP_REQUEST_METHODS: any;
-
-glob _VBNET_IDENT: any;
-
-glob _VBNET_DOTTED_IDENT: any;
-
-glob _VBNET_MODIFIER_WORDS: any;
-
-glob _VBNET_MODIFIER_RE: any;
-
-glob _VBNET_IMPORT_RE: any;
-
-glob _VBNET_NAMESPACE_RE: any;
-
-glob _VBNET_END_NAMESPACE_RE: any;
-
-glob _VBNET_TYPE_RE: any;
-
-glob _VBNET_END_TYPE_RE: any;
-
-glob _VBNET_MEMBER_RE: any;
-
-glob _VBNET_OPERATOR_RE: any;
-
-glob _VBNET_END_MEMBER_RE: any;
-
-glob _VBNET_INHERITS_RE: any;
-
-glob _VBNET_IMPLEMENTS_RE: any;
-
-glob _VBNET_NEW_RE: any;
-
-glob _VBNET_CALL_RE: any;
-
-glob _VBNET_CALL_KEYWORDS: any;
-
-glob _RESCRIPT_IDENT: any;
-
-glob _RESCRIPT_MODULE_RE: any;
-
-glob _RESCRIPT_DECORATOR_PREFIX: any;
-
-glob _RESCRIPT_LET_RE: any;
-
-glob _RESCRIPT_EXTERNAL_RE: any;
-
-glob _RESCRIPT_TYPE_RE: any;
-
-glob _RESCRIPT_OPEN_RE: any;
-
-glob _RESCRIPT_MODULE_ALIAS_RE: any;
-
-glob _RESCRIPT_JSX_RE: any;
-
-glob _RESCRIPT_MODULE_ATTR_RE: any;
-
-glob _RESCRIPT_CALL_RE: any;
-
-glob _RESCRIPT_KEYWORDS: any;
-
-glob _is_test_file: any;
-
-glob _MAX_DOCSTRING_CHARS: any;
-
-glob _DOC_COMMENT_NODE_TYPES: any;
-
-glob _DOC_COMMENT_SKIP_TYPES: any;
-
-glob _DOC_COMMENT_WRAPPER_TYPES: any;
-
-glob _CSHARP_SUMMARY_RE: any;
-
-glob _XML_TAG_RE: any;
-
-glob _DOC_PARAGRAPH_TAG_RE: any;
-
-glob _DOC_INLINE_TAG_RE: any;
-
-glob _DOC_BRIEF_RE: any;
-
-glob _PHPUNIT_TEST_ATTRIBUTE: any;
-
-glob _PHP_TEST_DOC_TAG_RE: any;
-
-glob _SEPARATE_SCOPE_RULE_LANGUAGES: any;
-
-glob _HCL_REF_PREFIXES: frozenset[str];
-
-glob _HCL_RECURSE_TYPES: frozenset[str];
-
-glob _HCL_BLOCK_CFG: dict[str, tuple[str, str, int, bool]];
-
-glob _JSON_VALUE_TYPES: any;
-
-glob _JSON_DATA_DIR_NAMES: any;
-
-glob _HTML_SECTION_TAGS: any;
-
-glob _HTML_HEADING_TAGS: any;
-
-glob _HTML_TEMPLATE_MARKERS: any;
-
-glob _HTML_JAVASCRIPT_TYPES: any;
-
-glob _HTML_TYPESCRIPT_TYPES: any;
-
-glob _XSLT_NAMESPACE: any;
-
-glob _XSLT_NAMED_STEP_RE: any;
-
-glob _YAML_SIMPLE_PATH_SEGMENT: any;
-
-glob _LOCALE_DIR_NAMES: any;
-
-glob _LANGUAGE_TAG_RE: any;
-
-glob _LANGUAGE_CODES: any;
-
-glob _POWERSHELL_NUMBER_PATTERN: any;
-
-glob _POWERSHELL_RANGE_RE: any;
-
-glob _POWERSHELL_SCOPE_RE: any;
-
-glob _PLSQL_IDENT_RE: any;
-
-glob _PLSQL_ROUTINE_RE: any;
-
-with entry {
-    _SQL_TABLE_RE = re.compile(
-        "(?:FROM|JOIN|INTO|CREATE\\s+(?:OR\\s+REPLACE\\s+)?(?:TABLE|VIEW)(?:\\s+IF\\s+NOT\\s+EXISTS)?|INSERT\\s+OVERWRITE)\\s+((?:`[^`]+`|\\w+)(?:\\.(?:`[^`]+`|\\w+))*)",
-        re.IGNORECASE,
-    );
-    _DBT_REF_RE = re.compile(
-        "\\{\\{-?\\s*(ref|source)\\s*\\(\\s*['\\\"]([^'\\\"]+)['\\\"](?:\\s*,\\s*['\\\"]([^'\\\"]+)['\\\"])?\\s*\\)",
-    );
-
-    _PYTHON_STAR_CACHE_MAX = 15000;
-    _PYTHON_STAR_EXPORT_CACHE = {};
-    _PYTHON_STAR_EXPORT_CACHE_LOCK = threading.RLock();
-    _PYTHON_MODULE_ALIAS_CACHE = {};
-    _PYTHON_MODULE_ALIAS_CACHE_LOCK = threading.Lock();
-    _PYTHON_RETURN_ANNOTATION_CACHE = {};
-    _PYTHON_RETURN_ANNOTATION_CACHE_LOCK = threading.RLock();
-    _PYTHON_PROPERTY_RETURN_ANNOTATION_CACHE = {};
-    _PYTHON_MODULE_CLASS_IDENTITY_CACHE = {};
-    _PYTHON_MODULE_CLASS_IDENTITY_CACHE_LOCK = threading.RLock();
-    _PY_EXPR_RECEIVER_KEY = "\x00expr:";
-    _PY_CLASS_IDENTITY_PREFIX = "\x00python-class\x00";
-
-    _PY_TUPLE_ANNOTATION_NAMES = frozenset({"Tuple", "tuple"});
-    _PY_TARGET_PATTERN_TYPES = frozenset({
-        "list",
-        "list_pattern",
-        "pattern_list",
-        "tuple",
-        "tuple_pattern",
-    });
-    _PY_SPLAT_PATTERN_TYPES = frozenset({"list_splat", "list_splat_pattern"});
-}
+glob _PY_SPLAT_PATTERN_TYPES: any = frozenset({"list_splat", "list_splat_pattern"});
 
 def _python_qualified_class_identity(file_path: str, class_name: str) -> str;
 
@@ -461,14 +135,9 @@ def _python_function_scope_bindings(
 ) -> dict[tuple[int, int], tuple[frozenset[str], frozenset[str]]];
 def _python_type_checking_aliases(tree: ast.Module) -> tuple[frozenset[str], frozenset[str]];
 
-glob type_checking_names_default_: any;
+glob type_checking_names_default_: any = frozenset();
 
-glob typing_modules_default_: any;
-
-with entry {
-    type_checking_names_default_ = frozenset();
-    typing_modules_default_ = frozenset();
-}
+glob typing_modules_default_: any = frozenset();
 
 def _python_static_truth(
     `node: ast.expr,
@@ -476,10 +145,11 @@ def _python_static_truth(
     typing_modules: frozenset[str] = typing_modules_default_,
 ) -> Optional[bool];
 
-with entry {
-    _TRY_STMT_TYPES = (ast.Try, ast.TryStar) if hasattr(ast, "TryStar") else (ast.Try,);
-    _MATCH_STMT_TYPES = (ast.Match,) if hasattr(ast, "Match") else ();
-}
+glob _TRY_STMT_TYPES: tuple[Any, ...] = (ast.Try, ast.TryStar)
+    if hasattr(ast, "TryStar")
+    else (ast.Try,);
+
+glob _MATCH_STMT_TYPES: tuple[Any, ...] = (ast.Match,) if hasattr(ast, "Match") else ();
 
 class _PythonUnreachableCallVisitor(ast.NodeVisitor) {
     def init(type_checking_names: frozenset[str], typing_modules: frozenset[str]);
@@ -524,52 +194,25 @@ def _is_static_dead_guard_child(parent, child) -> bool;
 def _is_in_static_dead_guard(`node) -> bool;
 def _is_in_rust_dead_guard(`node) -> bool;
 
-with entry {
-    _SQL_KEYWORDS = frozenset({
-        "SELECT",
-        "WHERE",
-        "GROUP",
-        "ORDER",
-        "HAVING",
-        "LIMIT",
-        "OFFSET",
-        "UNION",
-        "INTERSECT",
-        "EXCEPT",
-        "AS",
-        "ON",
-        "USING",
-        "SET",
-        "VALUES",
-        "DEFAULT",
-        "NULL",
-        "TRUE",
-        "FALSE",
-        "INNER",
-        "OUTER",
-        "LEFT",
-        "RIGHT",
-        "FULL",
-        "CROSS",
-        "NATURAL",
-        "LATERAL",
-        "RECURSIVE",
-        "ONLY",
-        "WITH",
-        "IF",
-        "NOT",
-        "EXISTS",
-    });
+glob _SQL_KEYWORDS: frozenset[str] = frozenset(
+    ("SELECT WHERE GROUP ORDER HAVING LIMIT OFFSET UNION INTERSECT EXCEPT AS ON USING SET VALUES "
+        "DEFAULT NULL TRUE FALSE INNER OUTER LEFT RIGHT FULL CROSS NATURAL LATERAL RECURSIVE ONLY "
+        "WITH IF NOT EXISTS").split(),
+);
 
-    logger = logging.getLogger(__name__);
+glob logger: any = logging.getLogger(__name__);
 
-    _DEFAULT_PARSER_LOAD_TIMEOUT_SECONDS = 5.0;
-    _PARSER_PROBE_RESULTS = {};
-    _PARSER_PROBE_FAILURE_DETAILS = {};
-    _PARSER_PROBE_LOCK = threading.Lock();
-    _PARSER_PROBE_GRAMMAR_LOCKS = {};
-    _EXPECTED_PARSER_LOAD_ERRORS = (ImportError, LookupError, OSError, ValueError);
-}
+glob _DEFAULT_PARSER_LOAD_TIMEOUT_SECONDS: any = 5.0;
+
+glob _PARSER_PROBE_RESULTS: dict[str, bool] = {};
+
+glob _PARSER_PROBE_FAILURE_DETAILS: dict[str, str] = {};
+
+glob _PARSER_PROBE_LOCK: any = threading.Lock();
+
+glob _PARSER_PROBE_GRAMMAR_LOCKS: dict[str, threading.Lock] = {};
+
+glob _EXPECTED_PARSER_LOAD_ERRORS: any = (ImportError, LookupError, OSError, ValueError);
 
 def _parser_load_timeout_seconds -> float;
 def _parser_probe_env -> dict[str, str];
@@ -580,9 +223,7 @@ def _mark_parser_unavailable(grammar: str);
 def _clear_parser_probe_cache;
 def _load_tree_sitter_parser(grammar: str) -> any;
 
-with entry {
-    _PhpPsr4Mappings = builtins.tuple[builtins.tuple[str, builtins.tuple[str, ...]], ...];
-}
+glob _PhpPsr4Mappings: any = builtins.tuple[builtins.tuple[str, builtins.tuple[str, ...]], ...];
 
 class _ImportSpec(NamedTuple) {
     has module: str;
@@ -602,27 +243,31 @@ class _GoModule(NamedTuple) {
     has replacements: tuple[tuple[str, str], ...];
 }
 
-with entry {
-    _GO_MODULE_LINE_RE = re.compile("^\\s*module\\s+\"?([^\\s\"]+)\"?\\s*(?://.*)?$");
-    _GO_REPLACE_LINE_RE = re.compile(
-        "^\\s*(?:replace\\s+)?([^\\s=>]+)(?:\\s+v\\S+)?\\s*=>\\s*(\\S+)(?:\\s+v\\S+)?\\s*(?://.*)?$"
-    );
-    _RUBY_REQUIRE_PATHS_RE = re.compile(
-        "require_paths?\\s*=\\s*(?:\\[([^\\]]*)\\]|%w[\\[({]([^\\])}]*)[\\])}]|(['\"])([^'\"]+)\\3)"
-    );
-    _RUBY_LOAD_PATH_RE = re.compile(
-        "(?:\\$LOAD_PATH|\\$:)\\s*(?:\\.unshift|\\.push|<<)\\s*\\(?\\s*(?:File\\.expand_path\\(\\s*)?(['\"])([^'\"]+)\\1\\s*(?:,\\s*(__dir__|__FILE__))?",
-    );
-    _RUBY_IMPORT_METHODS = frozenset({
-        "require",
-        "require_relative",
-        "load",
-        "autoload",
-        "require_all",
-    });
-    _RUBY_IMPORT_PATH_ARGUMENT = {"autoload": 1};
-    _GO_MOD_MAX_LINES = 2000;
-}
+glob _GO_MODULE_LINE_RE: any = re.compile("^\\s*module\\s+\"?([^\\s\"]+)\"?\\s*(?://.*)?$");
+
+glob _GO_REPLACE_LINE_RE: any = re.compile(
+    "^\\s*(?:replace\\s+)?([^\\s=>]+)(?:\\s+v\\S+)?\\s*=>\\s*(\\S+)(?:\\s+v\\S+)?\\s*(?://.*)?$"
+);
+
+glob _RUBY_REQUIRE_PATHS_RE: any = re.compile(
+    "require_paths?\\s*=\\s*(?:\\[([^\\]]*)\\]|%w[\\[({]([^\\])}]*)[\\])}]|(['\"])([^'\"]+)\\3)"
+);
+
+glob _RUBY_LOAD_PATH_RE: any = re.compile(
+    "(?:\\$LOAD_PATH|\\$:)\\s*(?:\\.unshift|\\.push|<<)\\s*\\(?\\s*(?:File\\.expand_path\\(\\s*)?(['\"])([^'\"]+)\\1\\s*(?:,\\s*(__dir__|__FILE__))?",
+);
+
+glob _RUBY_IMPORT_METHODS: any = frozenset({
+    "require",
+    "require_relative",
+    "load",
+    "autoload",
+    "require_all",
+});
+
+glob _RUBY_IMPORT_PATH_ARGUMENT: any = {"autoload": 1};
+
+glob _GO_MOD_MAX_LINES: any = 2000;
 
 @lru_cache(maxsize=256)
 def _read_go_mod(
@@ -688,804 +333,630 @@ class EdgeInfo {
     def postinit;
 }
 
-with entry {
-    EXTENSION_TO_LANGUAGE = {
-        ".py": "python",
-        ".js": "javascript",
-        ".jsx": "javascript",
-        ".ts": "typescript",
-        ".mts": "typescript",
-        ".cts": "typescript",
-        ".tsx": "tsx",
-        ".go": "go",
-        ".rs": "rust",
-        ".java": "java",
-        ".cs": "csharp",
-        ".rb": "ruby",
-        ".cpp": "cpp",
-        ".cc": "cpp",
-        ".cxx": "cpp",
-        ".c": "c",
-        ".h": "c",
-        ".hpp": "cpp",
-        ".hh": "cpp",
-        ".kt": "kotlin",
-        ".kts": "kotlin",
-        ".swift": "swift",
-        ".php": "php",
-        ".scala": "scala",
-        ".sol": "solidity",
-        ".vue": "vue",
-        ".html": "html",
-        ".htm": "html",
-        ".dart": "dart",
-        ".r": "r",
-        ".mjs": "javascript",
-        ".cjs": "javascript",
-        ".astro": "typescript",
-        ".pl": "perl",
-        ".pm": "perl",
-        ".t": "perl",
-        ".xs": "c",
-        ".lua": "lua",
-        ".luau": "luau",
-        ".m": "objc",
-        ".sh": "bash",
-        ".bash": "bash",
-        ".zsh": "bash",
-        ".ksh": "bash",
-        ".ex": "elixir",
-        ".exs": "elixir",
-        ".ipynb": "notebook",
-        ".zig": "zig",
-        ".ps1": "powershell",
-        ".psm1": "powershell",
-        ".psd1": "powershell",
-        ".svelte": "svelte",
-        ".jl": "julia",
-        ".res": "rescript",
-        ".resi": "rescript",
-        ".gd": "gdscript",
-        ".nix": "nix",
-        ".sv": "verilog",
-        ".svh": "verilog",
-        ".v": "verilog",
-        ".vh": "verilog",
-        ".vb": "vbnet",
-        ".sql": "sql",
-        ".pls": "sql",
-        ".plb": "sql",
-        ".pks": "sql",
-        ".pkb": "sql",
-        ".pck": "sql",
-        ".prc": "sql",
-        ".fnc": "sql",
-        ".trg": "sql",
-        ".tf": "hcl",
-        ".hcl": "hcl",
-        ".properties": "properties",
-        ".xsl": "xslt",
-        ".xslt": "xslt",
-        ".yml": "yaml",
-        ".yaml": "yaml",
-        ".json": "json",
-        ".robot": "robot",
-        ".resource": "robot",
-        ".liquid": "liquid",
-    };
-    _CPP_HEADER_EVIDENCE_TYPES = frozenset({
-        "access_specifier",
-        "alias_declaration",
-        "base_class_clause",
-        "class_specifier",
-        "concept_definition",
-        "lambda_expression",
-        "namespace_definition",
-        "noexcept",
-        "template_declaration",
-        "trailing_return_type",
-        "using_declaration",
-    });
+glob EXTENSION_TO_LANGUAGE: dict[str, str] = {
+    ".py": "python",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".ts": "typescript",
+    ".mts": "typescript",
+    ".cts": "typescript",
+    ".tsx": "tsx",
+    ".go": "go",
+    ".rs": "rust",
+    ".java": "java",
+    ".cs": "csharp",
+    ".rb": "ruby",
+    ".cpp": "cpp",
+    ".cc": "cpp",
+    ".cxx": "cpp",
+    ".c": "c",
+    ".h": "c",
+    ".hpp": "cpp",
+    ".hh": "cpp",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
+    ".swift": "swift",
+    ".php": "php",
+    ".scala": "scala",
+    ".sol": "solidity",
+    ".vue": "vue",
+    ".html": "html",
+    ".htm": "html",
+    ".dart": "dart",
+    ".r": "r",
+    ".mjs": "javascript",
+    ".cjs": "javascript",
+    ".astro": "typescript",
+    ".pl": "perl",
+    ".pm": "perl",
+    ".t": "perl",
+    ".xs": "c",
+    ".lua": "lua",
+    ".luau": "luau",
+    ".m": "objc",
+    ".sh": "bash",
+    ".bash": "bash",
+    ".zsh": "bash",
+    ".ksh": "bash",
+    ".ex": "elixir",
+    ".exs": "elixir",
+    ".ipynb": "notebook",
+    ".zig": "zig",
+    ".ps1": "powershell",
+    ".psm1": "powershell",
+    ".psd1": "powershell",
+    ".svelte": "svelte",
+    ".jl": "julia",
+    ".res": "rescript",
+    ".resi": "rescript",
+    ".gd": "gdscript",
+    ".nix": "nix",
+    ".sv": "verilog",
+    ".svh": "verilog",
+    ".v": "verilog",
+    ".vh": "verilog",
+    ".vb": "vbnet",
+    ".sql": "sql",
+    ".pls": "sql",
+    ".plb": "sql",
+    ".pks": "sql",
+    ".pkb": "sql",
+    ".pck": "sql",
+    ".prc": "sql",
+    ".fnc": "sql",
+    ".trg": "sql",
+    ".tf": "hcl",
+    ".hcl": "hcl",
+    ".properties": "properties",
+    ".xsl": "xslt",
+    ".xslt": "xslt",
+    ".yml": "yaml",
+    ".yaml": "yaml",
+    ".json": "json",
+    ".robot": "robot",
+    ".resource": "robot",
+    ".liquid": "liquid",
+};
 
-    _CPP_HEADER_EVIDENCE_QUALIFIERS = frozenset({b"consteval", b"constinit"});
-    _CPP_HEADER_NON_CODE_RE = re.compile(
-        b"/\\*.*?(?:\\*/|\\Z)|//[^\\n]*|\"(?:[^\"\\\\\\n]|\\\\.)*\"|'(?:[^'\\\\\\n]|\\\\.)*'",
-        re.DOTALL,
-    );
-    _CPP_HEADER_TEXT_EVIDENCE_RE = re.compile(
-        b"\\b(?:class|namespace|template|concept|using|public|private|protected|constexpr|noexcept|consteval|constinit|Q_SIGNALS)\\b|::|->|\\benum\\b[^;{}]{0,1024}\\bstruct\\b|\\b(?:struct|union)\\b[^;{}]{0,1024}:|\\]\\s*(?:\\[\\[|[^\\s;,)=\\[\\].+\\-*/%&|^!?:>])",
-    );
+glob _CPP_HEADER_EVIDENCE_TYPES: any = frozenset(
+    ("access_specifier alias_declaration base_class_clause class_specifier concept_definition "
+        "lambda_expression namespace_definition noexcept template_declaration trailing_return_type "
+        "using_declaration").split(),
+);
 
-    _CPP_QT_STRUCTURAL_MACRO_REPLACEMENTS = {
-        b"QT_BEGIN_NAMESPACE": b" " * len(b"QT_BEGIN_NAMESPACE"),
-        b"QT_END_NAMESPACE": b" " * len(b"QT_END_NAMESPACE"),
-        b"Q_OBJECT": b" " * len(b"Q_OBJECT"),
-        b"Q_SIGNALS": b"public" + b" " * (len(b"Q_SIGNALS") - len(b"public")),
-        b"Q_SLOTS": b" " * len(b"Q_SLOTS"),
-        b"Q_EMIT": b" " * len(b"Q_EMIT"),
-    };
-    SHEBANG_INTERPRETER_TO_LANGUAGE = {
-        "bash": "bash",
-        "sh": "bash",
-        "zsh": "bash",
-        "ksh": "bash",
-        "dash": "bash",
-        "ash": "bash",
-        "python": "python",
-        "python2": "python",
-        "python3": "python",
-        "pypy": "python",
-        "pypy3": "python",
-        "node": "javascript",
-        "nodejs": "javascript",
-        "ruby": "ruby",
-        "perl": "perl",
-        "lua": "lua",
-        "Rscript": "r",
-        "php": "php",
-    };
-    _SHEBANG_PROBE_BYTES = 256;
-    _ANSIBLE_PATH_COMPONENTS = frozenset({
-        "playbooks",
-        "roles",
-        "tasks",
-        "handlers",
-        "group_vars",
-        "host_vars",
-    });
-    _ANSIBLE_PLAYBOOK_NAMES = frozenset({
-        "site.yml",
-        "site.yaml",
-        "main.yml",
-        "main.yaml",
-        "install.yml",
-        "install.yaml",
-        "deploy.yml",
-        "deploy.yaml",
-    });
-    _ANSIBLE_PLAY_KEYS = frozenset({
-        "tasks",
-        "handlers",
-        "pre_tasks",
-        "post_tasks",
-        "roles",
-        "gather_facts",
-        "become",
-        "become_user",
-        "become_method",
-        "serial",
-        "strategy",
-        "vars_files",
-        "vars_prompt",
-        "any_errors_fatal",
-        "max_fail_percentage",
-        "ignore_errors",
-    });
-    _ANSIBLE_MODULE_KEYS = frozenset({
-        "apt",
-        "yum",
-        "dnf",
-        "package",
-        "pip",
-        "copy",
-        "template",
-        "file",
-        "service",
-        "systemd",
-        "command",
-        "shell",
-        "raw",
-        "git",
-        "user",
-        "stat",
-        "include_tasks",
-        "import_tasks",
-        "include_role",
-        "import_role",
-        "set_fact",
-        "debug",
-        "fail",
-        "assert",
-        "wait_for",
-        "pause",
-        "lineinfile",
-        "blockinfile",
-        "get_url",
-        "uri",
-        "unarchive",
-        "add_host",
-        "group_by",
-        "include_vars",
-    });
-    _TASK_META_KEYS = frozenset({
-        "name",
-        "when",
-        "loop",
-        "loop_control",
-        "with_items",
-        "with_first_found",
-        "with_fileglob",
-        "with_dict",
-        "with_subelements",
-        "with_nested",
-        "with_sequence",
-        "with_indexed_items",
-        "register",
-        "notify",
-        "tags",
-        "become",
-        "become_user",
-        "become_method",
-        "ignore_errors",
-        "vars",
-        "no_log",
-        "check_mode",
-        "environment",
-        "any_errors_fatal",
-        "run_once",
-        "delegate_to",
-        "delegate_facts",
-        "block",
-        "rescue",
-        "always",
-        "changed_when",
-        "failed_when",
-        "retries",
-        "delay",
-        "until",
-        "listen",
-        "connection",
-        "timeout",
-    });
-    _CLASS_TYPES = {
-        "python": ["class_definition"],
-        "javascript": ["class_declaration", "class"],
-        "typescript": [
-            "class_declaration",
-            "abstract_class_declaration",
-            "class",
-            "interface_declaration",
-            "type_alias_declaration",
-            "enum_declaration",
-        ],
-        "tsx": [
-            "class_declaration",
-            "abstract_class_declaration",
-            "class",
-            "interface_declaration",
-            "type_alias_declaration",
-            "enum_declaration",
-        ],
-        "go": ["type_declaration"],
-        "rust": ["struct_item", "enum_item", "trait_item"],
-        "java": ["class_declaration", "interface_declaration", "enum_declaration"],
-        "c": ["struct_specifier", "type_definition"],
-        "cpp": ["class_specifier", "struct_specifier"],
-        "csharp": [
-            "class_declaration",
-            "interface_declaration",
-            "enum_declaration",
-            "struct_declaration",
-            "record_declaration",
-        ],
-        "ruby": ["class", "module"],
-        "r": [],
-        "perl": ["package_statement", "class_statement", "role_statement"],
-        "kotlin": ["class_declaration", "object_declaration"],
-        "swift": ["class_declaration", "protocol_declaration"],
-        "php": [
-            "class_declaration",
-            "interface_declaration",
-            "trait_declaration",
-            "enum_declaration",
-        ],
-        "scala": ["class_definition", "trait_definition", "object_definition", "enum_definition"],
-        "solidity": [
-            "contract_declaration",
-            "interface_declaration",
-            "library_declaration",
-            "struct_declaration",
-            "enum_declaration",
-            "error_declaration",
-            "user_defined_type_definition",
-        ],
-        "dart": ["class_definition", "mixin_declaration", "enum_declaration"],
-        "lua": [],
-        "luau": ["type_definition"],
-        "objc": ["class_interface", "class_implementation", "protocol_declaration"],
-        "bash": [],
-        "elixir": [],
-        "nix": [],
-        "zig": [],
-        "powershell": ["class_statement"],
-        "julia": ["struct_definition", "abstract_definition", "module_definition"],
-        "verilog": [
-            "module_declaration",
-            "interface_declaration",
-            "class_declaration",
-            "package_declaration",
-        ],
-        "gdscript": ["class_definition", "class_name_statement"],
-        "sql": [],
-        "hcl": [],
-    };
-    _TS_HERITAGE_CLAUSES = frozenset({
-        "extends_clause",
-        "implements_clause",
-        "extends_type_clause",
-    });
-    _TS_TYPE_DECLARATIONS = frozenset({
+glob _CPP_HEADER_EVIDENCE_QUALIFIERS: any = frozenset({b"consteval", b"constinit"});
+
+glob _CPP_HEADER_NON_CODE_RE: any = re.compile(
+    b"/\\*.*?(?:\\*/|\\Z)|//[^\\n]*|\"(?:[^\"\\\\\\n]|\\\\.)*\"|'(?:[^'\\\\\\n]|\\\\.)*'", re.DOTALL
+);
+
+glob _CPP_HEADER_TEXT_EVIDENCE_RE: any = re.compile(
+    b"\\b(?:class|namespace|template|concept|using|public|private|protected|constexpr|noexcept|consteval|constinit|Q_SIGNALS)\\b|::|->|\\benum\\b[^;{}]{0,1024}\\bstruct\\b|\\b(?:struct|union)\\b[^;{}]{0,1024}:|\\]\\s*(?:\\[\\[|[^\\s;,)=\\[\\].+\\-*/%&|^!?:>])",
+);
+
+glob _CPP_QT_STRUCTURAL_MACRO_REPLACEMENTS: any = {
+    b"QT_BEGIN_NAMESPACE": b" " * len(b"QT_BEGIN_NAMESPACE"),
+    b"QT_END_NAMESPACE": b" " * len(b"QT_END_NAMESPACE"),
+    b"Q_OBJECT": b" " * len(b"Q_OBJECT"),
+    b"Q_SIGNALS": b"public" + b" " * (len(b"Q_SIGNALS") - len(b"public")),
+    b"Q_SLOTS": b" " * len(b"Q_SLOTS"),
+    b"Q_EMIT": b" " * len(b"Q_EMIT"),
+};
+
+glob SHEBANG_INTERPRETER_TO_LANGUAGE: dict[str, str] = {
+    "bash": "bash",
+    "sh": "bash",
+    "zsh": "bash",
+    "ksh": "bash",
+    "dash": "bash",
+    "ash": "bash",
+    "python": "python",
+    "python2": "python",
+    "python3": "python",
+    "pypy": "python",
+    "pypy3": "python",
+    "node": "javascript",
+    "nodejs": "javascript",
+    "ruby": "ruby",
+    "perl": "perl",
+    "lua": "lua",
+    "Rscript": "r",
+    "php": "php",
+};
+
+glob _SHEBANG_PROBE_BYTES: any = 256;
+
+glob _ANSIBLE_PATH_COMPONENTS: frozenset[str] = frozenset({
+    "playbooks",
+    "roles",
+    "tasks",
+    "handlers",
+    "group_vars",
+    "host_vars",
+});
+
+glob _ANSIBLE_PLAYBOOK_NAMES: frozenset[str] = frozenset(
+    ("site.yml site.yaml main.yml main.yaml install.yml install.yaml deploy.yml deploy.yaml").split(),
+);
+
+glob _ANSIBLE_PLAY_KEYS: frozenset[str] = frozenset(
+    ("tasks handlers pre_tasks post_tasks roles gather_facts become become_user become_method "
+        "serial strategy vars_files vars_prompt any_errors_fatal max_fail_percentage ignore_errors").split(),
+);
+
+glob _ANSIBLE_MODULE_KEYS: frozenset[str] = frozenset(
+    ("apt yum dnf package pip copy template file service systemd command shell raw git user stat "
+        "include_tasks import_tasks include_role import_role set_fact debug fail assert wait_for "
+        "pause lineinfile blockinfile get_url uri unarchive add_host group_by include_vars").split(),
+);
+
+glob _TASK_META_KEYS: frozenset[str] = frozenset(
+    ("name when loop loop_control with_items with_first_found with_fileglob with_dict "
+        "with_subelements with_nested with_sequence with_indexed_items register notify tags become "
+        "become_user become_method ignore_errors vars no_log check_mode environment any_errors_fatal "
+        "run_once delegate_to delegate_facts block rescue always changed_when failed_when retries "
+        "delay until listen connection timeout").split(),
+);
+
+glob _CLASS_TYPES: dict[str, list[str]] = {
+    "python": ["class_definition"],
+    "javascript": ["class_declaration", "class"],
+    "typescript": [
         "class_declaration",
         "abstract_class_declaration",
+        "class",
         "interface_declaration",
         "type_alias_declaration",
         "enum_declaration",
-    });
+    ],
+    "tsx": [
+        "class_declaration",
+        "abstract_class_declaration",
+        "class",
+        "interface_declaration",
+        "type_alias_declaration",
+        "enum_declaration",
+    ],
+    "go": ["type_declaration"],
+    "rust": ["struct_item", "enum_item", "trait_item"],
+    "java": ["class_declaration", "interface_declaration", "enum_declaration"],
+    "c": ["struct_specifier", "type_definition"],
+    "cpp": ["class_specifier", "struct_specifier"],
+    "csharp": [
+        "class_declaration",
+        "interface_declaration",
+        "enum_declaration",
+        "struct_declaration",
+        "record_declaration",
+    ],
+    "ruby": ["class", "module"],
+    "r": [],
+    "perl": ["package_statement", "class_statement", "role_statement"],
+    "kotlin": ["class_declaration", "object_declaration"],
+    "swift": ["class_declaration", "protocol_declaration"],
+    "php": ["class_declaration", "interface_declaration", "trait_declaration", "enum_declaration"],
+    "scala": ["class_definition", "trait_definition", "object_definition", "enum_definition"],
+    "solidity": [
+        "contract_declaration",
+        "interface_declaration",
+        "library_declaration",
+        "struct_declaration",
+        "enum_declaration",
+        "error_declaration",
+        "user_defined_type_definition",
+    ],
+    "dart": ["class_definition", "mixin_declaration", "enum_declaration"],
+    "lua": [],
+    "luau": ["type_definition"],
+    "objc": ["class_interface", "class_implementation", "protocol_declaration"],
+    "bash": [],
+    "elixir": [],
+    "nix": [],
+    "zig": [],
+    "powershell": ["class_statement"],
+    "julia": ["struct_definition", "abstract_definition", "module_definition"],
+    "verilog": [
+        "module_declaration",
+        "interface_declaration",
+        "class_declaration",
+        "package_declaration",
+    ],
+    "gdscript": ["class_definition", "class_name_statement"],
+    "sql": [],
+    "hcl": [],
+};
 
-    _FUNCTION_TYPES = {
-        "python": ["function_definition"],
-        "javascript": [
-            "function_declaration",
-            "generator_function_declaration",
-            "method_definition",
-            "arrow_function",
-        ],
-        "typescript": [
-            "function_declaration",
-            "generator_function_declaration",
-            "method_definition",
-            "abstract_method_signature",
-            "arrow_function",
-        ],
-        "tsx": [
-            "function_declaration",
-            "generator_function_declaration",
-            "method_definition",
-            "abstract_method_signature",
-            "arrow_function",
-        ],
-        "go": ["function_declaration", "method_declaration"],
-        "rust": ["function_item", "function_signature_item"],
-        "java": ["method_declaration", "constructor_declaration"],
-        "c": ["function_definition"],
-        "cpp": ["function_definition", "declaration", "field_declaration"],
-        "csharp": ["method_declaration", "constructor_declaration"],
-        "ruby": ["method", "singleton_method"],
-        "r": ["function_definition"],
-        "perl": ["subroutine_declaration_statement", "method_declaration_statement"],
-        "kotlin": ["function_declaration"],
-        "swift": [
-            "function_declaration",
-            "init_declaration",
-            "deinit_declaration",
-            "subscript_declaration",
-        ],
-        "php": ["function_definition", "method_declaration"],
-        "scala": ["function_definition", "function_declaration"],
-        "solidity": [
-            "function_definition",
-            "constructor_definition",
-            "modifier_definition",
-            "event_definition",
-            "fallback_receive_definition",
-        ],
-        "dart": ["function_signature"],
-        "lua": ["function_declaration"],
-        "luau": ["function_declaration"],
-        "objc": ["method_definition", "function_definition"],
-        "bash": ["function_definition"],
-        "elixir": [],
-        "nix": [],
-        "zig": [],
-        "powershell": ["function_statement", "class_method_definition"],
-        "julia": ["function_definition", "macro_definition"],
-        "verilog": ["task_declaration", "function_declaration", "always_construct"],
-        "gdscript": ["function_definition"],
-        "sql": [],
-        "hcl": [],
-    };
+glob _TS_HERITAGE_CLAUSES: any = frozenset({
+    "extends_clause",
+    "implements_clause",
+    "extends_type_clause",
+});
 
-    _IMPORT_TYPES = {
-        "python": ["import_statement", "import_from_statement"],
-        "javascript": ["import_statement"],
-        "typescript": ["import_statement"],
-        "tsx": ["import_statement"],
-        "go": ["import_declaration"],
-        "rust": ["use_declaration"],
-        "java": ["import_declaration"],
-        "c": ["preproc_include"],
-        "cpp": ["preproc_include"],
-        "csharp": ["using_directive"],
-        "ruby": ["call"],
-        "r": ["call"],
-        "perl": ["use_statement", "require_expression"],
-        "kotlin": ["import_header"],
-        "swift": ["import_declaration"],
-        "php": [
-            "namespace_use_declaration",
-            "include_expression",
-            "include_once_expression",
-            "require_expression",
-            "require_once_expression",
-        ],
-        "scala": ["import_declaration"],
-        "solidity": ["import_directive"],
-        "dart": ["import_or_export"],
-        "lua": [],
-        "luau": [],
-        "objc": ["preproc_include"],
-        "bash": [],
-        "elixir": [],
-        "nix": [],
-        "zig": [],
-        "powershell": [],
-        "julia": ["import_statement", "using_statement"],
-        "verilog": ["package_import_declaration"],
-        "gdscript": ["extends_statement"],
-        "sql": [],
-        "hcl": [],
-    };
+glob _TS_TYPE_DECLARATIONS: any = frozenset({
+    "class_declaration",
+    "abstract_class_declaration",
+    "interface_declaration",
+    "type_alias_declaration",
+    "enum_declaration",
+});
 
-    _CALL_TYPES = {
-        "python": ["call"],
-        "javascript": ["call_expression", "new_expression"],
-        "typescript": ["call_expression", "new_expression"],
-        "tsx": ["call_expression", "new_expression"],
-        "go": ["call_expression"],
-        "rust": ["call_expression", "macro_invocation"],
-        "java": ["method_invocation", "object_creation_expression", "method_reference"],
-        "c": ["call_expression"],
-        "cpp": ["call_expression"],
-        "csharp": ["invocation_expression", "object_creation_expression"],
-        "ruby": ["call"],
-        "r": ["call"],
-        "perl": [
-            "function_call_expression",
-            "method_call_expression",
-            "ambiguous_function_call_expression",
-        ],
-        "kotlin": ["call_expression"],
-        "swift": ["call_expression"],
-        "php": [
-            "function_call_expression",
-            "member_call_expression",
-            "scoped_call_expression",
-            "nullsafe_member_call_expression",
-            "object_creation_expression",
-        ],
-        "scala": ["call_expression", "instance_expression", "generic_function"],
-        "solidity": ["call_expression"],
-        "lua": ["function_call"],
-        "luau": ["function_call"],
-        "objc": ["message_expression", "call_expression"],
-        "bash": ["command"],
-        "elixir": [],
-        "nix": [],
-        "zig": [],
-        "powershell": ["command"],
-        "julia": ["call_expression", "broadcast_call_expression", "macrocall_expression"],
-        "verilog": [
-            "module_instantiation",
-            "interface_instantiation",
-            "function_subroutine_call",
-            "subroutine_call",
-            "system_tf_call",
-        ],
-        "gdscript": ["call", "attribute_call"],
-        "sql": [],
-        "hcl": [],
-    };
-}
+glob _FUNCTION_TYPES: dict[str, list[str]] = {
+    "python": ["function_definition"],
+    "javascript": [
+        "function_declaration",
+        "generator_function_declaration",
+        "method_definition",
+        "arrow_function",
+    ],
+    "typescript": [
+        "function_declaration",
+        "generator_function_declaration",
+        "method_definition",
+        "abstract_method_signature",
+        "arrow_function",
+    ],
+    "tsx": [
+        "function_declaration",
+        "generator_function_declaration",
+        "method_definition",
+        "abstract_method_signature",
+        "arrow_function",
+    ],
+    "go": ["function_declaration", "method_declaration"],
+    "rust": ["function_item", "function_signature_item"],
+    "java": ["method_declaration", "constructor_declaration"],
+    "c": ["function_definition"],
+    "cpp": ["function_definition", "declaration", "field_declaration"],
+    "csharp": ["method_declaration", "constructor_declaration"],
+    "ruby": ["method", "singleton_method"],
+    "r": ["function_definition"],
+    "perl": ["subroutine_declaration_statement", "method_declaration_statement"],
+    "kotlin": ["function_declaration"],
+    "swift": [
+        "function_declaration",
+        "init_declaration",
+        "deinit_declaration",
+        "subscript_declaration",
+    ],
+    "php": ["function_definition", "method_declaration"],
+    "scala": ["function_definition", "function_declaration"],
+    "solidity": [
+        "function_definition",
+        "constructor_definition",
+        "modifier_definition",
+        "event_definition",
+        "fallback_receive_definition",
+    ],
+    "dart": ["function_signature"],
+    "lua": ["function_declaration"],
+    "luau": ["function_declaration"],
+    "objc": ["method_definition", "function_definition"],
+    "bash": ["function_definition"],
+    "elixir": [],
+    "nix": [],
+    "zig": [],
+    "powershell": ["function_statement", "class_method_definition"],
+    "julia": ["function_definition", "macro_definition"],
+    "verilog": ["task_declaration", "function_declaration", "always_construct"],
+    "gdscript": ["function_definition"],
+    "sql": [],
+    "hcl": [],
+};
+
+glob _IMPORT_TYPES: dict[str, list[str]] = {
+    "python": ["import_statement", "import_from_statement"],
+    "javascript": ["import_statement"],
+    "typescript": ["import_statement"],
+    "tsx": ["import_statement"],
+    "go": ["import_declaration"],
+    "rust": ["use_declaration"],
+    "java": ["import_declaration"],
+    "c": ["preproc_include"],
+    "cpp": ["preproc_include"],
+    "csharp": ["using_directive"],
+    "ruby": ["call"],
+    "r": ["call"],
+    "perl": ["use_statement", "require_expression"],
+    "kotlin": ["import_header"],
+    "swift": ["import_declaration"],
+    "php": [
+        "namespace_use_declaration",
+        "include_expression",
+        "include_once_expression",
+        "require_expression",
+        "require_once_expression",
+    ],
+    "scala": ["import_declaration"],
+    "solidity": ["import_directive"],
+    "dart": ["import_or_export"],
+    "lua": [],
+    "luau": [],
+    "objc": ["preproc_include"],
+    "bash": [],
+    "elixir": [],
+    "nix": [],
+    "zig": [],
+    "powershell": [],
+    "julia": ["import_statement", "using_statement"],
+    "verilog": ["package_import_declaration"],
+    "gdscript": ["extends_statement"],
+    "sql": [],
+    "hcl": [],
+};
+
+glob _CALL_TYPES: dict[str, list[str]] = {
+    "python": ["call"],
+    "javascript": ["call_expression", "new_expression"],
+    "typescript": ["call_expression", "new_expression"],
+    "tsx": ["call_expression", "new_expression"],
+    "go": ["call_expression"],
+    "rust": ["call_expression", "macro_invocation"],
+    "java": ["method_invocation", "object_creation_expression", "method_reference"],
+    "c": ["call_expression"],
+    "cpp": ["call_expression"],
+    "csharp": ["invocation_expression", "object_creation_expression"],
+    "ruby": ["call"],
+    "r": ["call"],
+    "perl": [
+        "function_call_expression",
+        "method_call_expression",
+        "ambiguous_function_call_expression",
+    ],
+    "kotlin": ["call_expression"],
+    "swift": ["call_expression"],
+    "php": [
+        "function_call_expression",
+        "member_call_expression",
+        "scoped_call_expression",
+        "nullsafe_member_call_expression",
+        "object_creation_expression",
+    ],
+    "scala": ["call_expression", "instance_expression", "generic_function"],
+    "solidity": ["call_expression"],
+    "lua": ["function_call"],
+    "luau": ["function_call"],
+    "objc": ["message_expression", "call_expression"],
+    "bash": ["command"],
+    "elixir": [],
+    "nix": [],
+    "zig": [],
+    "powershell": ["command"],
+    "julia": ["call_expression", "broadcast_call_expression", "macrocall_expression"],
+    "verilog": [
+        "module_instantiation",
+        "interface_instantiation",
+        "function_subroutine_call",
+        "subroutine_call",
+        "system_tf_call",
+    ],
+    "gdscript": ["call", "attribute_call"],
+    "sql": [],
+    "hcl": [],
+};
 
 def _builtin_language_names -> frozenset[str];
 
-with entry {
-    _TEST_PATTERNS = [
-        re.compile("^test_"),
-        re.compile("^Test"),
-        re.compile("_test$"),
-        re.compile("\\.test\\."),
-        re.compile("\\.spec\\."),
-        re.compile("_spec$"),
-    ];
-    _SEP = "(?:^|[\\\\/])";
-    _ABSOLUTE_PATH_RE = re.compile("^(?:/|[A-Za-z]:/|//)");
-    _TEST_DIR_PATTERNS = [
-        re.compile(_SEP + "tests[\\\\/]"),
-        re.compile(_SEP + "__tests__[\\\\/]"),
-        re.compile(_SEP + "e2e[_-]?tests?[\\\\/]"),
-        re.compile(_SEP + "testthat[\\\\/]"),
-        re.compile(_SEP + "specs?[\\\\/].*\\.(?:rb|rake)$"),
-    ];
-    _SINGULAR_TEST_DIR_RE = re.compile(_SEP + "test[\\\\/]");
-    _TEST_HELPER_DIR_PATTERNS = [re.compile(_SEP + "test[_-]utils?[\\\\/]")];
-    _STORYBOOK_FILE_RE = re.compile("\\.stories\\.[jt]sx?$");
-    _TEST_NAME_PATTERNS = [
-        re.compile("^test_.*\\.py$"),
-        re.compile("_test\\.py$"),
-        re.compile("^conftest\\.py$"),
-        re.compile("\\.(?:test|spec)\\.[cm]?[jt]sx?$"),
-        _STORYBOOK_FILE_RE,
-        re.compile("_test\\.go$"),
-        re.compile("_(?:test|spec)\\.rb$"),
-        re.compile("[a-z0-9]Tests?\\.(?:java|kt|kts|scala|groovy)$"),
-        re.compile("[a-z0-9]Tests?\\.cs$"),
-        re.compile("[a-z0-9]Test\\.php$"),
-        re.compile("_test\\.dart$"),
-        re.compile("^test[_-].*\\.[rR]$"),
-        re.compile("\\.tests\\.ps1$", re.IGNORECASE),
-        re.compile("[_.]test\\.resi?$"),
-        re.compile("^runtests\\.jl$"),
-    ];
+glob _TEST_PATTERNS: any = [
+    re.compile("^test_"),
+    re.compile("^Test"),
+    re.compile("_test$"),
+    re.compile("\\.test\\."),
+    re.compile("\\.spec\\."),
+    re.compile("_spec$"),
+];
 
-    _TEST_RUNNER_NAMES = frozenset({
-        "describe",
-        "it",
-        "test",
-        "beforeEach",
-        "afterEach",
-        "beforeAll",
-        "afterAll",
-        "suite",
-    });
-    _RUBY_TEST_BLOCK_NAMES = frozenset({
-        "describe",
-        "context",
-        "it",
-        "specify",
-        "example",
-        "test",
-        "feature",
-        "scenario",
-        "shared_examples",
-        "shared_context",
-        "before",
-        "after",
-        "around",
-        "setup",
-        "teardown",
-        "let",
-        "let!",
-        "subject",
-        "subject!",
-    });
-    _RUBY_MEMO_BLOCK_NAMES = frozenset({"let", "let!", "subject", "subject!"});
-    _RUBY_DESCRIBING_BLOCK_NAMES = frozenset({"describe", "context"});
-    _RUBY_CONSTANT_PATH_RE = re.compile("^[A-Z]\\w*(?:\\.[A-Z]\\w*)*$");
-    _RubyClassRef = builtins.tuple[str, builtins.tuple[str, ...]];
-    _JAVA_PACKAGE_QUALIFIED_TYPE = re.compile("(?:[a-z_$][\\w$]*\\.)+[A-Z][\\w$]*");
-    _TEST_ANNOTATIONS = frozenset({
-        "Test",
-        "ParameterizedTest",
-        "RepeatedTest",
-        "TestFactory",
-        "org.junit.Test",
-        "org.junit.jupiter.api.Test",
-        "test",
-        "tokio::test",
-        "async_std::test",
-        "rstest",
-        "rstest::rstest",
-        "proptest",
-    });
-    _SPRING_STEREOTYPE_ANNOTATIONS = frozenset({
-        "Component",
-        "Service",
-        "Repository",
-        "Controller",
-        "RestController",
-        "Configuration",
-        "Indexed",
-        "ControllerAdvice",
-        "RestControllerAdvice",
-        "EventListener",
-    });
-    _SPRING_INJECT_ANNOTATIONS = frozenset({"Autowired", "Inject", "Resource"});
-    _SPRING_PLACEHOLDER_RE = re.compile("\\$\\{([^{}]+)\\}");
-    _TEMPORAL_INTERFACE_ANNOTATIONS = frozenset({"WorkflowInterface", "ActivityInterface"});
-    _TEMPORAL_METHOD_ANNOTATIONS = frozenset({
-        "WorkflowMethod",
-        "ActivityMethod",
-        "SignalMethod",
-        "QueryMethod",
-    });
-    _KAFKA_LISTENER_ANNOTATIONS = frozenset({"KafkaListener", "KafkaHandler"});
-    _KAFKA_CONSUMER_TYPES = frozenset({
-        "KafkaReceiver",
-        "ReactiveKafkaConsumerTemplate",
-        "MessageListenerContainer",
-        "ConcurrentMessageListenerContainer",
-    });
-    _KAFKA_PRODUCER_TYPES = frozenset({
-        "KafkaTemplate",
-        "KafkaOperations",
-        "ReactiveKafkaProducerTemplate",
-        "KafkaSender",
-    });
-    _SPRING_SCHEDULED_ANNOTATIONS = frozenset({"Scheduled", "Schedules"});
+glob _SEP: any = "(?:^|[\\\\/])";
 
-    _SPRING_EVENT_LISTENER_ANNOTATIONS = frozenset({"EventListener"});
-    _SPRING_EVENT_PUBLISH_METHODS = frozenset({"publishEvent"});
-    _JAVA_PACKAGE_KEY = "__crg_java_package__";
-    _JAVA_WILDCARD_KEY = "__crg_java_wildcard__";
-    _SPRING_REQUEST_PREFIX_KEY = "__crg_spring_request_prefix__:";
-    _JS_IMPORT_ORIGINAL_PREFIX_KEY = "__crg_js_import_original__:";
-    _PY_MODULE_BINDING_KEY = "__crg_py_module_binding__:";
-    _RUST_INLINE_MODULE_KEY = "__crg_rust_inline_module__:";
-    _PY_LITERAL_VALUE_TYPES = frozenset({
-        "concatenated_string",
-        "dictionary",
-        "dictionary_comprehension",
-        "false",
-        "float",
-        "generator_expression",
-        "integer",
-        "list",
-        "list_comprehension",
-        "set",
-        "set_comprehension",
-        "string",
-        "true",
-        "tuple",
-    });
-    _SPRING_REQUEST_MAPPINGS = {
-        "DeleteMapping": ("DELETE",),
-        "GetMapping": ("GET",),
-        "PatchMapping": ("PATCH",),
-        "PostMapping": ("POST",),
-        "PutMapping": ("PUT",),
-        "RequestMapping": (),
-    };
-    _SPRING_WEBFLUX_HTTP_VERBS = frozenset({"DELETE", "GET", "PATCH", "POST", "PUT"});
-    _HTTP_REQUEST_METHODS = frozenset({
-        "CONNECT",
-        "DELETE",
-        "GET",
-        "HEAD",
-        "OPTIONS",
-        "PATCH",
-        "POST",
-        "PUT",
-        "TRACE",
-    });
+glob _ABSOLUTE_PATH_RE: any = re.compile("^(?:/|[A-Za-z]:/|//)");
 
-    _VBNET_IDENT = "(?:[A-Za-z_][A-Za-z0-9_]*|\\[[^\\]\\r\\n]+\\])";
-    _VBNET_DOTTED_IDENT = f"{_VBNET_IDENT}(?:\\.{_VBNET_IDENT})*";
-    _VBNET_MODIFIER_WORDS = (
-        "Public",
-        "Private",
-        "Protected",
-        "Friend",
-        "Partial",
-        "Shared",
-        "Static",
-        "MustInherit",
-        "NotInheritable",
-        "Overridable",
-        "Overrides",
-        "MustOverride",
-        "Overloads",
-        "Default",
-        "ReadOnly",
-        "WriteOnly",
-        "Shadows",
-        "Async",
-        "Iterator",
-        "Declare",
-        "Narrowing",
-        "Widening",
-    );
-    _VBNET_MODIFIER_RE = "(?:(?:" + format("|".join(_VBNET_MODIFIER_WORDS), "") + ")\\s+)*";
+glob _TEST_DIR_PATTERNS: any = [
+    re.compile(_SEP + "tests[\\\\/]"),
+    re.compile(_SEP + "__tests__[\\\\/]"),
+    re.compile(_SEP + "e2e[_-]?tests?[\\\\/]"),
+    re.compile(_SEP + "testthat[\\\\/]"),
+    re.compile(_SEP + "specs?[\\\\/].*\\.(?:rb|rake)$"),
+];
 
-    _VBNET_IMPORT_RE = re.compile("^\\s*Imports\\s+(.+?)\\s*$", re.IGNORECASE);
-    _VBNET_NAMESPACE_RE = re.compile(
-        f"^\\s*Namespace\\s+(?P<name>{_VBNET_DOTTED_IDENT})\\s*$", re.IGNORECASE
-    );
-    _VBNET_END_NAMESPACE_RE = re.compile("^\\s*End\\s+Namespace\\b", re.IGNORECASE);
-    _VBNET_TYPE_RE = re.compile(
-        f"^\\s*{_VBNET_MODIFIER_RE}(?P<kind>Class|Interface|Structure|Module|Enum)\\s+(?P<name>{_VBNET_IDENT})\\b(?P<rest>.*)$",
-        re.IGNORECASE,
-    );
-    _VBNET_END_TYPE_RE = re.compile(
-        "^\\s*End\\s+(?P<kind>Class|Interface|Structure|Module|Enum)\\b", re.IGNORECASE
-    );
-    _VBNET_MEMBER_RE = re.compile(
-        f"^\\s*(?P<mods>{_VBNET_MODIFIER_RE})(?P<kind>Function|Sub|Property)\\s+(?P<name>{_VBNET_IDENT})\\b(?P<rest>.*)$",
-        re.IGNORECASE,
-    );
-    _VBNET_OPERATOR_RE = re.compile(
-        f"^\\s*(?P<mods>{_VBNET_MODIFIER_RE})(?P<kind>Operator)\\s+(?P<name>\\S+)\\s*(?P<rest>.*)$",
-        re.IGNORECASE,
-    );
-    _VBNET_END_MEMBER_RE = re.compile(
-        "^\\s*End\\s+(Function|Sub|Property|Operator)\\b", re.IGNORECASE
-    );
-    _VBNET_INHERITS_RE = re.compile("\\bInherits\\s+(.+?)\\s*$", re.IGNORECASE);
-    _VBNET_IMPLEMENTS_RE = re.compile("\\bImplements\\s+(.+?)\\s*$", re.IGNORECASE);
-    _VBNET_NEW_RE = re.compile(
-        f"\\bNew\\s+(?P<target>{_VBNET_DOTTED_IDENT})\\s*(?:\\(Of\\b[^)]*\\))?\\s*\\(",
-        re.IGNORECASE,
-    );
-    _VBNET_CALL_RE = re.compile(
-        f"(?<![A-Za-z0-9_.])(?P<target>{_VBNET_DOTTED_IDENT})\\s*\\(", re.IGNORECASE
-    );
+glob _SINGULAR_TEST_DIR_RE: any = re.compile(_SEP + "test[\\\\/]");
 
-    _VBNET_CALL_KEYWORDS = frozenset({
-        "addhandler",
-        "and",
-        "andalso",
-        "as",
-        "call",
-        "case",
-        "catch",
-        "class",
-        "cobj",
-        "continue",
-        "ctype",
-        "directcast",
-        "do",
-        "each",
-        "else",
-        "elseif",
-        "end",
-        "enum",
-        "erase",
-        "error",
-        "event",
-        "exit",
-        "finally",
-        "for",
-        "function",
-        "get",
-        "gettype",
-        "getxmlnamespace",
-        "global",
-        "gosub",
-        "goto",
-        "if",
-        "implements",
-        "imports",
-        "inherits",
-        "interface",
-        "loop",
-        "module",
-        "mustinherit",
-        "new",
-        "next",
-        "not",
-        "nothing",
-        "operator",
-        "option",
-        "or",
-        "orelse",
-        "property",
-        "raiseevent",
-        "redim",
-        "rem",
-        "removehandler",
-        "resume",
-        "return",
-        "select",
-        "set",
-        "step",
-        "stop",
-        "structure",
-        "sub",
-        "synclock",
-        "then",
-        "throw",
-        "to",
-        "try",
-        "typeof",
-        "until",
-        "using",
-        "when",
-        "while",
-        "with",
-        "withevents",
-        "xor",
-    });
-}
+glob _TEST_HELPER_DIR_PATTERNS: any = [re.compile(_SEP + "test[_-]utils?[\\\\/]")];
+
+glob _STORYBOOK_FILE_RE: any = re.compile("\\.stories\\.[jt]sx?$");
+
+glob _TEST_NAME_PATTERNS: any = [
+    re.compile("^test_.*\\.py$"),
+    re.compile("_test\\.py$"),
+    re.compile("^conftest\\.py$"),
+    re.compile("\\.(?:test|spec)\\.[cm]?[jt]sx?$"),
+    _STORYBOOK_FILE_RE,
+    re.compile("_test\\.go$"),
+    re.compile("_(?:test|spec)\\.rb$"),
+    re.compile("[a-z0-9]Tests?\\.(?:java|kt|kts|scala|groovy)$"),
+    re.compile("[a-z0-9]Tests?\\.cs$"),
+    re.compile("[a-z0-9]Test\\.php$"),
+    re.compile("_test\\.dart$"),
+    re.compile("^test[_-].*\\.[rR]$"),
+    re.compile("\\.tests\\.ps1$", re.IGNORECASE),
+    re.compile("[_.]test\\.resi?$"),
+    re.compile("^runtests\\.jl$"),
+];
+
+glob _TEST_RUNNER_NAMES: any = frozenset(
+    ("describe it test beforeEach afterEach beforeAll afterAll suite").split()
+);
+
+glob _RUBY_TEST_BLOCK_NAMES: any = frozenset({
+    "describe",
+    "context",
+    "it",
+    "specify",
+    "example",
+    "test",
+    "feature",
+    "scenario",
+    "shared_examples",
+    "shared_context",
+    "before",
+    "after",
+    "around",
+    "setup",
+    "teardown",
+    "let",
+    "let!",
+    "subject",
+    "subject!",
+});
+
+glob _RUBY_MEMO_BLOCK_NAMES: any = frozenset({"let", "let!", "subject", "subject!"});
+
+glob _RUBY_DESCRIBING_BLOCK_NAMES: any = frozenset({"describe", "context"});
+
+glob _RUBY_CONSTANT_PATH_RE: any = re.compile("^[A-Z]\\w*(?:\\.[A-Z]\\w*)*$");
+
+glob _RubyClassRef: any = builtins.tuple[str, builtins.tuple[str, ...]];
+
+glob _JAVA_PACKAGE_QUALIFIED_TYPE: any = re.compile("(?:[a-z_$][\\w$]*\\.)+[A-Z][\\w$]*");
+
+glob _TEST_ANNOTATIONS: any = frozenset(
+    ("Test ParameterizedTest RepeatedTest TestFactory org.junit.Test org.junit.jupiter.api.Test "
+        "test tokio::test async_std::test rstest rstest::rstest proptest").split(),
+);
+
+glob _SPRING_STEREOTYPE_ANNOTATIONS: any = frozenset(
+    ("Component Service Repository Controller RestController Configuration Indexed "
+        "ControllerAdvice RestControllerAdvice EventListener").split(),
+);
+
+glob _SPRING_INJECT_ANNOTATIONS: any = frozenset({"Autowired", "Inject", "Resource"});
+
+glob _SPRING_PLACEHOLDER_RE: any = re.compile("\\$\\{([^{}]+)\\}");
+
+glob _TEMPORAL_INTERFACE_ANNOTATIONS: any = frozenset({"WorkflowInterface", "ActivityInterface"});
+
+glob _TEMPORAL_METHOD_ANNOTATIONS: any = frozenset({
+    "WorkflowMethod",
+    "ActivityMethod",
+    "SignalMethod",
+    "QueryMethod",
+});
+
+glob _KAFKA_LISTENER_ANNOTATIONS: any = frozenset({"KafkaListener", "KafkaHandler"});
+
+glob _KAFKA_CONSUMER_TYPES: any = frozenset({
+    "KafkaReceiver",
+    "ReactiveKafkaConsumerTemplate",
+    "MessageListenerContainer",
+    "ConcurrentMessageListenerContainer",
+});
+
+glob _KAFKA_PRODUCER_TYPES: any = frozenset({
+    "KafkaTemplate",
+    "KafkaOperations",
+    "ReactiveKafkaProducerTemplate",
+    "KafkaSender",
+});
+
+glob _SPRING_SCHEDULED_ANNOTATIONS: any = frozenset({"Scheduled", "Schedules"});
+
+glob _SPRING_EVENT_LISTENER_ANNOTATIONS: any = frozenset({"EventListener"});
+
+glob _SPRING_EVENT_PUBLISH_METHODS: any = frozenset({"publishEvent"});
+
+glob _JAVA_PACKAGE_KEY: any = "__crg_java_package__";
+
+glob _JAVA_WILDCARD_KEY: any = "__crg_java_wildcard__";
+
+glob _SPRING_REQUEST_PREFIX_KEY: any = "__crg_spring_request_prefix__:";
+
+glob _JS_IMPORT_ORIGINAL_PREFIX_KEY: any = "__crg_js_import_original__:";
+
+glob _PY_MODULE_BINDING_KEY: any = "__crg_py_module_binding__:";
+
+glob _RUST_INLINE_MODULE_KEY: any = "__crg_rust_inline_module__:";
+
+glob _PY_LITERAL_VALUE_TYPES: any = frozenset(
+    ("concatenated_string dictionary dictionary_comprehension false float generator_expression "
+        "integer list list_comprehension set set_comprehension string true tuple").split(),
+);
+
+glob _SPRING_REQUEST_MAPPINGS: any = {
+    "DeleteMapping": ("DELETE",),
+    "GetMapping": ("GET",),
+    "PatchMapping": ("PATCH",),
+    "PostMapping": ("POST",),
+    "PutMapping": ("PUT",),
+    "RequestMapping": (),
+};
+
+glob _SPRING_WEBFLUX_HTTP_VERBS: any = frozenset({"DELETE", "GET", "PATCH", "POST", "PUT"});
+
+glob _HTTP_REQUEST_METHODS: any = frozenset(
+    "CONNECT DELETE GET HEAD OPTIONS PATCH POST PUT TRACE".split()
+);
+
+glob _VBNET_IDENT: any = "(?:[A-Za-z_][A-Za-z0-9_]*|\\[[^\\]\\r\\n]+\\])";
+
+glob _VBNET_DOTTED_IDENT: any = f"{_VBNET_IDENT}(?:\\.{_VBNET_IDENT})*";
+
+glob _VBNET_MODIFIER_WORDS: any = tuple(
+    ("Public Private Protected Friend Partial Shared Static MustInherit NotInheritable Overridable "
+        "Overrides MustOverride Overloads Default ReadOnly WriteOnly Shadows Async Iterator Declare "
+        "Narrowing Widening").split(),
+);
+
+glob _VBNET_MODIFIER_RE: any = f"(?:(?:{"|".join(_VBNET_MODIFIER_WORDS)})\\s+)*";
+
+glob _VBNET_IMPORT_RE: any = re.compile("^\\s*Imports\\s+(.+?)\\s*$", re.IGNORECASE);
+
+glob _VBNET_NAMESPACE_RE: any = re.compile(
+    f"^\\s*Namespace\\s+(?P<name>{_VBNET_DOTTED_IDENT})\\s*$", re.IGNORECASE
+);
+
+glob _VBNET_END_NAMESPACE_RE: any = re.compile("^\\s*End\\s+Namespace\\b", re.IGNORECASE);
+
+glob _VBNET_TYPE_RE: any = re.compile(
+    f"^\\s*{_VBNET_MODIFIER_RE}(?P<kind>Class|Interface|Structure|Module|Enum)\\s+(?P<name>{_VBNET_IDENT})\\b(?P<rest>.*)$",
+    re.IGNORECASE,
+);
+
+glob _VBNET_END_TYPE_RE: any = re.compile(
+    "^\\s*End\\s+(?P<kind>Class|Interface|Structure|Module|Enum)\\b", re.IGNORECASE
+);
+
+glob _VBNET_MEMBER_RE: any = re.compile(
+    f"^\\s*(?P<mods>{_VBNET_MODIFIER_RE})(?P<kind>Function|Sub|Property)\\s+(?P<name>{_VBNET_IDENT})\\b(?P<rest>.*)$",
+    re.IGNORECASE,
+);
+
+glob _VBNET_OPERATOR_RE: any = re.compile(
+    f"^\\s*(?P<mods>{_VBNET_MODIFIER_RE})(?P<kind>Operator)\\s+(?P<name>\\S+)\\s*(?P<rest>.*)$",
+    re.IGNORECASE,
+);
+
+glob _VBNET_END_MEMBER_RE: any = re.compile(
+    "^\\s*End\\s+(Function|Sub|Property|Operator)\\b", re.IGNORECASE
+);
+
+glob _VBNET_INHERITS_RE: any = re.compile("\\bInherits\\s+(.+?)\\s*$", re.IGNORECASE);
+
+glob _VBNET_IMPLEMENTS_RE: any = re.compile("\\bImplements\\s+(.+?)\\s*$", re.IGNORECASE);
+
+glob _VBNET_NEW_RE: any = re.compile(
+    f"\\bNew\\s+(?P<target>{_VBNET_DOTTED_IDENT})\\s*(?:\\(Of\\b[^)]*\\))?\\s*\\(", re.IGNORECASE
+);
+
+glob _VBNET_CALL_RE: any = re.compile(
+    f"(?<![A-Za-z0-9_.])(?P<target>{_VBNET_DOTTED_IDENT})\\s*\\(", re.IGNORECASE
+);
+
+glob _VBNET_CALL_KEYWORDS: any = frozenset(
+    ("addhandler and andalso as call case catch class cobj continue ctype directcast do each else "
+        "elseif end enum erase error event exit finally for function get gettype getxmlnamespace "
+        "global gosub goto if implements imports inherits interface loop module mustinherit new next "
+        "not nothing operator option or orelse property raiseevent redim rem removehandler resume "
+        "return select set step stop structure sub synclock then throw to try typeof until using when "
+        "while with withevents xor").split(),
+);
 
 def _vbnet_normalize_name(value: str) -> str;
 def _strip_vbnet_noise(text: str) -> str;
@@ -1498,77 +969,57 @@ def _vbnet_signature_parts(rest: str) -> tuple[Optional[str], Optional[str], lis
 
 def _vbnet_relationship_targets(value: str) -> list[str];
 
+glob _RESCRIPT_IDENT: any = "[A-Za-z_][A-Za-z0-9_']*";
+
+glob _RESCRIPT_MODULE_RE: any = re.compile(
+    "^\\s*module\\s+(?:type\\s+)?([A-Z][A-Za-z0-9_']*)\\s*[:=]", re.MULTILINE
+);
+
+glob _RESCRIPT_DECORATOR_PREFIX: any = "(?:@[A-Za-z_][A-Za-z0-9_']*(?:\\([^)]*\\))?\\s+)*";
+
+glob _RESCRIPT_LET_RE: any = re.compile(
+    f"^\\s*{_RESCRIPT_DECORATOR_PREFIX}(?:let\\s+(?:rec\\s+)?|and\\s+)({_RESCRIPT_IDENT})\\b",
+    re.MULTILINE,
+);
+
+glob _RESCRIPT_EXTERNAL_RE: any = re.compile(
+    f"^\\s*{_RESCRIPT_DECORATOR_PREFIX}external\\s+({_RESCRIPT_IDENT})\\s*:", re.MULTILINE
+);
+
+glob _RESCRIPT_TYPE_RE: any = re.compile(
+    f"^\\s*{_RESCRIPT_DECORATOR_PREFIX}type\\s+(?:rec\\s+)?({_RESCRIPT_IDENT})\\b", re.MULTILINE
+);
+
+glob _RESCRIPT_OPEN_RE: any = re.compile(
+    "^\\s*(open|include)\\s+([A-Z][A-Za-z0-9_'.]*)", re.MULTILINE
+);
+
+glob _RESCRIPT_MODULE_ALIAS_RE: any = re.compile(
+    "^\\s*module\\s+([A-Z][A-Za-z0-9_']*)\\s*=\\s*([A-Z][A-Za-z0-9_']*(?:\\.[A-Za-z_][A-Za-z0-9_']*)*)\\s*$",
+    re.MULTILINE,
+);
+
+glob _RESCRIPT_JSX_RE: any = re.compile(
+    "(?:^|(?<=[\\s{(,>}]))<([A-Z][A-Za-z0-9_']*(?:\\.[A-Z][A-Za-z0-9_']*)*)\\b", re.MULTILINE
+);
+
+glob _RESCRIPT_MODULE_ATTR_RE: any = re.compile("@module\\(\\s*\"([^\"]+)\"\\s*\\)");
+
+glob _RESCRIPT_CALL_RE: any = re.compile(
+    f"(?<![A-Za-z0-9_']){_RESCRIPT_IDENT}(?:\\.{_RESCRIPT_IDENT})*\\s*\\("
+);
+
 with entry {
-    _RESCRIPT_IDENT = "[A-Za-z_][A-Za-z0-9_']*";
-    _RESCRIPT_MODULE_RE = re.compile(
-        "^\\s*module\\s+(?:type\\s+)?([A-Z][A-Za-z0-9_']*)\\s*[:=]", re.MULTILINE
-    );
-    _RESCRIPT_DECORATOR_PREFIX = "(?:@[A-Za-z_][A-Za-z0-9_']*(?:\\([^)]*\\))?\\s+)*";
-    _RESCRIPT_LET_RE = re.compile(
-        f"^\\s*{_RESCRIPT_DECORATOR_PREFIX}(?:let\\s+(?:rec\\s+)?|and\\s+)({_RESCRIPT_IDENT})\\b",
-        re.MULTILINE,
-    );
-    _RESCRIPT_EXTERNAL_RE = re.compile(
-        f"^\\s*{_RESCRIPT_DECORATOR_PREFIX}external\\s+({_RESCRIPT_IDENT})\\s*:", re.MULTILINE
-    );
-    _RESCRIPT_TYPE_RE = re.compile(
-        f"^\\s*{_RESCRIPT_DECORATOR_PREFIX}type\\s+(?:rec\\s+)?({_RESCRIPT_IDENT})\\b", re.MULTILINE
-    );
-    _RESCRIPT_OPEN_RE = re.compile("^\\s*(open|include)\\s+([A-Z][A-Za-z0-9_'.]*)", re.MULTILINE);
-    _RESCRIPT_MODULE_ALIAS_RE = re.compile(
-        "^\\s*module\\s+([A-Z][A-Za-z0-9_']*)\\s*=\\s*([A-Z][A-Za-z0-9_']*(?:\\.[A-Za-z_][A-Za-z0-9_']*)*)\\s*$",
-        re.MULTILINE,
-    );
-    _RESCRIPT_JSX_RE = re.compile(
-        "(?:^|(?<=[\\s{(,>}]))<([A-Z][A-Za-z0-9_']*(?:\\.[A-Z][A-Za-z0-9_']*)*)\\b", re.MULTILINE
-    );
-    _RESCRIPT_MODULE_ATTR_RE = re.compile("@module\\(\\s*\"([^\"]+)\"\\s*\\)");
-    _RESCRIPT_CALL_RE = re.compile(
-        f"(?<![A-Za-z0-9_']){_RESCRIPT_IDENT}(?:\\.{_RESCRIPT_IDENT})*\\s*\\("
-    );
     _RESCRIPT_CALL_RE = re.compile(
         "(?<![A-Za-z0-9_'])([A-Za-z_][A-Za-z0-9_']*(?:\\.[A-Za-z_][A-Za-z0-9_']*)*)\\s*\\("
     );
-    _RESCRIPT_KEYWORDS = frozenset({
-        "let",
-        "rec",
-        "and",
-        "type",
-        "module",
-        "open",
-        "include",
-        "external",
-        "if",
-        "else",
-        "switch",
-        "when",
-        "match",
-        "fun",
-        "true",
-        "false",
-        "for",
-        "while",
-        "mutable",
-        "try",
-        "catch",
-        "throw",
-        "assert",
-        "lazy",
-        "do",
-        "in",
-        "of",
-        "as",
-        "exception",
-        "private",
-        "constraint",
-        "with",
-        "downto",
-        "to",
-        "unpack",
-        "async",
-        "await",
-    });
 }
+
+glob _RESCRIPT_KEYWORDS: any = frozenset(
+    ("let rec and type module open include external if else switch when match fun true false for "
+        "while mutable try catch throw assert lazy do in of as exception private constraint with "
+        "downto to unpack async await").split(),
+);
 
 def _strip_rescript_noise(text: str) -> str;
 def _rescript_brace_depth_array(cleaned: str) -> list[int];
@@ -1595,9 +1046,7 @@ def is_test_file(
     include_helper_dirs: bool = False,
 ) -> bool;
 
-with entry {
-    _is_test_file = is_test_file;
-}
+glob _is_test_file: any = is_test_file;
 
 def _is_test_function(
     name: str,
@@ -1606,24 +1055,30 @@ def _is_test_function(
     repo_root: "str | PurePath | None" = None,
 ) -> bool;
 
-with entry {
-    _MAX_DOCSTRING_CHARS = 400;
-    _DOC_COMMENT_NODE_TYPES = frozenset({
-        "comment",
-        "block_comment",
-        "line_comment",
-        "doc_comment",
-    });
-    _DOC_COMMENT_SKIP_TYPES = frozenset({"attribute_item", "decorator"});
-    _DOC_COMMENT_WRAPPER_TYPES = frozenset({"export_statement", "template_declaration"});
-    _CSHARP_SUMMARY_RE = re.compile(
-        "<summary(?:\\s[^>]*)?>(.*?)</summary\\s*>", re.IGNORECASE | re.DOTALL
-    );
-    _XML_TAG_RE = re.compile("<[^>]+>");
-    _DOC_PARAGRAPH_TAG_RE = re.compile("</?(?:p|para)(?:\\s[^>]*)?>", re.IGNORECASE);
-    _DOC_INLINE_TAG_RE = re.compile("\\{@(?:code|literal|link)\\s+([^}]+)\\}", re.IGNORECASE);
-    _DOC_BRIEF_RE = re.compile("^\\s*[@\\\\]brief\\s+", re.IGNORECASE);
-}
+glob _MAX_DOCSTRING_CHARS: any = 400;
+
+glob _DOC_COMMENT_NODE_TYPES: any = frozenset({
+    "comment",
+    "block_comment",
+    "line_comment",
+    "doc_comment",
+});
+
+glob _DOC_COMMENT_SKIP_TYPES: any = frozenset({"attribute_item", "decorator"});
+
+glob _DOC_COMMENT_WRAPPER_TYPES: any = frozenset({"export_statement", "template_declaration"});
+
+glob _CSHARP_SUMMARY_RE: any = re.compile(
+    "<summary(?:\\s[^>]*)?>(.*?)</summary\\s*>", re.IGNORECASE | re.DOTALL
+);
+
+glob _XML_TAG_RE: any = re.compile("<[^>]+>");
+
+glob _DOC_PARAGRAPH_TAG_RE: any = re.compile("</?(?:p|para)(?:\\s[^>]*)?>", re.IGNORECASE);
+
+glob _DOC_INLINE_TAG_RE: any = re.compile("\\{@(?:code|literal|link)\\s+([^}]+)\\}", re.IGNORECASE);
+
+glob _DOC_BRIEF_RE: any = re.compile("^\\s*[@\\\\]brief\\s+", re.IGNORECASE);
 
 def _clean_docstring_summary(raw: str, language: str) -> str;
 def _strip_block_doc_comment(text: str) -> str;
@@ -1631,22 +1086,16 @@ def _modifier_annotation_names(`node) -> list[str];
 def _python_decorator_names(`node) -> list[str];
 def _csharp_attribute_names(`node) -> list[str];
 
-with entry {
-    _PHPUNIT_TEST_ATTRIBUTE = "phpunit\\framework\\attributes\\test";
-}
+glob _PHPUNIT_TEST_ATTRIBUTE: any = "phpunit\\framework\\attributes\\test";
 
 def _php_attribute_aliases(`node) -> dict[str, str];
 def _php_attribute_names(`node) -> list[str];
 
-with entry {
-    _PHP_TEST_DOC_TAG_RE = re.compile("(?<![\\w-])@test(?![\\w-])");
-}
+glob _PHP_TEST_DOC_TAG_RE: any = re.compile("(?<![\\w-])@test(?![\\w-])");
 
 def _php_docblock_marks_test(`node) -> bool;
 
-with entry {
-    _SEPARATE_SCOPE_RULE_LANGUAGES = frozenset({"python", "cpp", "julia", "csharp"});
-}
+glob _SEPARATE_SCOPE_RULE_LANGUAGES: any = frozenset({"python", "cpp", "julia", "csharp"});
 
 def _nested_import_chain(module: str, resolved: str, symbol: str) -> str;
 
@@ -1665,60 +1114,30 @@ def _hcl_text(`node) -> str;
 def _hcl_child(`node, *types_: str) -> any;
 def _hcl_block_name(prefix: str, labels: list[str], n_labels: int) -> Optional[str];
 
-with entry {
-    _HCL_REF_PREFIXES = frozenset({
-        "var",
-        "module",
-        "local",
-        "data",
-        "each",
-        "count",
-        "self",
-        "path",
-        "terraform",
-    });
-}
+glob _HCL_REF_PREFIXES: frozenset[str] = frozenset(
+    ("var module local data each count self path terraform").split()
+);
 
 def _hcl_ref_target(`root: str, attrs: list[str], *, provider: bool = False) -> Optional[str];
 def _hcl_variable_refs(expr_node) -> Generator[any, any, any];
 
-with entry {
-    _HCL_RECURSE_TYPES = frozenset({
-        "expression",
-        "body",
-        "block",
-        "attribute",
-        "tuple",
-        "object",
-        "object_elem",
-        "collection_value",
-        "template_expr",
-        "for_expr",
-        "for_tuple_expr",
-        "for_object_expr",
-        "for_intro",
-        "for_cond",
-        "conditional",
-        "function_call",
-        "function_arguments",
-        "quoted_template",
-        "template_interpolation",
-    });
-}
+glob _HCL_RECURSE_TYPES: frozenset[str] = frozenset(
+    ("expression body block attribute tuple object object_elem collection_value template_expr "
+        "for_expr for_tuple_expr for_object_expr for_intro for_cond conditional function_call "
+        "function_arguments quoted_template template_interpolation").split(),
+);
 
 def _hcl_for_iterator_names(for_expr_node) -> frozenset[str];
 def _hcl_dynamic_iterator_name(block_node) -> Optional[str];
 
-with entry {
-    _HCL_BLOCK_CFG = {
-        "resource": ("Class", "resource", 2, True),
-        "data": ("Class", "data", 2, True),
-        "module": ("Class", "module", 1, True),
-        "variable": ("Function", "var", 1, False),
-        "output": ("Function", "output", 1, True),
-        "provider": ("Function", "provider", 1, True),
-    };
-}
+glob _HCL_BLOCK_CFG: dict[str, tuple[str, str, int, bool]] = {
+    "resource": ("Class", "resource", 2, True),
+    "data": ("Class", "data", 2, True),
+    "module": ("Class", "module", 1, True),
+    "variable": ("Function", "var", 1, False),
+    "output": ("Function", "output", 1, True),
+    "provider": ("Function", "provider", 1, True),
+};
 
 def _is_ansible_path(path: Path) -> bool;
 def _is_ansible_content(source: bytes) -> bool;
@@ -1730,61 +1149,45 @@ def _yaml_end_line(`node: object) -> int;
 
 def _yaml_get_key(mapping_node: object, key: str) -> Optional[object];
 
-with entry {
-    _JSON_VALUE_TYPES = {
-        "array": "array",
-        "false": "boolean",
-        "null": "null",
-        "number": "number",
-        "object": "object",
-        "string": "string",
-        "true": "boolean",
-    };
-    _JSON_DATA_DIR_NAMES = frozenset({
-        "__fixtures__",
-        "__mocks__",
-        "__snapshots__",
-        "data",
-        "datasets",
-        "demo",
-        "demos",
-        "doc",
-        "docs",
-        "example",
-        "examples",
-        "fixtures",
-        "mocks",
-        "sample",
-        "samples",
-        "snapshots",
-        "test-data",
-        "test_data",
-        "testdata",
-    });
-}
+glob _JSON_VALUE_TYPES: any = {
+    "array": "array",
+    "false": "boolean",
+    "null": "null",
+    "number": "number",
+    "object": "object",
+    "string": "string",
+    "true": "boolean",
+};
+
+glob _JSON_DATA_DIR_NAMES: any = frozenset(
+    ("__fixtures__ __mocks__ __snapshots__ data datasets demo demos doc docs example examples "
+        "fixtures mocks sample samples snapshots test-data test_data testdata").split(),
+);
 
 def _is_storable_key(key: str) -> bool;
 def _json_key(key_node: Any) -> Optional[str];
 
 def _yaml_scalar(`node: object) -> Optional[str];
 
-with entry {
-    _HTML_SECTION_TAGS = frozenset({"article", "div", "section"});
-    _HTML_HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"});
-    _HTML_TEMPLATE_MARKERS = ("{{", "{%", "<%", "${");
-    _HTML_JAVASCRIPT_TYPES = frozenset({
-        "",
-        "application/ecmascript",
-        "application/javascript",
-        "application/x-javascript",
-        "module",
-        "text/babel",
-        "text/ecmascript",
-        "text/javascript",
-        "text/jsx",
-    });
-    _HTML_TYPESCRIPT_TYPES = frozenset({"application/typescript", "text/typescript"});
-}
+glob _HTML_SECTION_TAGS: any = frozenset({"article", "div", "section"});
+
+glob _HTML_HEADING_TAGS: any = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"});
+
+glob _HTML_TEMPLATE_MARKERS: any = ("{{", "{%", "<%", "${");
+
+glob _HTML_JAVASCRIPT_TYPES: any = frozenset({
+    "",
+    "application/ecmascript",
+    "application/javascript",
+    "application/x-javascript",
+    "module",
+    "text/babel",
+    "text/ecmascript",
+    "text/javascript",
+    "text/jsx",
+});
+
+glob _HTML_TYPESCRIPT_TYPES: any = frozenset({"application/typescript", "text/typescript"});
 
 def _html_start_tag(element: Any) -> Any;
 
@@ -1794,10 +1197,9 @@ def _html_script_language(attributes: dict[str, str]) -> Optional[str];
 def _html_is_local_src(src: str) -> bool;
 def _html_first_heading(element: Any, max_chars: int) -> Optional[str];
 
-with entry {
-    _XSLT_NAMESPACE = "http://www.w3.org/1999/XSL/Transform";
-    _XSLT_NAMED_STEP_RE = re.compile("@?[^\\W\\d][\\w.-]*(?::[^\\W\\d][\\w.-]*)?");
-}
+glob _XSLT_NAMESPACE: any = "http://www.w3.org/1999/XSL/Transform";
+
+glob _XSLT_NAMED_STEP_RE: any = re.compile("@?[^\\W\\d][\\w.-]*(?::[^\\W\\d][\\w.-]*)?");
 
 def _xml_name(element: Any) -> str;
 def _xml_attributes(element: Any) -> dict[str, str];
@@ -1829,15 +1231,22 @@ class _XsltTemplate {
     }
 }
 
-with entry {
-    _YAML_SIMPLE_PATH_SEGMENT = re.compile("^[A-Za-z_][A-Za-z0-9_-]*$");
-    _LOCALE_DIR_NAMES = frozenset({"i18n", "l10n", "locale", "locales", "translations"});
+glob _YAML_SIMPLE_PATH_SEGMENT: any = re.compile("^[A-Za-z_][A-Za-z0-9_-]*$");
 
-    _LANGUAGE_TAG_RE = re.compile("([a-z]{2,3})(?:[-_@][a-z0-9]{2,8})*");
-    _LANGUAGE_CODES = frozenset(
-        "aa ab ae af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ast ceb ckb fil gsw haw hsb kab kmr nds sco szl tok tzl yue zgh".split(),
-    );
-}
+glob _LOCALE_DIR_NAMES: any = frozenset({"i18n", "l10n", "locale", "locales", "translations"});
+
+glob _LANGUAGE_TAG_RE: any = re.compile("([a-z]{2,3})(?:[-_@][a-z0-9]{2,8})*");
+
+glob _LANGUAGE_CODES: any = frozenset(
+    ("aa ab ae af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs ca ce ch co cr cs cu "
+        "cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi "
+        "ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks "
+        "ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl "
+        "nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl "
+        "sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve "
+        "vi vo wa wo xh yi yo za zh zu ast ceb ckb fil gsw haw hsb kab kmr nds sco szl tok tzl "
+        "yue zgh").split(),
+);
 
 def _yaml_path_child(prefix: str, segment: str) -> str;
 def _yaml_value_type(`node: object) -> str;
@@ -1845,29 +1254,25 @@ def _is_language_tag(text: str) -> bool;
 def _is_locale_yaml(path: "str | PurePath", repo_root: "str | PurePath | None") -> bool;
 def _ansible_is_play_item(item: object) -> bool;
 
-with entry {
-    _POWERSHELL_NUMBER_PATTERN = "[+-]?(?:(?:0x[0-9a-f]+|0b[01]+)(?:u[ysl]?|[ysln])?|\\d+(?:u[ysl]?|[yslnd])?|(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:e[+-]?\\d+)?d?)(?:[kmgtp]b)?";
-    _POWERSHELL_RANGE_RE = re.compile(
-        f"{_POWERSHELL_NUMBER_PATTERN}\\.\\.(?:{_POWERSHELL_NUMBER_PATTERN}|\\$.*)?", re.IGNORECASE
-    );
-    _POWERSHELL_SCOPE_RE = re.compile("^(?:global|local|private|script):", re.IGNORECASE);
+glob _POWERSHELL_NUMBER_PATTERN: any = "[+-]?(?:(?:0x[0-9a-f]+|0b[01]+)(?:u[ysl]?|[ysln])?|\\d+(?:u[ysl]?|[yslnd])?|(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:e[+-]?\\d+)?d?)(?:[kmgtp]b)?";
 
-    _PLSQL_IDENT_RE = "[^\\W\\d][\\w$#]*";
+glob _POWERSHELL_RANGE_RE: any = re.compile(
+    f"{_POWERSHELL_NUMBER_PATTERN}\\.\\.(?:{_POWERSHELL_NUMBER_PATTERN}|\\$.*)?", re.IGNORECASE
+);
 
-    _PLSQL_ROUTINE_RE = f"{_PLSQL_IDENT_RE}(?:\\.{_PLSQL_IDENT_RE})*(?![\\w$#])\\s*(?:\\((?:[^();]|\\([^()]*\\))*\\)\\s*)?";
-    local_names_default_ = frozenset();
-    provider_attributes_default_ = frozenset();
-    resolving_default_ = frozenset();
-    resolving_default__ = frozenset();
-}
+glob _POWERSHELL_SCOPE_RE: any = re.compile("^(?:global|local|private|script):", re.IGNORECASE);
 
-glob local_names_default_: any;
+glob _PLSQL_IDENT_RE: any = "[^\\W\\d][\\w$#]*";
 
-glob provider_attributes_default_: any;
+glob _PLSQL_ROUTINE_RE: any = f"{_PLSQL_IDENT_RE}(?:\\.{_PLSQL_IDENT_RE})*(?![\\w$#])\\s*(?:\\((?:[^();]|\\([^()]*\\))*\\)\\s*)?";
 
-glob resolving_default_: any;
+glob local_names_default_: any = frozenset();
 
-glob resolving_default__: any;
+glob provider_attributes_default_: any = frozenset();
+
+glob resolving_default_: any = frozenset();
+
+glob resolving_default__: any = frozenset();
 
 class CodeParser(builtins.object) {
     static has _MODULE_CACHE_MAX: any = 15000;
@@ -1941,32 +1346,14 @@ class CodeParser(builtins.object) {
 
     static has _LARAVEL_ELOQUENT_MODEL: any = "Illuminate\\Database\\Eloquent\\Model";
 
-    static has _LARAVEL_ROUTE_VERBS: any = frozenset({
-        "get",
-        "post",
-        "put",
-        "patch",
-        "delete",
-        "options",
-        "any",
-        "match",
-        "resource",
-        "apiResource",
-    });
+    static has _LARAVEL_ROUTE_VERBS: any = frozenset(
+        ("get post put patch delete options any match resource apiResource").split()
+    );
 
-    static has _LARAVEL_RELATIONSHIPS: any = frozenset({
-        "hasMany",
-        "hasOne",
-        "belongsTo",
-        "belongsToMany",
-        "morphTo",
-        "morphMany",
-        "morphOne",
-        "morphToMany",
-        "morphedByMany",
-        "hasManyThrough",
-        "hasOneThrough",
-    });
+    static has _LARAVEL_RELATIONSHIPS: any = frozenset(
+        ("hasMany hasOne belongsTo belongsToMany morphTo morphMany morphOne morphToMany "
+            "morphedByMany hasManyThrough hasOneThrough").split(),
+    );
 
     def init(repo_root: Optional[Path] = None);
 
@@ -2085,118 +1472,20 @@ class CodeParser(builtins.object) {
         f"(?<![\\w$#])({_PLSQL_IDENT_RE}(?:\\.{_PLSQL_IDENT_RE}){{0,2}})\\s*\\("
     );
 
-    has _PLSQL_CALL_KEYWORDS: frozenset[str] = frozenset({
-        "if",
-        "elsif",
-        "else",
-        "then",
-        "end",
-        "loop",
-        "while",
-        "for",
-        "case",
-        "when",
-        "begin",
-        "declare",
-        "exception",
-        "return",
-        "raise",
-        "is",
-        "as",
-        "procedure",
-        "function",
-        "trigger",
-        "package",
-        "cursor",
-        "type",
-        "record",
-        "table",
-        "pragma",
-        "and",
-        "or",
-        "not",
-        "in",
-        "exists",
-        "between",
-        "into",
-        "over",
-        "varchar",
-        "varchar2",
-        "nvarchar2",
-        "number",
-        "char",
-        "nchar",
-        "date",
-        "timestamp",
-        "raw",
-        "boolean",
-        "clob",
-        "blob",
-        "long",
-        "float",
-        "integer",
-        "int",
-        "smallint",
-        "decimal",
-        "numeric",
-        "double",
-        "real",
-        "pls_integer",
-        "binary_integer",
-        "urowid",
-        "rowid",
-        "bfile",
-        "xmltype",
-        "sys_refcursor",
-        "interval",
-    });
+    has _PLSQL_CALL_KEYWORDS: frozenset[str] = frozenset(
+        ("if elsif else then end loop while for case when begin declare exception return raise is "
+            "as procedure function trigger package cursor type record table pragma and or not in "
+            "exists between into over varchar varchar2 nvarchar2 number char nchar date timestamp raw "
+            "boolean clob blob long float integer int smallint decimal numeric double real "
+            "pls_integer binary_integer urowid rowid bfile xmltype sys_refcursor interval").split(),
+    );
 
-    has _PLSQL_BUILTIN_FUNCS: frozenset[str] = frozenset({
-        "count",
-        "sum",
-        "avg",
-        "max",
-        "min",
-        "greatest",
-        "least",
-        "to_char",
-        "to_date",
-        "to_number",
-        "to_timestamp",
-        "cast",
-        "nvl",
-        "nvl2",
-        "coalesce",
-        "nullif",
-        "decode",
-        "substr",
-        "substrb",
-        "instr",
-        "trim",
-        "ltrim",
-        "rtrim",
-        "upper",
-        "lower",
-        "initcap",
-        "length",
-        "lengthb",
-        "replace",
-        "lpad",
-        "rpad",
-        "concat",
-        "round",
-        "trunc",
-        "mod",
-        "abs",
-        "ceil",
-        "floor",
-        "power",
-        "sqrt",
-        "extract",
-        "sysdate",
-        "systimestamp",
-        "raise_application_error",
-    });
+    has _PLSQL_BUILTIN_FUNCS: frozenset[str] = frozenset(
+        ("count sum avg max min greatest least to_char to_date to_number to_timestamp cast nvl "
+            "nvl2 coalesce nullif decode substr substrb instr trim ltrim rtrim upper lower initcap "
+            "length lengthb replace lpad rpad concat round trunc mod abs ceil floor power sqrt "
+            "extract sysdate systimestamp raise_application_error").split(),
+    );
 
     static has _PLSQL_BUILTIN_PACKAGE_PREFIXES: any = ("dbms_", "utl_");
 
@@ -2206,16 +1495,9 @@ class CodeParser(builtins.object) {
 
     static has _INTO_LOOKBACK: any = 60;
 
-    static has _ORACLE_EXTENSIONS: any = frozenset({
-        ".pls",
-        ".plb",
-        ".pks",
-        ".pkb",
-        ".pck",
-        ".prc",
-        ".fnc",
-        ".trg",
-    });
+    static has _ORACLE_EXTENSIONS: any = frozenset(
+        ".pls .plb .pks .pkb .pck .prc .fnc .trg".split()
+    );
 
     static has _PLSQL_ROUTINE: any = _PLSQL_ROUTINE_RE;
 
@@ -2287,16 +1569,9 @@ class CodeParser(builtins.object) {
         nodes: list[NodeInfo], edges: list[EdgeInfo], file_path: str
     ) -> list[EdgeInfo];
 
-    static has _TYPED_CALL_LANGUAGES: any = frozenset({
-        "python",
-        "kotlin",
-        "java",
-        "javascript",
-        "typescript",
-        "tsx",
-        "php",
-        "csharp",
-    });
+    static has _TYPED_CALL_LANGUAGES: any = frozenset(
+        ("python kotlin java javascript typescript tsx php csharp").split()
+    );
 
     static has _UNRESOLVED_TYPE_LANGUAGES: any = frozenset({
         "java",
@@ -2308,28 +1583,10 @@ class CodeParser(builtins.object) {
 
     static has _TRANSPARENT_TYPE_WRAPPERS: any = frozenset({"Annotated", "Optional", "Type"});
 
-    static has _NON_RECEIVER_TYPE_NAMES: any = frozenset({
-        "Array",
-        "Collection",
-        "Dict",
-        "Iterable",
-        "List",
-        "Map",
-        "Mapping",
-        "MutableList",
-        "MutableMap",
-        "MutableMapping",
-        "ReadonlyArray",
-        "Sequence",
-        "Set",
-        "Tuple",
-        "Union",
-        "dict",
-        "frozenset",
-        "list",
-        "set",
-        "tuple",
-    });
+    static has _NON_RECEIVER_TYPE_NAMES: any = frozenset(
+        ("Array Collection Dict Iterable List Map Mapping MutableList MutableMap MutableMapping "
+            "ReadonlyArray Sequence Set Tuple Union dict frozenset list set tuple").split(),
+    );
     def _collect_typed_call_targets(
         `root, language: str, file_path: str, import_map: dict[str, str], defined_names: set[str]
     ) -> dict[tuple[int, str, str], tuple[Optional[str], str, str]];
@@ -2723,19 +1980,10 @@ class CodeParser(builtins.object) {
 
     static has _JS_WRAPPER_MAX_DEPTH: any = 3;
 
-    static has _JS_COMPONENT_WRAPPERS: any = frozenset({
-        "forwardRef",
-        "memo",
-        "observer",
-        "withRouter",
-        "withStyles",
-        "withTheme",
-        "connect",
-        "styled",
-        "inject",
-        "withTranslation",
-        "withErrorBoundary",
-    });
+    static has _JS_COMPONENT_WRAPPERS: any = frozenset(
+        ("forwardRef memo observer withRouter withStyles withTheme connect styled inject "
+            "withTranslation withErrorBoundary").split(),
+    );
 
     static has _JS_CURRIED_WRAPPERS: any = frozenset({
         "connect",
@@ -3084,19 +2332,9 @@ class CodeParser(builtins.object) {
 
     static has _ARGUMENTS_TYPES: any = frozenset({"arguments", "argument_list"});
 
-    static has _VALUE_REF_SKIP_NAMES: any = frozenset({
-        "true",
-        "false",
-        "null",
-        "undefined",
-        "None",
-        "True",
-        "False",
-        "self",
-        "this",
-        "cls",
-        "super",
-    });
+    static has _VALUE_REF_SKIP_NAMES: any = frozenset(
+        ("true false null undefined None True False self this cls super").split()
+    );
     def _extract_ts_type_reference(
         child,
         language: str,
@@ -3331,16 +2569,9 @@ class CodeParser(builtins.object) {
     def _qualify(name: str, file_path: str, enclosing_class: Optional[str]) -> str;
     def _node_qualified(`node: NodeInfo) -> str;
 
-    static has _CUSTOM_NAME_LEAF_TYPES: any = (
-        "word",
-        "identifier",
-        "name",
-        "simple_identifier",
-        "command_name",
-        "key_brace",
-        "type_identifier",
-        "property_identifier",
-        "constant",
+    static has _CUSTOM_NAME_LEAF_TYPES: any = tuple(
+        ("word identifier name simple_identifier command_name key_brace type_identifier "
+            "property_identifier constant").split(),
     );
 
     static has _MAX_CUSTOM_NAME_DEPTH: any = 4;

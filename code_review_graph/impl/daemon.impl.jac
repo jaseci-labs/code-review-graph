@@ -704,12 +704,11 @@ impl ConfigWatcher.init(config_path: Path, callback: Callable[[], None], poll_in
 }
 
 impl ConfigWatcher.start {
-    watcher: any;
     try {
         import from watchdog.events { FileSystemEventHandler }
         import from watchdog.observers { Observer }
 
-        watcher = self;
+        watcher: any = self;
 
         def on_modified(_handler: Any, event: Any) {
             if Path(event.src_path).resolve() == watcher._config_path.resolve() {

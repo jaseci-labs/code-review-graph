@@ -1,10 +1,6 @@
 import from __future__ { annotations }
 
-import operator;
-
-import json;
-
-import os;
+import operator, json, os;
 
 import from contextlib { contextmanager }
 

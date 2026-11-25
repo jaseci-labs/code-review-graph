@@ -1,24 +1,12 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import json;
-
-import logging;
-
-import sqlite3;
-
-import threading;
+import builtins, json, logging, sqlite3, threading;
 
 import from collections { OrderedDict }
 
 import from pathlib { Path }
 
-glob logger: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-}
+glob logger: any = logging.getLogger(__name__);
 
 def default_registry_path -> Path;
 

@@ -319,7 +319,6 @@ impl _clean_pattern(raw: str) -> Optional[str] {
 
 impl _load_workspace(`root: Path, patterns: list[str]) -> _Workspace {
     cleaned: any;
-    rel: any;
     `include: any = [p for p in patterns if not p.strip().startswith("!")];
     exclude: any = [
         cleaned
@@ -331,7 +330,7 @@ impl _load_workspace(`root: Path, patterns: list[str]) -> _Workspace {
     duplicates: set[str] = set[any]();
 
     for package_dir in _expand_patterns(`root, `include) {
-        rel = package_dir.relative_to(`root).as_posix();
+        rel: any = package_dir.relative_to(`root).as_posix();
         if `any(_glob_match(rel, pattern) for pattern in exclude) {
             continue;
         }
@@ -408,10 +407,9 @@ impl _glob_match(path: str, pattern: str) -> bool {
 }
 
 impl _walk_globstar(`root: Path, pattern: str) -> list[Path] {
-    part: any;
     `static: list[str] = [];
     for part_ in PurePosixPath(pattern).parts {
-        part = part_;
+        part: any = part_;
         if `any(ch in part for ch in "*?[") {
             break;
         }
@@ -528,7 +526,6 @@ impl _exports_targets(exports: Any, subpath: str) -> list[str] {
 }
 
 impl _flatten_targets(value: Any, depth: int = 0) -> list[str] {
-    rank: any;
     if depth > _MAX_EXPORTS_DEPTH {
         return [];
     }
@@ -539,7 +536,7 @@ impl _flatten_targets(value: Any, depth: int = 0) -> list[str] {
         return [t for item in value for t in _flatten_targets(item, depth + 1)];
     }
     if isinstance(value, `dict) {
-        rank = {name: i for (i, name) in enumerate(_CONDITION_ORDER)};
+        rank: any = {name: i for (i, name) in enumerate(_CONDITION_ORDER)};
         ordered: any = sorted(value, key=lambda (k) -> any { rank.get(k, len(rank)) });
         return [t for k in ordered for t in _flatten_targets(value[k], depth + 1)];
     }

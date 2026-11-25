@@ -1,8 +1,6 @@
 import from __future__ { annotations }
 
-import operator;
-
-import sqlite3;
+import operator, sqlite3;
 
 import from typing { Any }
 
@@ -14,11 +12,7 @@ glob POSTPROCESS_PENDING: any = "postprocess-pending";
 
 glob BUILD_COMPLETE: any = "complete";
 
-glob INCOMPLETE_BUILD_STATES: any;
-
-with entry {
-    INCOMPLETE_BUILD_STATES = frozenset({BUILD_IN_PROGRESS, POSTPROCESS_PENDING});
-}
+glob INCOMPLETE_BUILD_STATES: any = frozenset({BUILD_IN_PROGRESS, POSTPROCESS_PENDING});
 
 def read_build_state(store: Any) -> str;
 def graph_contents_are_complete(state: str) -> bool;

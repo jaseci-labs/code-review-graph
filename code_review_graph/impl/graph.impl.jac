@@ -46,8 +46,6 @@ impl _bound_collision_extra(extra: dict) -> dict {
 impl _ordered_pairs(new_lines: list[int], old_lines: list[int]) -> list[tuple[int, int]] {
     longer: any;
     shorter: any;
-    sign: any;
-    cost: any;
     j: any;
     k: any;
     if len(new_lines) == len(old_lines) {
@@ -61,7 +59,7 @@ impl _ordered_pairs(new_lines: list[int], old_lines: list[int]) -> list[tuple[in
         return [];
     }
     skips: any = len(longer) - len(shorter);
-    sign = 1 if new_is_longer else -1;
+    sign: any = 1 if new_is_longer else -1;
 
     def offset(i: int, j: int) -> int {
         return (longer[i] - shorter[j]) * sign;
@@ -71,7 +69,7 @@ impl _ordered_pairs(new_lines: list[int], old_lines: list[int]) -> list[tuple[in
     if len(shorter) * (skips + 1) ** 2 > _ORDERED_PAIRS_MAX_STEPS {
         pairs = [(j, j) for j in range(len(shorter))];
     } else {
-        cost = [abs(offset(k, 0)) for k in range(skips + 1)];
+        cost: any = [abs(offset(k, 0)) for k in range(skips + 1)];
         back: list[list[int]] = [[-1] * (skips + 1)];
         for j in range(1, len(shorter)) {
             step: any = [0] * (skips + 1);
@@ -354,8 +352,7 @@ impl CorruptGraphDatabaseError.init(db_path: str | Path, reason: object) {
 }
 
 impl _is_unreadable_database(db_path: Path, exc: sqlite3.DatabaseError) -> bool {
-    message: any;
-    message = `str(exc).lower();
+    message: any = `str(exc).lower();
     if `any(known in message for known in _CORRUPTION_MESSAGES) {
         return True;
     }
@@ -371,8 +368,7 @@ impl _is_unreadable_database(db_path: Path, exc: sqlite3.DatabaseError) -> bool 
 }
 
 impl _has_incompatible_schema(db_path: Path, exc: sqlite3.DatabaseError) -> bool {
-    message: any;
-    message = `str(exc).lower();
+    message: any = `str(exc).lower();
     if not `any(known in message for known in _INCOMPATIBLE_SCHEMA_MESSAGES) {
         return False;
     }
@@ -915,13 +911,12 @@ impl GraphStore._resolve_edge_identities(
 }
 
 impl GraphStore._settle_collision_endpoints -> int {
-    conn: any;
     identities: dict[str, list[str]];
     known: dict[str, list[str]];
     updates: list[tuple[str, str, str, float, str, str | None, int]];
     row: any;
     kind: any;
-    conn = self._conn;
+    conn: any = self._conn;
     identities = {};
     for (qualified,) in conn.execute(
         "SELECT qualified_name FROM nodes WHERE qualified_name GLOB '*:S[0-9a-f]*'"
@@ -1522,12 +1517,9 @@ impl GraphStore.iter_edges_by_target(qualified_name: str) -> Generator[any, any,
 }
 
 impl GraphStore.get_config_consumers(key: str) -> list[GraphEdge] {
-    parts: any;
-    parts = key.split(".");
+    parts: any = key.split(".");
     targets: any = [f"config:{key}", f"config:{key}.*"];
-    targets.extend(
-        "config:" + format(".".join(parts[:index]), "") + ".*" for index in range(1, len(parts))
-    );
+    targets.extend(f"config:{".".join(parts[:index])}.*" for index in range(1, len(parts)));
     rows: any = [];
     for target in dict.fromkeys(targets) {
         rows.extend(
@@ -1581,15 +1573,13 @@ impl GraphStore.get_transitive_tests(
     *,
     include_helper_routes: bool = True,
 ) -> list[dict] {
-    conn: any;
     candidate_cache: dict[str, list[tuple[str, str]]];
     import_cache: dict[str, set[str]];
     module_files: dict[str, str] | None;
-    bound_callees: any;
     if max_frontier is None {
         max_frontier = env_int("CRG_MAX_TRANSITIVE_FRONTIER", 50);
     }
-    conn = self._conn;
+    conn: any = self._conn;
     seen: set[str] = set[any]();
     results: list[dict] = [];
     input_qns: any = [qualified_name];
@@ -1730,7 +1720,7 @@ impl GraphStore.get_transitive_tests(
                 next_frontier.add(row["target_qualified"]);
             }
         }
-        bound_callees = self._existing_qualified_names(next_frontier);
+        bound_callees: any = self._existing_qualified_names(next_frontier);
         frontier = sorted(
             next_frontier, key=lambda (name) -> any { (name not in bound_callees, name) }
         )[:max_frontier];
@@ -1777,9 +1767,8 @@ impl GraphStore.get_transitive_tests(
 }
 
 impl GraphStore.get_ambiguous_call_tests(qualified_name: str) -> list[str] {
-    conn: any;
     built_by_test: dict[str, set[tuple[str, int]]];
-    conn = self._conn;
+    conn: any = self._conn;
     built_by_test = {};
 
     def owner(method_qn: str) -> str {
@@ -1787,7 +1776,7 @@ impl GraphStore.get_ambiguous_call_tests(qualified_name: str) -> list[str] {
         _: any;
         tail: any;
         (path, _, tail) = method_qn.rpartition("::") as any;
-        return format(path, "") + "::" + format(tail.rpartition(".")[0], "");
+        return f"{path}::{tail.rpartition(".")[0]}";
     }
 
     def built(`test: str) -> set[tuple[str, int]] {
@@ -2127,7 +2116,6 @@ impl GraphStore._select_evidence_backed_candidate(
 impl GraphStore._receiver_backed_candidates(
     candidates: list[tuple[str, str]], edge_extra: dict, parent_lookup: dict[str, str | None]
 ) -> list[tuple[str, str]] {
-    class_name: any;
     binding: any = edge_extra.get("receiver_binding");
     if binding == "module" {
         module_file: any = edge_extra.get("receiver_module");
@@ -2141,7 +2129,7 @@ impl GraphStore._receiver_backed_candidates(
         ];
     }
     if binding == "class" {
-        class_name = edge_extra.get("receiver_class");
+        class_name: any = edge_extra.get("receiver_class");
         if not isinstance(class_name, `str) or not class_name {
             return [];
         }
@@ -2328,7 +2316,6 @@ impl GraphStore.refresh_target_resolution -> int {
 }
 
 impl GraphStore._resolve_inherited_endpoints -> int {
-    extra: any;
     conn: any = self._conn;
     work: list[tuple[str, sqlite3.Row, dict, str, str, str]] = [];
     column: any;
@@ -2338,7 +2325,7 @@ impl GraphStore._resolve_inherited_endpoints -> int {
             f"SELECT e.id, e.{column} AS endpoint, e.extra FROM edges e WHERE e.kind = ? AND (e.extra LIKE ? OR e.extra LIKE ? OR (e.{column} LIKE '%::%' AND NOT EXISTS (SELECT 1 FROM nodes n WHERE n.qualified_name = e.{column})))",
             (kind, f"%\"{CLAIMED_ENDPOINT_KEY}\"%", f"%\"{INHERITED_ENDPOINT_KEY}\"%"),
         ).fetchall() {
-            extra = _load_edge_extra(row["extra"]);
+            extra: any = _load_edge_extra(row["extra"]);
             managed: any = extra.get(INHERITED_ENDPOINT_KEY);
             claimed: any = extra.get(CLAIMED_ENDPOINT_KEY);
             if isinstance(managed, `str) {
@@ -3466,7 +3453,6 @@ impl GraphStore.get_impact_radius_sql(
     max_nodes: int = max_nodes_default__,
     resolution: str = "all",
 ) -> dict[str, Any] {
-    score_by_qn: any;
     resolution_guard: any = _impact_resolution_guard(resolution);
     max_depth = max(0, `int(max_depth));
     max_nodes = max(0, `int(max_nodes));
@@ -3601,7 +3587,7 @@ impl GraphStore.get_impact_radius_sql(
         }
     }
     kept_rows: any = rows[:max_nodes];
-    score_by_qn = {row[0]: `float(row[1]) for row in kept_rows};
+    score_by_qn: any = {row[0]: `float(row[1]) for row in kept_rows};
 
     changed_nodes: any = self._batch_get_nodes(seeds);
     impacted_nodes: any = self._batch_get_nodes(`set(score_by_qn));

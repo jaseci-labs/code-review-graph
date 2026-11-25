@@ -1,8 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
+import importlib, operator;
 
 import from bisect { bisect_right }
 
@@ -12,32 +10,32 @@ import from collections.abc { Sequence }
 
 import from typing { Any }
 
-glob DETAIL_SECTIONS: tuple[str, ...];
+glob DETAIL_SECTIONS: tuple[str, ...] = (
+    "risk",
+    "communities",
+    "hubs",
+    "coupling",
+    "impact",
+    "gaps",
+    "graph",
+);
 
-glob MAX_ROWS: any;
+glob MAX_ROWS: any = 10;
 
-glob MAX_CALLERS: any;
+glob MAX_CALLERS: any = 5;
 
-glob _NOT_COUPLING: any;
+glob _NOT_COUPLING: any = frozenset({"CONTAINS", "TESTED_BY"});
 
-glob _LANGUAGE_FAMILY: any;
-
-with entry {
-    DETAIL_SECTIONS = ("risk", "communities", "hubs", "coupling", "impact", "gaps", "graph");
-    MAX_ROWS = 10;
-    MAX_CALLERS = 5;
-    _NOT_COUPLING = frozenset({"CONTAINS", "TESTED_BY"});
-    _LANGUAGE_FAMILY = {
-        "typescript": "javascript",
-        "tsx": "javascript",
-        "vue": "javascript",
-        "svelte": "javascript",
-        "cpp": "c",
-        "objc": "c",
-        "luau": "lua",
-        "notebook": "python",
-    };
-}
+glob _LANGUAGE_FAMILY: any = {
+    "typescript": "javascript",
+    "tsx": "javascript",
+    "vue": "javascript",
+    "svelte": "javascript",
+    "cpp": "c",
+    "objc": "c",
+    "luau": "lua",
+    "notebook": "python",
+};
 
 def parse_detail_sections(value: str) -> tuple[str, ...];
 def build_change_details(

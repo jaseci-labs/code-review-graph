@@ -1,15 +1,6 @@
 impl _close_inherited_locks {
     for lock in `list(_open_locks) {
-        items_: any = list((lock._handle, None));
-        if len(items_) != 2 {
-            raise ValueError(
-                f"too many values to unpack (expected 2, got {len(items_)})"
-                    if len(items_) > 2
-                    else f"not enough values to unpack (expected 2, got {len(items_)})",
-            );
-        }
-        handle: any = items_[0];
-        lock._handle = items_[1];
+        (handle, lock._handle) = (lock._handle, None);
         if handle is not None {
             handle.close();
         }
@@ -107,16 +98,7 @@ impl WriteLock._record_holder(handle: Any) {
 }
 
 impl WriteLock.release {
-    items__: any = list((self._handle, None));
-    if len(items__) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items__)})"
-                if len(items__) > 2
-                else f"not enough values to unpack (expected 2, got {len(items__)})",
-        );
-    }
-    handle: any = items__[0];
-    self._handle = items__[1];
+    (handle, self._handle) = (self._handle, None);
     _open_locks.discard(self);
     if handle is None {
         return;

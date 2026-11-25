@@ -120,11 +120,10 @@ impl _node_names(conn: sqlite3.Connection) -> dict[int, str] {
 }
 
 impl _flow_keys(conn: sqlite3.Connection) -> dict[int, str] {
-    names: any;
     if not _table_exists(conn, "flows") {
         return {};
     }
-    names = _node_names(conn);
+    names: any = _node_names(conn);
     keys: dict[int, str] = {};
     for row in conn.execute("SELECT id, entry_point_id, path_json FROM flows") {
         try {
@@ -163,9 +162,7 @@ impl _project_flow_memberships(conn: sqlite3.Connection) -> _Projection {
         "SELECT fm.flow_id AS flow_id, fm.position AS position, n.qualified_name AS qn FROM flow_memberships fm LEFT JOIN nodes n ON n.id = fm.node_id",
     ) {
         flow_key: any = keys.get(`int(row["flow_id"]), "<orphan flow>");
-        _add(
-            out, format(flow_key, "") + "|" + format(_blank(row["qn"]), ""), _blank(row["position"])
-        );
+        _add(out, f"{flow_key}|{_blank(row["qn"])}", _blank(row["position"]));
     }
     return out;
 }
@@ -319,14 +316,7 @@ impl _git(tree: Path, *args_: str, check: bool = True) -> str {
         stdin=subprocess.DEVNULL,
     );
     if check and proc.returncode != 0 {
-        raise RuntimeError(
-            "git "
-                + format(" ".join(args), "")
-                + " failed in "
-                + format(tree, "")
-                + ": "
-                + format(proc.stderr.strip(), ""),
-        );
+        raise RuntimeError(f"git {" ".join(args)} failed in {tree}: {proc.stderr.strip()}");
     }
     return proc.stdout;
 }
@@ -393,7 +383,6 @@ impl _relative(tree: Path, stored: str) -> str {
 
 impl _pick_targets(db_path: Path, tree: Path) -> _Targets {
     per_file: Counter[str];
-    suffix: any;
     conn: any = _open(db_path);
     try {
         symbols: list[_Symbol] = [];
@@ -416,7 +405,7 @@ impl _pick_targets(db_path: Path, tree: Path) -> _Targets {
             key=lambda (p) -> any { (-per_file[p], p) },
         );
         primary: any = ranked[0] if ranked else "";
-        suffix = Path(primary).suffix if primary else "";
+        suffix: any = Path(primary).suffix if primary else "";
         sibling: any = next((p for p in ranked[1:] if Path(p).suffix == suffix), "");
         import_sites: any = [
             (_relative(tree, row["file_path"]), `int(row["line"]))
@@ -523,7 +512,7 @@ impl _edit_add_file(tree: Path, targets: _Targets) -> _Edit {
     suffix: any = Path(targets.primary).suffix if targets.primary else "";
     source: any = _PROBE_SOURCES.get(suffix);
     if source is None {
-        return _Edit(skipped="no probe source for " + format(suffix or "unknown suffix", ""));
+        return _Edit(skipped=f"no probe source for {suffix or "unknown suffix"}");
     }
     rel: any = `str(Path(targets.primary).with_name(_PROBE_STEM + suffix));
     (tree / rel).write_text(source, encoding="utf-8");
@@ -560,8 +549,7 @@ impl _edit_move_function(tree: Path, targets: _Targets) -> _Edit {
 }
 
 impl _ranked_import_sites(targets: _Targets) -> list[tuple[str, int]] {
-    suffix: any;
-    suffix = Path(targets.primary).suffix if targets.primary else "";
+    suffix: any = Path(targets.primary).suffix if targets.primary else "";
 
     def rank(site: tuple[str, int]) -> tuple[int, str, int] {
         rel: any = site[0];

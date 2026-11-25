@@ -1315,15 +1315,13 @@ impl is_test_file(
     *,
     include_helper_dirs: bool = False,
 ) -> bool {
-    basename: any;
-    relative: any;
     normalized: any = normalize_file_path(path);
-    basename = normalized.rsplit("/", 1)[-1];
+    basename: any = normalized.rsplit("/", 1)[-1];
     if `any(p.search(basename) for p in _TEST_NAME_PATTERNS) {
         return True;
     }
 
-    relative = _repo_relative_path(normalized, repo_root);
+    relative: any = _repo_relative_path(normalized, repo_root);
     if relative is None {
         return False;
     }
@@ -1469,7 +1467,6 @@ impl _csharp_attribute_names(`node) -> list[str] {
 }
 
 impl _php_attribute_aliases(`node) -> dict[str, str] {
-    alias: any;
     `root: any = `node;
     while `root.parent is not None {
         `root = `root.parent;
@@ -1480,7 +1477,7 @@ impl _php_attribute_aliases(`node) -> dict[str, str] {
     while stack {
         current: any = stack.pop();
         if current.type == "namespace_use_clause" {
-            alias = current.child_by_field_name("alias");
+            alias: any = current.child_by_field_name("alias");
             if alias is not None {
                 target: any = next(
                     (child
@@ -1652,7 +1649,6 @@ impl _php_namespaces(root_node) -> list[str] {
 }
 
 impl _csharp_namespaces(root_node) -> list[str] {
-    current_namespace: any;
     namespaces: list[str] = [];
     stack: any = [(root_node, "")];
 
@@ -1660,7 +1656,7 @@ impl _csharp_namespaces(root_node) -> list[str] {
         `node: any;
         parent_namespace: any;
         (`node, parent_namespace) = stack.pop() as any;
-        current_namespace = parent_namespace;
+        current_namespace: any = parent_namespace;
         if `node.type in ("namespace_declaration", "file_scoped_namespace_declaration") {
             for c in `node.children {
                 if c.type in ("qualified_name", "identifier") {
@@ -1811,9 +1807,8 @@ impl _is_ansible_path(path: Path) -> bool {
 }
 
 impl _is_ansible_content(source: bytes) -> bool {
-    text: any;
     try {
-        text = source.decode("utf-8", errors="replace");
+        text: any = source.decode("utf-8", errors="replace");
     } except Exception {
         return False;
     }
@@ -1842,8 +1837,7 @@ impl _is_ansible_content(source: bytes) -> bool {
 }
 
 impl _ansible_file_type(path: Path) -> str {
-    parts_lower: any;
-    parts_lower = [p.lower() for p in path.parts];
+    parts_lower: any = [p.lower() for p in path.parts];
     name_lower: any = path.name.lower();
     if "meta" in parts_lower and name_lower in ("main.yml", "main.yaml") {
         return "meta";
@@ -2714,12 +2708,11 @@ impl CodeParser._has_cpp_header_text_evidence(source: bytes) -> bool {
 }
 
 impl CodeParser._mask_cpp_qt_macros(source: bytes) -> bytes {
-    length: any;
     if b"Q_" not in source and b"QT_" not in source {
         return source;
     }
     masked: any = bytearray(source);
-    length = len(source);
+    length: any = len(source);
     index: any = 0;
     line_has_code: any = False;
 
@@ -2940,9 +2933,8 @@ impl CodeParser._liquid_output_name(expression: str) -> str {
 }
 
 impl CodeParser._parse_liquid(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    masked: any;
     text: any = source.decode("utf-8", errors="replace");
-    masked = self._LIQUID_LITERAL_RE.sub(CodeParser._blank_liquid_span, text);
+    masked: any = self._LIQUID_LITERAL_RE.sub(CodeParser._blank_liquid_span, text);
     file_path: any = normalize_file_path(path);
     nodes: any = [
         NodeInfo(
@@ -3424,8 +3416,7 @@ impl CodeParser._add_html_section(
     sections: dict[str, NodeInfo],
     file_node: NodeInfo,
 ) {
-    html_id: any;
-    html_id = attributes.get("id", "").strip();
+    html_id: any = attributes.get("id", "").strip();
     if tag not in _HTML_SECTION_TAGS
         or not html_id
         or `any(marker in html_id for marker in _HTML_TEMPLATE_MARKERS)
@@ -3766,7 +3757,7 @@ impl CodeParser._xslt_template(
         line_start=line_start,
         line_end=element.end_point[0] + 1,
         language="xslt",
-        params="(" + format(", ".join(params), "") + ")" if params else None,
+        params=f"({", ".join(params)})" if params else None,
         extra=extra,
         identity_name=identity,
     );
@@ -3790,13 +3781,12 @@ impl CodeParser._walk_xslt_body(
     edges: list[EdgeInfo],
 ) {
     child: any;
-    child_scope: any;
     source: any = owner.qualified if owner is not None else file_path;
     stack: any = [(child, scope) for child in reversed(_xml_child_elements(element))];
     while stack {
         parent_scope: any;
         (child, parent_scope) = stack.pop() as any;
-        child_scope = _xml_scope(child, parent_scope);
+        child_scope: any = _xml_scope(child, parent_scope);
         name: any = _xslt_local_name(child, child_scope);
         line: any = child.start_point[0] + 1;
         if name == "call-template" {
@@ -4194,8 +4184,6 @@ impl CodeParser._parse_databricks_py_notebook(
 }
 
 impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    file_path: any;
-    nodes: any;
     edges: list[EdgeInfo];
     namespace_stack: list[dict];
     type_stack: list[dict];
@@ -4203,11 +4191,11 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
     text: any = source.decode("utf-8", errors="replace");
     cleaned: any = _strip_vbnet_noise(text);
     statements: any = _vbnet_logical_lines(cleaned);
-    file_path = normalize_file_path(path);
+    file_path: any = normalize_file_path(path);
     line_count: any = text.count("\n") + 1;
     test_file: any = self._is_test_path(file_path);
 
-    nodes = [
+    nodes: any = [
         NodeInfo(
             kind="File",
             name=file_path,
@@ -4251,7 +4239,6 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
     }
 
     def close_type(line_no: int, kind: Optional[str] = None) {
-        wanted: any;
         while member_stack {
             close_member(line_no);
         }
@@ -4261,7 +4248,7 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
         if kind is None {
             `entry: any = type_stack.pop();
         } else {
-            wanted = kind.casefold();
+            wanted: any = kind.casefold();
             index: any = next(
                 (pos
                 for pos in range(len(type_stack) - 1, -1, -1)
@@ -4599,16 +4586,14 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
 }
 
 impl CodeParser._parse_robot(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    file_path: any;
-    nodes: any;
     edges: list[EdgeInfo];
     current: Optional[tuple[str, str, int, str]];
     cell: any;
     `node: any;
     text: any = source.decode("utf-8-sig", errors="replace");
-    file_path = normalize_file_path(path);
+    file_path: any = normalize_file_path(path);
     lines: any = text.splitlines();
-    nodes = [
+    nodes: any = [
         NodeInfo(
             kind="File",
             name=file_path,
@@ -4895,10 +4880,9 @@ impl CodeParser._parse_robot(path: Path, source: bytes) -> tuple[list[NodeInfo],
 impl CodeParser._resolve_vbnet_edges(
     nodes: list[NodeInfo], edges: list[EdgeInfo], file_path: str
 ) -> list[EdgeInfo] {
-    prefix: any;
     symbols: dict[str, list[str]];
     bare_symbols: dict[str, list[str]];
-    prefix = f"{file_path}::";
+    prefix: any = f"{file_path}::";
     symbols = {};
     bare_symbols = {};
     for `node in nodes {
@@ -4980,18 +4964,14 @@ impl CodeParser._resolve_vbnet_edges(
 impl CodeParser._parse_rescript(
     path: Path, source: bytes
 ) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    line_starts: any;
-    modules: any;
-    depth_arr: any;
     off: any;
-    caller: any;
     e: any;
     text: any = source.decode("utf-8", errors="replace");
     file_path_str: any = normalize_file_path(path);
     test_file: any = self._is_test_path(file_path_str);
     is_interface: any = operator.eq(path.suffix.lower(), ".resi");
     cleaned: any = _strip_rescript_noise(text);
-    line_starts = [0];
+    line_starts: any = [0];
     i: any;
     for (i, ch) in enumerate(cleaned) {
         if ch == "\n" {
@@ -5033,8 +5013,8 @@ impl CodeParser._parse_rescript(
             extra=file_extra,
         ),
     );
-    modules = _scan_rescript_modules(cleaned, offset_to_line);
-    depth_arr = _rescript_brace_depth_array(cleaned);
+    modules: any = _scan_rescript_modules(cleaned, offset_to_line);
+    depth_arr: any = _rescript_brace_depth_array(cleaned);
     def is_top_level(off: int, parent_mod: Optional[str]) -> bool {
         d: any = depth_arr[off] if off < len(depth_arr) else 0;
         if parent_mod is None {
@@ -5245,7 +5225,7 @@ impl CodeParser._parse_rescript(
                     extra={"rescript_import_kind": "jsx"},
                 ),
             );
-            caller = None;
+            caller: any = None;
             caller_parent: any = None;
             for `entry in let_entries {
                 if `entry["start_off"] <= off < `entry["end_off"] {
@@ -5824,12 +5804,11 @@ impl CodeParser._parse_sql(path: Path, source: bytes) -> tuple[list[NodeInfo], l
 }
 
 impl CodeParser._is_dbt_model_path(path: Path) -> Optional[bool] {
-    resolved_path: any;
     if self._repo_root is None {
         return None;
     }
 
-    resolved_path = path.resolve();
+    resolved_path: any = path.resolve();
     try {
         resolved_path.relative_to(self._repo_root);
     } except ValueError {
@@ -6144,7 +6123,6 @@ impl CodeParser._extract_sql_ddl(
 impl CodeParser._resolve_call_targets(
     nodes: list[NodeInfo], edges: list[EdgeInfo], file_path: str
 ) -> list[EdgeInfo] {
-    is_cpp: any;
     symbols: dict[str, list[tuple[str, Optional[str]]]];
     callable_symbols: dict[str, list[tuple[str, Optional[str]]]];
     `node: any;
@@ -6155,7 +6133,7 @@ impl CodeParser._resolve_call_targets(
         return edges;
     }
 
-    is_cpp = `any(operator.eq(`node.language, "cpp") for `node in nodes);
+    is_cpp: any = `any(operator.eq(`node.language, "cpp") for `node in nodes);
     is_go: any = `any(operator.eq(`node.language, "go") for `node in nodes);
 
     def cpp_resolution_extra(extra: dict, resolution: str, candidates: list[str]) -> dict {
@@ -6583,23 +6561,19 @@ impl CodeParser._resolve_julia_call_targets(
 impl CodeParser._collect_typed_call_targets(
     `root, language: str, file_path: str, import_map: dict[str, str], defined_names: set[str]
 ) -> dict[tuple[int, str, str], tuple[Optional[str], str, str]] {
-    class_types: any;
-    function_types: any;
-    call_types: any;
-    block_types: any;
     targets: dict[tuple[int, str, str], tuple[Optional[str], str, str]];
     declared_type_parameters: list[set[str]];
     if language not in self._TYPED_CALL_LANGUAGES {
         return {};
     }
 
-    class_types = `set(self._class_types.get(language, []));
-    function_types = `set(self._function_types.get(language, []));
+    class_types: any = `set(self._class_types.get(language, []));
+    function_types: any = `set(self._function_types.get(language, []));
     if language == "csharp" {
         function_types.add("local_function_statement");
     }
-    call_types = `set(self._call_types.get(language, []));
-    block_types = {
+    call_types: any = `set(self._call_types.get(language, []));
+    block_types: any = {
         "java": {"block"},
         "kotlin": {"statements"},
         "javascript": {"statement_block"},
@@ -6799,9 +6773,8 @@ impl CodeParser._collect_class_typed_fields(
 
 impl CodeParser._collect_function_typed_parameters(function_node, language: str) -> dict[str, str] {
     bindings: dict[str, str];
-    parameter_types: any;
     bindings = {};
-    parameter_types = {
+    parameter_types: any = {
         "python": {"typed_parameter", "typed_default_parameter"},
         "kotlin": {"parameter"},
         "java": {"formal_parameter", "spread_parameter"},
@@ -7063,20 +7036,7 @@ impl CodeParser._base_type_name(annotation: str) -> Optional[str] {
         if outer in cls._NON_RECEIVER_TYPE_NAMES {
             return None;
         }
-        if outer
-            in (
-                "None",
-                "bool",
-                "boolean",
-                "float",
-                "int",
-                "number",
-                "str",
-                "string",
-                "unknown",
-                "void",
-            )
-        {
+        if outer in tuple("None bool boolean float int number str string unknown void".split()) {
             return None;
         }
         return outer;
@@ -7212,12 +7172,9 @@ impl CodeParser._collect_python_receiver_evidence(
     property_returns: dict[tuple[str, str], str];
     ambiguous_returns: set[str];
     name: any;
-    context: any;
     evidence: dict[tuple[int, str], tuple[str, str]];
     expression_evidence: dict[tuple[int, str], list[tuple[str, str]]];
     property_read_edges: list[EdgeInfo];
-    unreachable_positions: any;
-    function_scopes: any;
     key: any;
     module_bindings = {};
     imported_names = set[any]();
@@ -7322,7 +7279,7 @@ impl CodeParser._collect_python_receiver_evidence(
         };
     }
 
-    context = _PyReceiverContext(
+    context: any = _PyReceiverContext(
         file_path=file_path,
         class_names=frozenset(class_names),
         imported_names=frozenset(imported_names),
@@ -7344,8 +7301,8 @@ impl CodeParser._collect_python_receiver_evidence(
     evidence = {};
     expression_evidence = {};
     property_read_edges = [];
-    unreachable_positions = _python_unreachable_call_positions(source);
-    function_scopes = _python_function_scope_bindings(source);
+    unreachable_positions: any = _python_unreachable_call_positions(source);
+    function_scopes: any = _python_function_scope_bindings(source);
     def bind_targets(
         left,
         value,
@@ -7737,13 +7694,12 @@ impl CodeParser._collect_python_class_fields(
 impl CodeParser._python_property_definition(
     owner_type: str, property_name: str, context: _PyReceiverContext
 ) -> Optional[tuple[str, str, str]] {
-    annotations: any;
     identity: any = _python_split_class_identity(owner_type);
     if identity is not None {
         origin: any;
         actual_class: any;
         (origin, actual_class) = identity as any;
-        annotations = self._python_module_property_return_annotations(origin);
+        annotations: any = self._python_module_property_return_annotations(origin);
         key: any = (actual_class, property_name);
         if key not in annotations {
             return None;
@@ -7811,7 +7767,6 @@ impl CodeParser._python_module_property_return_annotations(
 }
 
 impl CodeParser._python_module_class_identities(module_file: str) -> dict[str, tuple[str, str]] {
-    resolved: any;
     class_counts: dict[str, int];
     imported_names: set[str];
     module_bindings: dict[str, set[str]];
@@ -7824,7 +7779,7 @@ impl CodeParser._python_module_class_identities(module_file: str) -> dict[str, t
     } except (OSError, RuntimeError, ValueError) {
         return {};
     }
-    resolved = normalize_file_path(module_path);
+    resolved: any = normalize_file_path(module_path);
     if self._excluded_files and resolved in self._excluded_files {
         return {};
     }
@@ -8453,7 +8408,6 @@ impl CodeParser._python_tuple_annotation_elements(annotation: str) -> Optional[l
 }
 
 impl CodeParser._python_module_return_annotations(module_file: str) -> dict[str, str] {
-    annotations: any;
     if not module_file.endswith(".py") {
         return {};
     }
@@ -8473,7 +8427,7 @@ impl CodeParser._python_module_return_annotations(module_file: str) -> dict[str,
         if cached is not None {
             return cached;
         }
-        annotations = self._read_python_return_annotations(module_path);
+        annotations: any = self._read_python_return_annotations(module_path);
         for stale in [
             key
             for key in _PYTHON_RETURN_ANNOTATION_CACHE
@@ -8576,19 +8530,16 @@ impl CodeParser._python_from_import_bindings(
     symbol_origins: Optional[dict[str, str]] = None,
     symbol_names: Optional[dict[str, str]] = None,
 ) {
-    package_dir: any;
-    submodules: any;
-    module_file: any;
     module_node: any = `node.child_by_field_name("module_name");
     if module_node is None {
         return;
     }
     module: any = module_node.text.decode("utf-8", errors="replace");
-    package_dir = self._python_package_dir(module, file_path);
-    submodules = `set(self._python_submodule_names(`node, package_dir))
+    package_dir: any = self._python_package_dir(module, file_path);
+    submodules: any = `set(self._python_submodule_names(`node, package_dir))
         if package_dir is not None
         else set[any]();
-    module_file = self._resolve_module_to_file(module, file_path, "python")
+    module_file: any = self._resolve_module_to_file(module, file_path, "python")
         if symbol_origins is not None
         else None;
 
@@ -8677,16 +8628,7 @@ impl CodeParser._apply_python_receiver_evidence(
             if identity is None {
                 extra["receiver_class"] = detail;
             } else {
-                items__: any = list(identity as any);
-                if len(items__) != 2 {
-                    raise ValueError(
-                        f"too many values to unpack (expected 2, got {len(items__)})"
-                            if len(items__) > 2
-                            else f"not enough values to unpack (expected 2, got {len(items__)})",
-                    );
-                }
-                extra["receiver_class_file"] = items__[0];
-                extra["receiver_class"] = items__[1];
+                (extra["receiver_class_file"], extra["receiver_class"]) = (identity);
             }
         }
         annotated.append(
@@ -8982,11 +8924,9 @@ impl CodeParser._apply_ruby_test_receivers(
 }
 
 impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    anchor_definitions: any;
     alias_lines_by_anchor: dict[str, list[int]];
     event: any;
     file_path: any;
-    nodes: any;
     edges: list[EdgeInfo];
     shared_targets: dict[int, str];
     shared_anchor_names: dict[int, str];
@@ -8995,11 +8935,8 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
     path_key_tags: dict[tuple[int, str], set[str]];
     contains_edges: set[tuple[str, str]];
     duplicate_summaries: list[dict[str, Any]];
-    duplicate_count: any;
-    unsupported_key_count: any;
     alias_indices: dict[str, int];
     skipped_seen: set[int];
-    truncated: any;
     if len(source) > self._MAX_GENERIC_YAML_BYTES {
         logger.debug(
             "Skipping generic YAML file %s: %d bytes exceeds the %d-byte limit",
@@ -9036,7 +8973,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
     try {
         documents: any = `list(_yaml.compose_all(text));
         yaml_events: any = `list(_yaml.parse(text)) if b"&" in source else [];
-        anchor_definitions = {
+        anchor_definitions: any = {
             event.start_mark.index: `str(event.anchor)
             for event in yaml_events
             if not isinstance(event, _YamlAliasEvent) and getattr(event, "anchor", None) is not None
@@ -9064,7 +9001,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
         "yaml_truncated": False,
         "values_indexed": False,
     };
-    nodes = [
+    nodes: any = [
         NodeInfo(
             kind="File",
             name=file_path,
@@ -9083,11 +9020,11 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
     path_key_tags = {};
     contains_edges = set[any]();
     duplicate_summaries = [];
-    duplicate_count = 0;
-    unsupported_key_count = 0;
+    duplicate_count: any = 0;
+    unsupported_key_count: any = 0;
     alias_indices = {};
     skipped_seen = set[any]();
-    truncated = False;
+    truncated: any = False;
 
     def qualified(schema_path: str, document_index: int) -> str {
         return f"{file_path}::yaml:{document_index}:{schema_path}";
@@ -9595,8 +9532,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
 }
 
 impl CodeParser._parse_json(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    file_path: any;
-    file_path = normalize_file_path(path);
+    file_path: any = normalize_file_path(path);
     file_extra: dict[str, Any] = {
         "config_format": "json",
         "json_truncated": False,
@@ -9778,8 +9714,6 @@ impl CodeParser._parse_spring_config(
 impl CodeParser._parse_spring_yaml(
     path: Path, source: bytes
 ) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-    file_path: any;
-    nodes: any;
     emitted: set[str];
     try {
         documents: any = `list(_yaml.compose_all(source.decode("utf-8", errors="replace")));
@@ -9792,8 +9726,8 @@ impl CodeParser._parse_spring_yaml(
         return ([], []);
     }
 
-    file_path = normalize_file_path(path);
-    nodes = [self._spring_config_file_node(path, source, "yaml")];
+    file_path: any = normalize_file_path(path);
+    nodes: any = [self._spring_config_file_node(path, source, "yaml")];
     emitted = set[any]();
 
     def emit(raw_key: str, value_node: object, document_index: int) {
@@ -9865,7 +9799,6 @@ impl CodeParser._parse_spring_yaml(
 }
 
 impl CodeParser._is_non_spring_yaml(documents: list[object]) -> bool {
-    top_level_keys: any;
     key: any;
     signatures: any = (
         frozenset({"apiVersion", "kind"}),
@@ -9882,7 +9815,7 @@ impl CodeParser._is_non_spring_yaml(documents: list[object]) -> bool {
         if not isinstance(document, _YamlMapping) {
             return True;
         }
-        top_level_keys = {
+        top_level_keys: any = {
             key
             for (key_node, _) in document.value
             if (key := _yaml_scalar(key_node)) is not None
@@ -13125,11 +13058,10 @@ impl CodeParser._js_in_test_body(
     enclosing_class: Optional[str],
     enclosing_func: Optional[str],
 ) -> bool {
-    qualified: any;
     if not enclosing_func {
         return False;
     }
-    qualified = self._qualify(enclosing_func, file_path, enclosing_class);
+    qualified: any = self._qualify(enclosing_func, file_path, enclosing_class);
     return `any(
         `node.is_test and operator.eq(self._node_qualified(`node), qualified)
         for `node in reversed(nodes),
@@ -14009,17 +13941,16 @@ impl CodeParser._emit_spring_endpoint_nodes(
     nodes: list[NodeInfo],
     edges: list[EdgeInfo],
 ) -> int {
-    annotations: any;
     prefix: any;
-    annotations = self._java_annotations_named(method_node, frozenset(_SPRING_REQUEST_MAPPINGS));
+    annotations: any = self._java_annotations_named(
+        method_node, frozenset(_SPRING_REQUEST_MAPPINGS)
+    );
     if not annotations {
         return 0;
     }
 
     prefixes: any = [""];
-    encoded_prefixes: any = import_map.get(
-        format(_SPRING_REQUEST_PREFIX_KEY, "") + format(class_name or "", "")
-    );
+    encoded_prefixes: any = import_map.get(f"{_SPRING_REQUEST_PREFIX_KEY}{class_name or ""}");
     if encoded_prefixes {
         try {
             parsed_prefixes: any = json.loads(encoded_prefixes);
@@ -14289,8 +14220,7 @@ impl CodeParser._emit_scheduled_nodes_from_method(
     nodes: list[NodeInfo],
     edges: list[EdgeInfo],
 ) -> int {
-    annotations: any;
-    annotations = self._scheduled_annotations(method_node);
+    annotations: any = self._scheduled_annotations(method_node);
     target: any = self._qualify(method_name, file_path, class_name);
     for (index, annotation) in enumerate(annotations) {
         attributes: any = self._java_annotation_attributes(annotation);
@@ -14470,10 +14400,8 @@ impl CodeParser._emit_spring_event_publish_edges(
     import_map: dict[str, str],
     edges: list[EdgeInfo],
 ) -> int {
-    source: any;
-    emitted: any;
-    source = self._qualify(method_name, file_path, class_name);
-    emitted = 0;
+    source: any = self._qualify(method_name, file_path, class_name);
+    emitted: any = 0;
 
     def `visit(`node) {
         child: any;
@@ -17008,7 +16936,6 @@ impl CodeParser._emit_laravel_relationship_edge(
 }
 
 impl CodeParser._get_java_method_and_receiver(`node) -> tuple[Optional[str], Optional[str]] {
-    field: any;
     children: any = `node.children;
     if len(children) == 2
         and children[0].type == "identifier"
@@ -17046,7 +16973,7 @@ impl CodeParser._get_java_method_and_receiver(`node) -> tuple[Optional[str], Opt
         }
     } elif method_name and children[0].type == "field_access" {
         owner: any = children[0].child_by_field_name("object");
-        field = children[0].child_by_field_name("field");
+        field: any = children[0].child_by_field_name("field");
         if owner is not None and owner.type == "this" and field is not None {
             receiver_name = field.text.decode("utf-8", errors="replace");
         }
@@ -17731,7 +17658,6 @@ impl CodeParser._extract_verilog_constructs(
     enclosing_func: Optional[str],
 ) -> bool {
     roots: set[str];
-    identifier_type: any;
 
     def decode(`node) -> str {
         return `node.text.decode("utf-8", errors="replace");
@@ -17802,16 +17728,10 @@ impl CodeParser._extract_verilog_constructs(
         );
     }
 
-    local_declarations: any = {
-        "data_declaration",
-        "input_declaration",
-        "output_declaration",
-        "inout_declaration",
-        "net_declaration",
-        "parameter_declaration",
-        "local_parameter_declaration",
-        "type_declaration",
-    };
+    local_declarations: any = set(
+        ("data_declaration input_declaration output_declaration inout_declaration net_declaration "
+            "parameter_declaration local_parameter_declaration type_declaration").split(),
+    );
     if enclosing_func is not None and node_type in local_declarations {
         return True;
     }
@@ -18045,7 +17965,7 @@ impl CodeParser._extract_verilog_constructs(
     }
 
     if node_type in ("covergroup_declaration", "property_declaration") {
-        identifier_type = "covergroup_identifier"
+        identifier_type: any = "covergroup_identifier"
             if node_type == "covergroup_declaration"
             else "property_identifier";
         name = next(
@@ -19028,18 +18948,15 @@ impl CodeParser._collect_js_require_names(declaration, import_map: dict[str, str
 impl CodeParser._collect_import_names(
     `node, language: str, source: bytes, import_map: dict[str, str], file_path: Optional[str] = None
 ) {
-    module: any;
-    package_dir: any;
-    submodules: any;
     if language == "python" {
         if `node.type == "import_from_statement" {
             module_node: any = `node.child_by_field_name("module_name");
             if module_node is None {
                 return;
             }
-            module = module_node.text.decode("utf-8", errors="replace");
-            package_dir = self._python_package_dir(module, file_path);
-            submodules = `set(self._python_submodule_names(`node, package_dir))
+            module: any = module_node.text.decode("utf-8", errors="replace");
+            package_dir: any = self._python_package_dir(module, file_path);
+            submodules: any = `set(self._python_submodule_names(`node, package_dir))
                 if package_dir is not None
                 else set[any]();
             if module.startswith(".") {
@@ -19928,14 +19845,13 @@ impl CodeParser._resolve_ruby_require_all_dir(module: str, file_path: str) -> Op
 }
 
 impl CodeParser._java_source_roots(file_path: str) -> tuple[Optional[Path], list[Path]] {
-    source_set: any;
     directory: any = Path(file_path).resolve().parent;
     boundary: any = self._import_repo_boundary(file_path);
     for `root in (directory, *directory.parents) {
         if not self._path_is_within(`root, boundary) {
             break;
         }
-        source_set = `root.parent;
+        source_set: any = `root.parent;
         source_dir: any = source_set.parent;
         if `root.name != "java" or source_dir.name != "src" {
             continue;
@@ -19959,7 +19875,6 @@ impl CodeParser._java_source_roots(file_path: str) -> tuple[Optional[Path], list
 }
 
 impl CodeParser._java_same_package_file(class_name: str, file_path: str) -> Optional[str] {
-    file_name: any;
     package: any;
     if not class_name.isidentifier() {
         return None;
@@ -19970,7 +19885,7 @@ impl CodeParser._java_same_package_file(class_name: str, file_path: str) -> Opti
         resolved: any = self._module_file_cache[cache_key];
     } else {
         resolved = None;
-        file_name = f"{class_name}.java";
+        file_name: any = f"{class_name}.java";
         candidates: any = [directory.resolve() / file_name];
         own_root: any;
         sibling_roots: any;
@@ -21441,15 +21356,11 @@ impl CodeParser._cpp_function_identity(
         for child in declarator.children
         if child.type in ("type_qualifier", "ref_qualifier")
     ];
-    qualifier_suffix: any = " " + format(" ".join(qualifiers), "") if qualifiers else "";
+    qualifier_suffix: any = f" {" ".join(qualifiers)}" if qualifiers else "";
     raw_params: any = parameters.text.decode("utf-8", errors="replace");
     return (
         explicit_scope,
-        format(callable_name, "")
-            + "("
-            + format(",".join(parameter_types), "")
-            + ")"
-            + format(qualifier_suffix, ""),
+        f"{callable_name}({",".join(parameter_types)}){qualifier_suffix}",
         raw_params,
     );
 }
@@ -21655,7 +21566,7 @@ impl CodeParser._get_params(`node, language: str, source: bytes) -> Optional[str
             if c.type == "parameter"
         ];
         if params {
-            return "(" + format(", ".join(params), "") + ")";
+            return f"({", ".join(params)})";
         }
     }
     return None;
@@ -22458,7 +22369,6 @@ impl CodeParser._extract_import(
 }
 
 impl CodeParser._get_call_name(`node, language: str, source: bytes) -> Optional[str] {
-    field: any;
     if not `node.children {
         return None;
     }
@@ -22475,7 +22385,7 @@ impl CodeParser._get_call_name(`node, language: str, source: bytes) -> Optional[
             callee = callee.child_by_field_name("function");
         }
         if callee is not None and callee.type == "field_expression" {
-            field = callee.child_by_field_name("field");
+            field: any = callee.child_by_field_name("field");
             if field is not None {
                 return field.text.decode("utf-8", errors="replace");
             }

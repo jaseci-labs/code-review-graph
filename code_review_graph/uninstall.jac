@@ -1,26 +1,6 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import operator;
-
-import copy;
-
-import importlib;
-
-import json;
-
-import os;
-
-import shutil;
-
-import stat;
-
-import subprocess;
-
-import sys;
-
-import tempfile;
+import builtins, operator, copy, importlib, json, os, shutil, stat, subprocess, sys, tempfile;
 
 import from dataclasses { dataclass, field }
 
@@ -28,23 +8,13 @@ import from pathlib { Path }
 
 import from typing { Any, Callable, Sequence }
 
-glob _tomllib: Any;
+glob _tomllib: Any = importlib.import_module("tomllib" if sys.version_info >= (3, 11) else "tomli");
 
-glob _ENTRY_NAME: any;
+glob _ENTRY_NAME: any = "code-review-graph";
 
-glob _GIT_HOOK_MARKER: any;
+glob _GIT_HOOK_MARKER: any = skills._GIT_HOOK_NOTE;
 
-glob _GITIGNORE_BANNER: any;
-
-glob _remove_jsonc_paths: any;
-
-with entry {
-    _tomllib = importlib.import_module("tomllib" if sys.version_info >= (3, 11) else "tomli");
-
-    _ENTRY_NAME = "code-review-graph";
-    _GIT_HOOK_MARKER = skills._GIT_HOOK_NOTE;
-    _GITIGNORE_BANNER = "# Added by code-review-graph";
-}
+glob _GITIGNORE_BANNER: any = "# Added by code-review-graph";
 
 @dataclass
 class UninstallReport {
@@ -69,9 +39,7 @@ class UninstallReport {
     }
 }
 
-with entry {
-    _remove_jsonc_paths = jsonc.remove_paths;
-}
+glob _remove_jsonc_paths: any = jsonc.remove_paths;
 
 def _absolute(path: Path) -> Path;
 

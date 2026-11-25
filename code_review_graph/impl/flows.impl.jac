@@ -422,7 +422,6 @@ impl trace_flows(
 }
 
 impl compute_criticality(`flow: dict, adj: FlowAdjacency) -> float {
-    has_tested_by: any;
     n: any;
     node_ids: list[int] = `flow.get("path", []);
     if not node_ids {
@@ -432,7 +431,7 @@ impl compute_criticality(`flow: dict, adj: FlowAdjacency) -> float {
     nodes_by_id: any = adj.nodes_by_id;
     nodes_by_qn: any = adj.nodes_by_qn;
     calls_out: any = adj.calls_out;
-    has_tested_by = adj.has_tested_by;
+    has_tested_by: any = adj.has_tested_by;
 
     nodes: list[GraphNode] = [n for nid in node_ids if (n := nodes_by_id.get(nid)) is not None];
     if not nodes {
@@ -475,7 +474,6 @@ impl compute_criticality(`flow: dict, adj: FlowAdjacency) -> float {
 }
 
 impl store_flows(store: GraphStore, flows: list[dict]) -> int {
-    flow_id: any;
     conn: any = store._conn;
 
     if conn.in_transaction {
@@ -504,7 +502,7 @@ impl store_flows(store: GraphStore, flows: list[dict]) -> int {
                     path_json,
                 ),
             );
-            flow_id = cursor.lastrowid;
+            flow_id: any = cursor.lastrowid;
             membership_rows.extend(
                 (flow_id, node_id, position) for (position, node_id) in enumerate(node_ids)
             );

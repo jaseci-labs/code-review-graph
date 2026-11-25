@@ -1,16 +1,6 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import operator;
-
-import json;
-
-import sqlite3;
-
-import subprocess;
-
-import sys;
+import importlib, operator, json, sqlite3, subprocess, sys;
 
 import from pathlib { Path }
 

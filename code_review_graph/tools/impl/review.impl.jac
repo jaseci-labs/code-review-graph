@@ -258,9 +258,6 @@ impl get_review_context(
     max_files: int = 25,
 ) -> dict[str, Any] {
     `root: any;
-    tested_qualified: any;
-    file_risk: any;
-    regions: any;
     _validate_positive_int(max_results, "max_results");
     _validate_positive_int(max_files, "max_files");
     _validate_positive_int(max_lines_per_file, "max_lines_per_file");
@@ -315,7 +312,7 @@ impl get_review_context(
                 if n.kind == "Function" and not n.is_test and not is_test_file(n.file_path, `root)
             ];
             test_edges: any = [e for e in impact["edges"] if e.kind == "TESTED_BY"];
-            tested_qualified = {e.source_qualified for e in test_edges};
+            tested_qualified: any = {e.source_qualified for e in test_edges};
             test_gap_count: any = sum(
                 1
                 for f in changed_funcs
@@ -356,7 +353,7 @@ impl get_review_context(
             return result;
         }
         nodes_by_rel: any = _nodes_by_rel_path(`root, changed_files, impact["changed_nodes"]);
-        file_risk = _risk_by_file(store, changed_files, nodes_by_rel);
+        file_risk: any = _risk_by_file(store, changed_files, nodes_by_rel);
         ranked_files: any = [
             rel
             for (_, rel) in sorted(
@@ -466,7 +463,7 @@ impl get_review_context(
                 if rel_path not in file_lines {
                     continue;
                 }
-                regions = regions_by_file.get(rel_path, []);
+                regions: any = regions_by_file.get(rel_path, []);
                 held: any = granted.get(rel_path, []);
                 have: any = len(held);
                 want: any = len(regions);
@@ -679,7 +676,6 @@ impl detect_changes_func(
     max_results: int = 25,
     max_flows: int = 20,
 ) -> dict[str, Any] {
-    lines: any;
     _validate_positive_int(max_results, "max_results");
     _validate_positive_int(max_flows, "max_flows");
 
@@ -738,7 +734,7 @@ impl detect_changes_func(
                     file_path: any = Path(fp);
                     if file_path.is_file() and path_within_repo(`root, file_path, followed) {
                         try {
-                            lines = file_path.read_text(
+                            lines: any = file_path.read_text(
                                 encoding="utf-8", errors="replace"
                             ).splitlines();
                             start: any = max(0, ls - 1);

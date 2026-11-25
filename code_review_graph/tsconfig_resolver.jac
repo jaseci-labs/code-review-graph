@@ -1,30 +1,16 @@
 import from __future__ { annotations }
 
-import builtins;
-
-import json;
-
-import logging;
-
-import os;
-
-import re;
+import builtins, json, logging, os, re;
 
 import from pathlib { Path }
 
 import from typing { Optional }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _PROBE_EXTENSIONS: any;
+glob _PROBE_EXTENSIONS: any = [".ts", ".tsx", ".js", ".jsx", ".vue", ".mts", ".cts"];
 
-glob _TSCONFIG_NAMES: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _PROBE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".vue", ".mts", ".cts"];
-    _TSCONFIG_NAMES = ["tsconfig.json", "tsconfig.app.json", "jsconfig.json"];
-}
+glob _TSCONFIG_NAMES: any = ["tsconfig.json", "tsconfig.app.json", "jsconfig.json"];
 
 obj TsconfigResolver {
     has _cache: any;

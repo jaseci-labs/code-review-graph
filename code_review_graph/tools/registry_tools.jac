@@ -1,24 +1,16 @@
 import from __future__ { annotations }
 
-import importlib;
-
-import logging;
+import importlib, logging;
 
 import from pathlib { Path }
 
 import from typing { Any }
 
-glob logger: any;
+glob logger: any = logging.getLogger(__name__);
 
-glob _MAX_CROSS_REPO_RESULTS: any;
+glob _MAX_CROSS_REPO_RESULTS: any = 100;
 
-glob _MAX_ECHOED_NAMES: any;
-
-with entry {
-    logger = logging.getLogger(__name__);
-    _MAX_CROSS_REPO_RESULTS = 100;
-    _MAX_ECHOED_NAMES = 20;
-}
+glob _MAX_ECHOED_NAMES: any = 20;
 
 def list_repos_func -> dict[str, Any];
 def _select_repos(

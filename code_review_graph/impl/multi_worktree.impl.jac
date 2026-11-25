@@ -37,12 +37,12 @@ impl _run_git(`root: Path, *args_: str) -> str {
             check=False,
         );
     } except (OSError, ValueError, subprocess.TimeoutExpired) as exc {
-        raise MultiWorktreeError("Git command failed: " + format(" ".join(args), "")) from exc;
+        raise MultiWorktreeError(f"Git command failed: {" ".join(args)}") from exc;
     }
     if result.returncode != 0 {
         detail: any = result.stderr.strip() or result.stdout.strip();
         raise MultiWorktreeError(
-            "Git command failed: " + format(" ".join(args), "") + (f" ({detail})" if detail else "")
+            f"Git command failed: {" ".join(args)}" + (f" ({detail})" if detail else "")
         );
     }
     return result.stdout.strip();
@@ -91,16 +91,7 @@ impl _listed_worktree_roots(primary_root: Path) -> set[Path] {
 
 impl WorktreeAuthorizer.init(repo_root: str | None) {
     raw_root: any = repo_root or `str(find_project_root());
-    items_: any = list(_canonical_git_identity(raw_root) as any);
-    if len(items_) != 2 {
-        raise ValueError(
-            f"too many values to unpack (expected 2, got {len(items_)})"
-                if len(items_) > 2
-                else f"not enough values to unpack (expected 2, got {len(items_)})",
-        );
-    }
-    self.primary_root = items_[0];
-    self.primary_common = items_[1];
+    (self.primary_root, self.primary_common) = (_canonical_git_identity(raw_root));
 }
 
 impl WorktreeAuthorizer.authorize(raw_root: object) -> Path {
