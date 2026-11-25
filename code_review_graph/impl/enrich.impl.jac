@@ -67,7 +67,7 @@ impl _get_flow_names_for_node(conn: Any, node_id: int) -> list[str] {
 }
 
 impl _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> list[str] {
-    GraphNode = importlib.import_module("code_review_graph.graph").GraphNode;
+    GraphNode = lazy("graph", "GraphNode");
     assert isinstance(`node, GraphNode);
 
     qn: any = `node.qualified_name;
@@ -145,8 +145,8 @@ impl _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> 
 }
 
 impl enrich_search(pattern: str, repo_root: str) -> str {
-    GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
-    _fts_search = importlib.import_module("code_review_graph.search")._fts_search;
+    GraphStore = lazy("graph", "GraphStore");
+    _fts_search = lazy("search", "_fts_search");
 
     db_path: any = Path(repo_root) / ".code-review-graph" / "graph.db";
     if not db_path.exists() {
@@ -190,7 +190,7 @@ impl enrich_search(pattern: str, repo_root: str) -> str {
 }
 
 impl enrich_file_read(file_path: str, repo_root: str) -> str {
-    GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
+    GraphStore = lazy("graph", "GraphStore");
 
     db_path: any = Path(repo_root) / ".code-review-graph" / "graph.db";
     if not db_path.exists() {
@@ -251,8 +251,8 @@ impl run_hook -> None {
         return;
     }
     cwd: any = hook_input.get("cwd", os.getcwd());
-    find_project_root = importlib.import_module("code_review_graph.incremental").find_project_root;
-    get_db_path = importlib.import_module("code_review_graph.incremental").get_db_path;
+    find_project_root = lazy("incremental", "find_project_root");
+    get_db_path = lazy("incremental", "get_db_path");
 
     repo_path: any = find_project_root(Path(cwd));
     repo_root: any = `str(repo_path);

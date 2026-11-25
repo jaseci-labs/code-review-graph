@@ -32,6 +32,8 @@ Sections:
 All of it is read from the local graph; nothing leaves the machine.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

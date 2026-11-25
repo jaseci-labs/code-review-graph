@@ -254,7 +254,7 @@ impl _migrate_v12(conn: sqlite3.Connection) -> None {
 }
 
 impl _migrate_v13(conn: sqlite3.Connection) -> None {
-    node_index_tokens = importlib.import_module("code_review_graph.graph").node_index_tokens;
+    node_index_tokens = lazy("graph", "node_index_tokens");
 
     if not _has_column(conn, "nodes", "docstring") {
         _apply(conn, "ALTER TABLE nodes ADD COLUMN docstring TEXT", what="nodes.docstring");

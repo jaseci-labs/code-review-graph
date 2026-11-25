@@ -31,6 +31,8 @@ drifted, an edge whose confidence drifted, or any row in ``flows``,
 what the snapshot cannot.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import from __future__ { annotations }

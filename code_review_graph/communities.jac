@@ -4,6 +4,8 @@ Detects communities of related code nodes using the Leiden algorithm (via igraph
 optional) with a file-based grouping fallback when igraph is not installed.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

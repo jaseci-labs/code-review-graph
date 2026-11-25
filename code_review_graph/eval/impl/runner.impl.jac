@@ -127,8 +127,8 @@ impl _embedding_count(store) -> int | None {
 }
 
 impl _build_embedding_index(store, db_path, provider: str | None, model: str | None) -> None {
-    EmbeddingStore = importlib.import_module("code_review_graph.embeddings").EmbeddingStore;
-    embed_all_nodes = importlib.import_module("code_review_graph.embeddings").embed_all_nodes;
+    EmbeddingStore = lazy("embeddings", "EmbeddingStore");
+    embed_all_nodes = lazy("embeddings", "embed_all_nodes");
 
     try {
         emb_store: any = EmbeddingStore(db_path, provider=provider, model=model);
@@ -188,10 +188,10 @@ impl run_eval(
         name: any = config["name"];
         logger.info("Evaluating %s...", name);
         repo_path: any = clone_or_update(config).resolve();
-        GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
-        full_build = importlib.import_module("code_review_graph.incremental").full_build;
-        get_db_path = importlib.import_module("code_review_graph.incremental").get_db_path;
-        run_post_processing = importlib.import_module("code_review_graph.postprocessing").run_post_processing;
+        GraphStore = lazy("graph", "GraphStore");
+        full_build = lazy("incremental", "full_build");
+        get_db_path = lazy("incremental", "get_db_path");
+        run_post_processing = lazy("postprocessing", "run_post_processing");
 
         db_path: any = get_db_path(repo_path);
         store: any = GraphStore(db_path);

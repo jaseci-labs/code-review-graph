@@ -1,5 +1,7 @@
 """Flow completeness benchmark: evaluates entry point detection and flow tracing."""
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import from __future__ { annotations }

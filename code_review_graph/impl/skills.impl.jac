@@ -225,7 +225,7 @@ impl _mimo_config_path(repo_root: Path) -> Path {
 }
 
 impl _codex_home -> Path {
-    codex_home = importlib.import_module("code_review_graph.codex_skill").codex_home;
+    codex_home = lazy("codex_skill", "codex_home");
 
     return codex_home();
 }
@@ -733,7 +733,7 @@ impl _merge_yaml_mcp_server(
 }
 
 impl _merge_dsh_patch_server(config_path: Path, server_entry: dict[str, Any]) -> bool | None {
-    dsh: any = importlib.import_module("code_review_graph.dsh");
+    dsh: any = lazy("dsh");
 
     raw: any = "";
     row: any = dsh.server_row(server_entry);
@@ -2201,7 +2201,7 @@ impl install_codex_hooks(repo_root: Path) -> Path | None {
 }
 
 impl install_codex_skill -> Path | None {
-    _install = importlib.import_module("code_review_graph.codex_skill").install_codex_skill;
+    _install = lazy("codex_skill", "install_codex_skill");
 
     return _install();
 }

@@ -6,6 +6,8 @@ the live MCP inventory from ``skills.PLATFORMS`` and treating every shared file
 as user-owned data that may only be edited surgically.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import builtins;
 
 import operator;

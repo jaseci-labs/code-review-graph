@@ -1,5 +1,7 @@
 """Tool 1: build_or_update_graph + run_postprocess."""
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

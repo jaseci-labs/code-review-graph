@@ -1,5 +1,7 @@
 """Tool: get_minimal_context — ultra-compact context for token-efficient workflows."""
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import from __future__ { annotations }

@@ -1,7 +1,7 @@
 impl _clean_build(tree: Path, db_path: Path) -> dict[str, Any] {
-    GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
-    full_build = importlib.import_module("code_review_graph.incremental").full_build;
-    _run_postprocess = importlib.import_module("code_review_graph.tools.build")._run_postprocess;
+    GraphStore = lazy("graph", "GraphStore");
+    full_build = lazy("incremental", "full_build");
+    _run_postprocess = lazy("tools.build", "_run_postprocess");
 
     store: any = GraphStore(db_path);
     try {
@@ -14,9 +14,9 @@ impl _clean_build(tree: Path, db_path: Path) -> dict[str, Any] {
 }
 
 impl _incremental_build(tree: Path, db_path: Path, base: str) -> dict[str, Any] {
-    GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
-    incremental_update = importlib.import_module("code_review_graph.incremental").incremental_update;
-    _run_postprocess = importlib.import_module("code_review_graph.tools.build")._run_postprocess;
+    GraphStore = lazy("graph", "GraphStore");
+    incremental_update = lazy("incremental", "incremental_update");
+    _run_postprocess = lazy("tools.build", "_run_postprocess");
 
     store: any = GraphStore(db_path);
     try {
@@ -227,7 +227,7 @@ impl _diff_projection(
 }
 
 impl _clean(text: str, path_prefix: str) -> str {
-    _sanitize_name = importlib.import_module("code_review_graph.graph")._sanitize_name;
+    _sanitize_name = lazy("graph", "_sanitize_name");
 
     if path_prefix {
         text = text.replace(path_prefix, "");
@@ -289,9 +289,9 @@ impl compare_graphs(
 }
 
 impl _snapshot_summary(incremental_db: Path, rebuild_db: Path) -> dict[str, Any] {
-    GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
-    diff_snapshots = importlib.import_module("code_review_graph.graph_diff").diff_snapshots;
-    take_snapshot = importlib.import_module("code_review_graph.graph_diff").take_snapshot;
+    GraphStore = lazy("graph", "GraphStore");
+    diff_snapshots = lazy("graph_diff", "diff_snapshots");
+    take_snapshot = lazy("graph_diff", "take_snapshot");
 
     left: any = GraphStore(incremental_db);
     try {

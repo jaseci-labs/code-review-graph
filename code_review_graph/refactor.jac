@@ -6,6 +6,8 @@ go through a preview-then-apply workflow with expiry enforcement and path
 traversal prevention.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import builtins;

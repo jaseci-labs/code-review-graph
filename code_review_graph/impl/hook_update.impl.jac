@@ -96,7 +96,7 @@ impl _recorded_root(db_path: Path) -> Path | None {
 }
 
 impl _has_graph(repo_root: Path) -> bool {
-    get_db_path = importlib.import_module("code_review_graph.incremental").get_db_path;
+    get_db_path = lazy("incremental", "get_db_path");
 
     try {
         db_path: any = get_db_path(repo_root, read_only=True);
@@ -172,7 +172,7 @@ impl run_update_hook(existing_only: bool = False) -> None {
 }
 
 impl _update_repo(repo_root: Path) -> None {
-    build_or_update_graph = importlib.import_module("code_review_graph.tools.build").build_or_update_graph;
+    build_or_update_graph = lazy("tools.build", "build_or_update_graph");
 
     try {
         result: any = build_or_update_graph(

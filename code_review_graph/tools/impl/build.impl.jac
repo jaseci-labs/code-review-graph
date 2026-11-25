@@ -74,7 +74,7 @@ impl _run_embedding_refresh(
         return;
     }
     try {
-        refresh_embeddings = importlib.import_module("code_review_graph.embeddings").refresh_embeddings;
+        refresh_embeddings = lazy("embeddings", "refresh_embeddings");
 
         refreshed: any = refresh_embeddings(store, provider=provider, model=model);
         if refreshed is None {
@@ -90,7 +90,7 @@ impl _run_embedding_refresh(
 }
 
 impl _report_refresh_skipped(result: dict[str, Any], warnings: list[str]) -> None {
-    REFRESH_SKIPPED_WARNING = importlib.import_module("code_review_graph.embeddings").REFRESH_SKIPPED_WARNING;
+    REFRESH_SKIPPED_WARNING = lazy("embeddings", "REFRESH_SKIPPED_WARNING");
 
     logger.warning(REFRESH_SKIPPED_WARNING);
     warnings.append(REFRESH_SKIPPED_WARNING);
@@ -221,8 +221,8 @@ impl _run_postprocess(
 
     stage_started = time.perf_counter();
     try {
-        rebuild_fts_index = importlib.import_module("code_review_graph.search").rebuild_fts_index;
-        update_fts_index = importlib.import_module("code_review_graph.search").update_fts_index;
+        rebuild_fts_index = lazy("search", "rebuild_fts_index");
+        update_fts_index = lazy("search", "update_fts_index");
 
         if full_rebuild {
             build_result["fts_indexed"] = rebuild_fts_index(store);
@@ -257,14 +257,14 @@ impl _run_postprocess(
         if noop_incremental {
             count: any = 0;
         } elif use_incremental {
-            incremental_trace_flows = importlib.import_module("code_review_graph.flows").incremental_trace_flows;
+            incremental_trace_flows = lazy("flows", "incremental_trace_flows");
 
             count = incremental_trace_flows(
                 store, changed_files or [], repo_root=repo_root, entry_point_qns=entry_point_qns
             );
         } else {
-            _store_flows = importlib.import_module("code_review_graph.flows").store_flows;
-            _trace_flows = importlib.import_module("code_review_graph.flows").trace_flows;
+            _store_flows = lazy("flows", "store_flows");
+            _trace_flows = lazy("flows", "trace_flows");
 
             flows: any = _trace_flows(store);
             count = _store_flows(store, flows);
@@ -282,14 +282,14 @@ impl _run_postprocess(
         if noop_incremental {
             count = store._conn.execute("SELECT COUNT(*) FROM communities").fetchone()[0];
         } elif use_incremental {
-            incremental_detect_communities = importlib.import_module("code_review_graph.communities").incremental_detect_communities;
+            incremental_detect_communities = lazy("communities", "incremental_detect_communities");
 
             count = incremental_detect_communities(
                 store, changed_files or [], repo_root=repo_root, force=communities_were_affected
             );
         } else {
-            _detect_communities = importlib.import_module("code_review_graph.communities").detect_communities;
-            _store_communities = importlib.import_module("code_review_graph.communities").store_communities;
+            _detect_communities = lazy("communities", "detect_communities");
+            _store_communities = lazy("communities", "store_communities");
 
             comms: any = _detect_communities(store);
             count = _store_communities(store, comms);
@@ -434,7 +434,7 @@ impl build_or_update_graph(
                         "postprocess_level": postprocess,
                     };
                     if embedding_provider and embedding_model {
-                        has_embeddings = importlib.import_module("code_review_graph.embeddings").has_embeddings;
+                        has_embeddings = lazy("embeddings", "has_embeddings");
 
                         if not has_embeddings(store) {
                             noop_warnings: list[str] = [];
@@ -476,7 +476,7 @@ impl build_or_update_graph(
                 }
                 build_result["repaired_interrupted_build"] = interrupted;
                 if not pending and embedding_provider and embedding_model {
-                    has_embeddings = importlib.import_module("code_review_graph.embeddings").has_embeddings;
+                    has_embeddings = lazy("embeddings", "has_embeddings");
 
                     if not has_embeddings(store) {
                         embedding_warnings: list[str] = [];
@@ -660,7 +660,7 @@ impl run_postprocess(
 
         if fts {
             try {
-                rebuild_fts_index = importlib.import_module("code_review_graph.search").rebuild_fts_index;
+                rebuild_fts_index = lazy("search", "rebuild_fts_index");
 
                 fts_count: any = rebuild_fts_index(store);
                 result["fts_indexed"] = fts_count;
@@ -674,8 +674,8 @@ impl run_postprocess(
 
         if flows {
             try {
-                _store_flows = importlib.import_module("code_review_graph.flows").store_flows;
-                _trace_flows = importlib.import_module("code_review_graph.flows").trace_flows;
+                _store_flows = lazy("flows", "store_flows");
+                _trace_flows = lazy("flows", "trace_flows");
 
                 traced: any = _trace_flows(store);
                 count: any = _store_flows(store, traced);
@@ -690,8 +690,8 @@ impl run_postprocess(
 
         if communities {
             try {
-                _detect_communities = importlib.import_module("code_review_graph.communities").detect_communities;
-                _store_communities = importlib.import_module("code_review_graph.communities").store_communities;
+                _detect_communities = lazy("communities", "detect_communities");
+                _store_communities = lazy("communities", "store_communities");
 
                 comms: any = _detect_communities(store);
                 count = _store_communities(store, comms);

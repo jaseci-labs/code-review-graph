@@ -5,12 +5,12 @@ impl _process_already_gone(error: OSError) -> bool {
 
 impl _handle_start(args: argparse.Namespace) -> None {
     import from code_review_graph.daemon { DaemonAlreadyRunningError }
-    WatchDaemon = importlib.import_module("code_review_graph.daemon").WatchDaemon;
-    claim_daemon_lock = importlib.import_module("code_review_graph.daemon").claim_daemon_lock;
-    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
-    load_config = importlib.import_module("code_review_graph.daemon").load_config;
-    reap_orphaned_watchers = importlib.import_module("code_review_graph.daemon").reap_orphaned_watchers;
-    write_pid = importlib.import_module("code_review_graph.daemon").write_pid;
+    WatchDaemon = lazy("daemon", "WatchDaemon");
+    claim_daemon_lock = lazy("daemon", "claim_daemon_lock");
+    is_daemon_running = lazy("daemon", "is_daemon_running");
+    load_config = lazy("daemon", "load_config");
+    reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
+    write_pid = lazy("daemon", "write_pid");
 
     if is_daemon_running() {
         print("Error: Daemon is already running.");
@@ -54,11 +54,11 @@ impl _handle_start(args: argparse.Namespace) -> None {
 }
 
 impl _handle_stop(_args: argparse.Namespace) -> None {
-    clear_pid = importlib.import_module("code_review_graph.daemon").clear_pid;
-    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
-    pid_alive = importlib.import_module("code_review_graph.daemon").pid_alive;
-    read_pid = importlib.import_module("code_review_graph.daemon").read_pid;
-    reap_orphaned_watchers = importlib.import_module("code_review_graph.daemon").reap_orphaned_watchers;
+    clear_pid = lazy("daemon", "clear_pid");
+    is_daemon_running = lazy("daemon", "is_daemon_running");
+    pid_alive = lazy("daemon", "pid_alive");
+    read_pid = lazy("daemon", "read_pid");
+    reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
 
     if not is_daemon_running() {
         reaped: any = reap_orphaned_watchers();
@@ -147,7 +147,7 @@ impl _handle_stop(_args: argparse.Namespace) -> None {
 }
 
 impl _reap_watchers_left_behind -> None {
-    reap_orphaned_watchers = importlib.import_module("code_review_graph.daemon").reap_orphaned_watchers;
+    reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
 
     for orphan in reap_orphaned_watchers() {
         print(
@@ -161,7 +161,7 @@ impl _reap_watchers_left_behind -> None {
 }
 
 impl _handle_restart(args: argparse.Namespace) -> None {
-    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
+    is_daemon_running = lazy("daemon", "is_daemon_running");
 
     if is_daemon_running() {
         _handle_stop(args);
@@ -191,14 +191,14 @@ impl _format_age(seconds: float | None) -> str {
 
 impl _handle_status(_args: argparse.Namespace) -> None {
     orphan: any;
-    find_orphaned_watchers = importlib.import_module("code_review_graph.daemon").find_orphaned_watchers;
-    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
-    load_config = importlib.import_module("code_review_graph.daemon").load_config;
-    load_state = importlib.import_module("code_review_graph.daemon").load_state;
-    pid_alive = importlib.import_module("code_review_graph.daemon").pid_alive;
-    read_pid = importlib.import_module("code_review_graph.daemon").read_pid;
-    read_watch_health = importlib.import_module("code_review_graph.daemon").read_watch_health;
-    watcher_status = importlib.import_module("code_review_graph.daemon").watcher_status;
+    find_orphaned_watchers = lazy("daemon", "find_orphaned_watchers");
+    is_daemon_running = lazy("daemon", "is_daemon_running");
+    load_config = lazy("daemon", "load_config");
+    load_state = lazy("daemon", "load_state");
+    pid_alive = lazy("daemon", "pid_alive");
+    read_pid = lazy("daemon", "read_pid");
+    read_watch_health = lazy("daemon", "read_watch_health");
+    watcher_status = lazy("daemon", "watcher_status");
 
     config: any = load_config();
     running: any = is_daemon_running();
@@ -347,7 +347,7 @@ impl _handle_status(_args: argparse.Namespace) -> None {
 }
 
 impl _handle_logs(args: argparse.Namespace) -> None {
-    load_config = importlib.import_module("code_review_graph.daemon").load_config;
+    load_config = lazy("daemon", "load_config");
 
     config: any = load_config();
 
@@ -384,8 +384,8 @@ impl _handle_logs(args: argparse.Namespace) -> None {
 }
 
 impl _handle_add(args: argparse.Namespace) -> None {
-    add_repo_to_config = importlib.import_module("code_review_graph.daemon").add_repo_to_config;
-    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
+    add_repo_to_config = lazy("daemon", "add_repo_to_config");
+    is_daemon_running = lazy("daemon", "is_daemon_running");
 
     try {
         add_repo_to_config(args.path, alias=args.alias);
@@ -402,9 +402,9 @@ impl _handle_add(args: argparse.Namespace) -> None {
 }
 
 impl _handle_remove(args: argparse.Namespace) -> None {
-    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
-    load_config = importlib.import_module("code_review_graph.daemon").load_config;
-    remove_repo_from_config = importlib.import_module("code_review_graph.daemon").remove_repo_from_config;
+    is_daemon_running = lazy("daemon", "is_daemon_running");
+    load_config = lazy("daemon", "load_config");
+    remove_repo_from_config = lazy("daemon", "remove_repo_from_config");
 
     config_before: any = load_config();
     count_before: any = len(config_before.repos);

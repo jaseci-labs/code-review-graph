@@ -17,6 +17,8 @@ This module extracts that pipeline so every entry point — MCP tool, CLI
 commands, and watch mode — produces identical results.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import from __future__ { annotations }

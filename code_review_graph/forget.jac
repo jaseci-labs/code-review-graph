@@ -17,6 +17,8 @@ bare endpoints), and purges embedding vectors whose node is gone. The result is
 equivalent to building the graph without the forgotten files.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import from __future__ { annotations }

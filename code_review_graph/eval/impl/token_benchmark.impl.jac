@@ -3,8 +3,8 @@ impl estimate_tokens(`obj: Any) -> int {
 }
 
 impl benchmark_review_workflow(repo_root: str, base: str = "HEAD~1") -> dict {
-    get_minimal_context = importlib.import_module("code_review_graph.tools.context").get_minimal_context;
-    detect_changes_func = importlib.import_module("code_review_graph.tools.review").detect_changes_func;
+    get_minimal_context = lazy("tools.context", "get_minimal_context");
+    detect_changes_func = lazy("tools.review", "detect_changes_func");
 
     total_tokens: any = 0;
     calls: any = [];
@@ -26,9 +26,9 @@ impl benchmark_review_workflow(repo_root: str, base: str = "HEAD~1") -> dict {
 }
 
 impl benchmark_architecture_workflow(repo_root: str) -> dict {
-    list_communities_func = importlib.import_module("code_review_graph.tools.community_tools").list_communities_func;
-    get_minimal_context = importlib.import_module("code_review_graph.tools.context").get_minimal_context;
-    list_flows = importlib.import_module("code_review_graph.tools.flows_tools").list_flows;
+    list_communities_func = lazy("tools.community_tools", "list_communities_func");
+    get_minimal_context = lazy("tools.context", "get_minimal_context");
+    list_flows = lazy("tools.flows_tools", "list_flows");
 
     total_tokens: any = 0;
     calls: any = [];
@@ -57,8 +57,8 @@ impl benchmark_architecture_workflow(repo_root: str) -> dict {
 }
 
 impl benchmark_debug_workflow(repo_root: str) -> dict {
-    get_minimal_context = importlib.import_module("code_review_graph.tools.context").get_minimal_context;
-    semantic_search_nodes = importlib.import_module("code_review_graph.tools.query").semantic_search_nodes;
+    get_minimal_context = lazy("tools.context", "get_minimal_context");
+    semantic_search_nodes = lazy("tools.query", "semantic_search_nodes");
 
     total_tokens: any = 0;
     calls: any = [];
@@ -82,8 +82,8 @@ impl benchmark_debug_workflow(repo_root: str) -> dict {
 }
 
 impl benchmark_onboard_workflow(repo_root: str) -> dict {
-    get_minimal_context = importlib.import_module("code_review_graph.tools.context").get_minimal_context;
-    list_graph_stats = importlib.import_module("code_review_graph.tools.query").list_graph_stats;
+    get_minimal_context = lazy("tools.context", "get_minimal_context");
+    list_graph_stats = lazy("tools.query", "list_graph_stats");
 
     total_tokens: any = 0;
     calls: any = [];
@@ -107,8 +107,8 @@ impl benchmark_onboard_workflow(repo_root: str) -> dict {
 }
 
 impl benchmark_pre_merge_workflow(repo_root: str, base: str = "HEAD~1") -> dict {
-    get_minimal_context = importlib.import_module("code_review_graph.tools.context").get_minimal_context;
-    detect_changes_func = importlib.import_module("code_review_graph.tools.review").detect_changes_func;
+    get_minimal_context = lazy("tools.context", "get_minimal_context");
+    detect_changes_func = lazy("tools.review", "detect_changes_func");
 
     total_tokens: any = 0;
     calls: any = [];

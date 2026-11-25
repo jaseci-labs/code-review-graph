@@ -8,6 +8,8 @@ endpoint cannot be driven cross-origin (e.g. via DNS rebinding); see
 ``code_review_graph.http_origin_guard``.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

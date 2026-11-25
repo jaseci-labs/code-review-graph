@@ -442,7 +442,7 @@ impl _embedding_search(
         return [];
     }
     try {
-        EmbeddingStore = importlib.import_module("code_review_graph.embeddings").EmbeddingStore;
+        EmbeddingStore = lazy("embeddings", "EmbeddingStore");
     } except ImportError {
         return [];
     }

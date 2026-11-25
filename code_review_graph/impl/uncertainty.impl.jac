@@ -83,7 +83,7 @@ impl _confirmed_note(target: str, current: bool) -> str {
 }
 
 impl _live_git_head(`root: Path) -> str | None {
-    _read_live_git_head = importlib.import_module("code_review_graph.tools._common")._read_live_git_head;
+    _read_live_git_head = lazy("tools._common", "_read_live_git_head");
 
     return _read_live_git_head(`root);
 }

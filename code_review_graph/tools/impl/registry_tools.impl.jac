@@ -1,5 +1,5 @@
 impl list_repos_func -> dict[str, Any] {
-    Registry = importlib.import_module("code_review_graph.registry").Registry;
+    Registry = lazy("registry", "Registry");
 
     try {
         registry: any = Registry();
@@ -59,7 +59,7 @@ impl cross_repo_search_func(
     max_results: int = 50,
     repos: list[str] | None = None,
 ) -> dict[str, Any] {
-    Registry = importlib.import_module("code_review_graph.registry").Registry;
+    Registry = lazy("registry", "Registry");
 
     _validate_positive_int(limit, "limit");
     _validate_positive_int(max_results, "max_results");

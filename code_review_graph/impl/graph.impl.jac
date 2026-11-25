@@ -336,7 +336,7 @@ impl _assert_usable_database(conn: sqlite3.Connection, db_path: Path) -> None {
 
     version: any = get_schema_version(conn);
     if version > LATEST_VERSION {
-        __version__ = importlib.import_module("code_review_graph").__version__;
+        __version__ = lazy("", "__version__");
 
         `here: any = Path(__file__).resolve().parent;
         raise GraphStoreError(
@@ -870,7 +870,7 @@ impl GraphStore._stored_identity_candidates(qualified_name: str) -> list[str] {
 impl GraphStore._resolve_edge_identities(
     `edge: EdgeInfo, local_prefix: str | None = None, cache: dict[str, list[str]] | None = None
 ) -> EdgeInfo {
-    EdgeInfo = importlib.import_module("code_review_graph.parser").EdgeInfo;
+    EdgeInfo = lazy("parser", "EdgeInfo");
     called: any = 1
         if `edge.kind in _COLLISION_CALL_KINDS
         else 0 if `edge.kind == "TESTED_BY" else None;
@@ -1316,7 +1316,7 @@ impl GraphStore._align_edge_with_collisions(
     `edge: EdgeInfo, collisions: dict[str, list[tuple[int, int, str]]]
 ) -> EdgeInfo {
     source: any;
-    EdgeInfo = importlib.import_module("code_review_graph.parser").EdgeInfo;
+    EdgeInfo = lazy("parser", "EdgeInfo");
 
     if `edge.kind == "TESTED_BY" {
         call: any = self._align_edge_with_collisions(
@@ -1873,7 +1873,7 @@ impl GraphStore._get_test_helper_routes(
     seeds: list[str], max_depth: int, max_callers: int, repo_root: str | None
 ) -> dict[str, dict[str, Any]] {
     origins: any;
-    is_test_file = importlib.import_module("code_review_graph.parser").is_test_file;
+    is_test_file = lazy("parser", "is_test_file");
 
     routes: dict[str, dict[str, Any]] = {};
     frontier: any = {qn: {qn} for qn in seeds if "::" in qn};
@@ -2023,7 +2023,7 @@ impl GraphStore.get_caller_test_routes(
         if not callers {
             break;
         }
-        is_test_file = importlib.import_module("code_review_graph.parser").is_test_file;
+        is_test_file = lazy("parser", "is_test_file");
 
         caller_names: any = sorted(callers);
         for start in range(0, len(caller_names), 450) {
@@ -4606,7 +4606,7 @@ impl edge_to_dict(e: GraphEdge) -> dict {
 
 impl __getattr__(name: str) -> Any {
     if name in ("EdgeInfo", "NodeInfo", "is_test_file") {
-        val: any = getattr(importlib.import_module("code_review_graph.parser"), name);
+        val: any = getattr(lazy("parser"), name);
         globals()[name] = val;
         return val;
     }

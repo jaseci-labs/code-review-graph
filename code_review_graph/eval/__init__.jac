@@ -4,6 +4,8 @@ Provides scoring metrics (token efficiency, MRR, precision/recall),
 benchmark runners, and report generators for benchmarking graph-based code reviews.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import from __future__ { annotations }
 
 import importlib;

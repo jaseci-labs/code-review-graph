@@ -18488,7 +18488,7 @@ impl CodeParser._compute_path_is_indexed(path: Path, boundary: Path) -> bool {
     if patterns is None {
         return True;
     }
-    _should_ignore = importlib.import_module("code_review_graph.incremental")._should_ignore;
+    _should_ignore = lazy("incremental", "_should_ignore");
 
     return not _should_ignore(relative, patterns);
 }
@@ -18499,7 +18499,7 @@ impl CodeParser._ignore_patterns(boundary: Path) -> Optional[list[str]] {
         return self._ignore_patterns_cache[key];
     }
     try {
-        _load_ignore_patterns = importlib.import_module("code_review_graph.incremental")._load_ignore_patterns;
+        _load_ignore_patterns = lazy("incremental", "_load_ignore_patterns");
 
         patterns: Optional[list[str]] = _load_ignore_patterns(boundary);
     } except Exception {

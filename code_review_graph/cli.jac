@@ -26,6 +26,8 @@ Usage:
     code-review-graph daemon remove <path_or_alias>
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

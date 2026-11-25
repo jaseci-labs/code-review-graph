@@ -31,6 +31,8 @@ gives the same answer given the seeds, every edge touching a node it could keep,
 and the graph-wide totals.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import builtins;

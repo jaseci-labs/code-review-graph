@@ -7,6 +7,8 @@ while it edits a linked worktree; in each case the right graph is the one next
 to the file (#311).
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

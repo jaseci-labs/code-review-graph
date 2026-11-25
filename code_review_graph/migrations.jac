@@ -17,6 +17,8 @@ write lock is retried rather than raised, because a migration is a handful of
 statements and the other process is about to finish.
 """
 
+import from code_review_graph._lazy { lazy }
+
 import importlib;
 
 import operator;

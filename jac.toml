@@ -201,6 +201,7 @@ dev = [
 files = [
     "code_review_graph/__init__.jac",
     "code_review_graph/__main__.jac",
+    "code_review_graph/_lazy.jac",
     "code_review_graph/_legacy_instructions.jac",
     "code_review_graph/analysis.jac",
     "code_review_graph/aop_resolver.jac",
@@ -304,6 +305,13 @@ files = [
     "code_review_graph/visualization.jac",
     "code_review_graph/wiki.jac",
     "code_review_graph/workspace_resolver.jac",
+    "code_review_graph/_bundled_skills/build-graph/SKILL.md",
+    "code_review_graph/_bundled_skills/debug-issue/SKILL.md",
+    "code_review_graph/_bundled_skills/explore-codebase/SKILL.md",
+    "code_review_graph/_bundled_skills/refactor-safely/SKILL.md",
+    "code_review_graph/_bundled_skills/review-changes/SKILL.md",
+    "code_review_graph/_bundled_skills/review-delta/SKILL.md",
+    "code_review_graph/_bundled_skills/review-pr/SKILL.md",
 ]
 
 [test.pypi."."]

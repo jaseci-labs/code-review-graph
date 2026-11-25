@@ -299,6 +299,15 @@ impl removal_ranges(tokens: Sequence[Token], path: Sequence[str | int]) -> list[
     return [(start, end)];
 }
 
+impl _in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool {
+    for (lo, hi) in ranges {
+        if lo <= position and position < hi {
+            return True;
+        }
+    }
+    return False;
+}
+
 impl remove_paths(raw: str, paths: Iterable[Sequence[str | int]]) -> str {
     offset: any;
     tokens: any = tokenize(raw);
@@ -325,14 +334,7 @@ impl remove_paths(raw: str, paths: Iterable[Sequence[str | int]]) -> str {
         for (index, token) in enumerate(tokens[:-1])
         if token.kind == "," and tokens[index + 1].kind in ("}", "]")
     };
-    surviving: any = [
-        token
-        for token in tokens
-        if not `any(
-            operator.le(lo, compared_ := token.start) and operator.lt(compared_, hi)
-            for (lo, hi) in merged,
-        )
-    ];
+    surviving: any = [token for token in tokens if not _in_ranges(token.start, merged)];
     exposed: any = [
         token.start
         for (index, token) in enumerate(surviving[:-1])

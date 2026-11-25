@@ -1,5 +1,5 @@
 impl derive_search_terms(question: str) -> list[str] {
-    extract_query_identifiers = importlib.import_module("code_review_graph.search").extract_query_identifiers;
+    extract_query_identifiers = lazy("search", "extract_query_identifiers");
 
     terms: list[str] = [];
     seen: set[str] = set[any]();
@@ -97,7 +97,7 @@ impl run(repo_path: Path, store, config: dict) -> list[dict] {
         };
 
         try {
-            hybrid_search = importlib.import_module("code_review_graph.search").hybrid_search;
+            hybrid_search = lazy("search", "hybrid_search");
             hits: any = hybrid_search(
                 store,
                 question,

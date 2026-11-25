@@ -64,6 +64,8 @@ def object_members(tokens: Sequence[Token], index: int) -> list[Member];
 def array_elements(tokens: Sequence[Token], index: int) -> list[Element];
 def find_value(tokens: Sequence[Token], path: Sequence[str | int]) -> int;
 def removal_ranges(tokens: Sequence[Token], path: Sequence[str | int]) -> list[tuple[int, int]];
+def _in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool;
+
 def remove_paths(raw: str, paths: Iterable[Sequence[str | int]]) -> str;
 def _column_of(raw: str, offset: int) -> int;
 def _line_indent(raw: str, offset: int) -> int;

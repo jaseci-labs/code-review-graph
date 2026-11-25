@@ -224,7 +224,7 @@ impl _get_file_call_edges(store, file_path: str) -> any {
     rows: any = conn.execute(
         "SELECT * FROM edges WHERE file_path = ? AND kind = 'CALLS'", (file_path,)
     ).fetchall();
-    GraphEdge = importlib.import_module("code_review_graph.graph").GraphEdge;
+    GraphEdge = lazy("graph", "GraphEdge");
     return [
         GraphEdge(
             id=r["id"],

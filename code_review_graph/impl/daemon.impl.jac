@@ -809,7 +809,7 @@ impl WatchDaemon.init(config: DaemonConfig | None = None, config_path: Path | No
 
 impl WatchDaemon.start -> None {
     logger.info("Starting daemon '%s'", self._config.session_name);
-    Registry = importlib.import_module("code_review_graph.registry").Registry;
+    Registry = lazy("registry", "Registry");
 
     registry: any = Registry();
     repo: any;
@@ -876,7 +876,7 @@ impl WatchDaemon.reconcile(new_config: DaemonConfig | None = None) -> None {
         if desired[alias].path != self._current_repos[alias].path
     };
     if to_add or to_update {
-        Registry = importlib.import_module("code_review_graph.registry").Registry;
+        Registry = lazy("registry", "Registry");
 
         registry: any = Registry();
 
