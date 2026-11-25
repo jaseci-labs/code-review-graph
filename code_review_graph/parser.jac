@@ -8895,10 +8895,11 @@ class CodeParser(builtins.object) {
         def `visit(
             `node, owner_class: Optional[str] = None, in_function: bool = False, depth: int = 0
         ) -> any {
+            node_type: any = `node.type;
             if depth > self._MAX_AST_DEPTH {
                 return;
             }
-            if `node.type == "class_definition" {
+            if node_type == "class_definition" {
                 name_node: any = `node.child_by_field_name("name");
                 nested_class: any = name_node.text.decode("utf-8", errors="replace")
                     if name_node is not None
@@ -8915,7 +8916,7 @@ class CodeParser(builtins.object) {
                 }
                 return;
             }
-            if `node.type == "function_definition" {
+            if node_type == "function_definition" {
                 if owner_class and not in_function {
                     name_node = `node.child_by_field_name("name");
                     if name_node is not None
