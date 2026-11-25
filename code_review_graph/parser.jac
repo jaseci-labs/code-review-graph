@@ -4167,145 +4167,44 @@ class CodeParser(builtins.object) {
         return (nodes, edges);
     }
 
+    def _add_tested_by(nodes: list[NodeInfo], edges: list[EdgeInfo]) {
+        test_qnames: any = {
+            self._qualify(n.name, n.file_path, n.parent_name)
+            for n in nodes
+            if n.is_test
+        };
+        for `edge in `list(edges) {
+            if `edge.kind == "CALLS" and `edge.source in test_qnames {
+                edges.append(
+                    EdgeInfo(
+                        kind="TESTED_BY",
+                        source=`edge.target,
+                        target=`edge.source,
+                        file_path=`edge.file_path,
+                        line=`edge.line,
+                    ),
+                );
+            }
+        }
+    }
+
     def _parse_vue(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-        vue_parser: any = self._get_parser("vue");
-        if not vue_parser {
-            return ([], []);
-        }
-
-        tree: any = vue_parser.parse(source);
-        file_path_str: any = normalize_file_path(path);
-        test_file: any = self._is_test_path(file_path_str);
-
-        all_nodes: list[NodeInfo] = [
-            NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
-                language="vue",
-                is_test=test_file,
-            ),
-        ];
-        all_edges: list[EdgeInfo] = [];
-        for child in tree.root_node.children {
-            if child.type != "script_element" {
-                continue;
-            }
-            script_lang: any = "javascript";
-            start_tag: any = None;
-            raw_text_node: any = None;
-            for sub in child.children {
-                if sub.type == "start_tag" {
-                    start_tag = sub;
-                } elif sub.type == "raw_text" {
-                    raw_text_node = sub;
-                }
-            }
-
-            if start_tag {
-                for attr in start_tag.children {
-                    if attr.type == "attribute" {
-                        attr_name: any = None;
-                        attr_value: any = None;
-                        for a in attr.children {
-                            if a.type == "attribute_name" {
-                                attr_name = a.text.decode("utf-8", errors="replace");
-                            } elif a.type == "quoted_attribute_value" {
-                                for v in a.children {
-                                    if v.type == "attribute_value" {
-                                        attr_value = v.text.decode("utf-8", errors="replace");
-                                    }
-                                }
-                            }
-                        }
-                        if attr_name == "lang" and attr_value in ("ts", "typescript") {
-                            script_lang = "typescript";
-                        }
-                    }
-                }
-            }
-
-            if not raw_text_node {
-                continue;
-            }
-
-            script_source: any = raw_text_node.text;
-            line_offset: any = raw_text_node.start_point[0];
-            script_parser: any = self._get_parser(script_lang);
-            if not script_parser {
-                continue;
-            }
-
-            script_tree: any = script_parser.parse(script_source);
-            import_map: any;
-            defined_names: any;
-            (import_map, defined_names) = self._collect_file_scope(
-                script_tree.root_node, script_lang, script_source, file_path_str
-            ) as any;
-
-            nodes: list[NodeInfo] = [];
-            edges: list[EdgeInfo] = [];
-            self._extract_from_tree(
-                script_tree.root_node,
-                script_source,
-                script_lang,
-                file_path_str,
-                nodes,
-                edges,
-                import_map=import_map,
-                defined_names=defined_names,
-            );
-            for `node in nodes {
-                `node.line_start += line_offset;
-                `node.line_end += line_offset;
-                `node.language = "vue";
-            }
-            `edge: any;
-            for `edge in edges {
-                `edge.line += line_offset;
-            }
-
-            all_nodes.extend(nodes);
-            all_edges.extend(edges);
-        }
-        if test_file {
-            test_qnames: any = set[any]();
-            for n in all_nodes {
-                if n.is_test {
-                    qn: any = self._qualify(n.name, n.file_path, n.parent_name);
-                    test_qnames.add(qn);
-                }
-            }
-            for `edge in `list(all_edges) {
-                if `edge.kind == "CALLS" and `edge.source in test_qnames {
-                    all_edges.append(
-                        EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
-                        ),
-                    );
-                }
-            }
-        }
-
-        return (all_nodes, all_edges);
+        return self._parse_sfc(path, source, "vue");
     }
 
     def _parse_svelte(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
-        svelte_parser: any = self._get_parser("svelte");
-        if not svelte_parser {
-            svelte_parser = self._get_parser("vue");
-        }
-        if not svelte_parser {
+        return self._parse_sfc(path, source, "svelte");
+    }
+
+    def _parse_sfc(
+        path: Path, source: bytes, language: str
+    ) -> tuple[list[NodeInfo], list[EdgeInfo]] {
+        sfc_parser: any = self._get_parser(language) or self._get_parser("vue");
+        if not sfc_parser {
             return ([], []);
         }
 
-        tree: any = svelte_parser.parse(source);
+        tree: any = sfc_parser.parse(source);
         file_path_str: any = normalize_file_path(path);
         test_file: any = self._is_test_path(file_path_str);
 
@@ -4316,7 +4215,7 @@ class CodeParser(builtins.object) {
                 file_path=file_path_str,
                 line_start=1,
                 line_end=source.count(b"\n") + 1,
-                language="svelte",
+                language=language,
                 is_test=test_file,
             ),
         ];
@@ -4325,7 +4224,6 @@ class CodeParser(builtins.object) {
             if child.type != "script_element" {
                 continue;
             }
-
             script_lang: any = "javascript";
             start_tag: any = None;
             raw_text_node: any = None;
@@ -4366,7 +4264,6 @@ class CodeParser(builtins.object) {
 
             script_source: any = raw_text_node.text;
             line_offset: any = raw_text_node.start_point[0];
-
             script_parser: any = self._get_parser(script_lang);
             if not script_parser {
                 continue;
@@ -4391,11 +4288,10 @@ class CodeParser(builtins.object) {
                 import_map=import_map,
                 defined_names=defined_names,
             );
-
             for `node in nodes {
                 `node.line_start += line_offset;
                 `node.line_end += line_offset;
-                `node.language = "svelte";
+                `node.language = language;
             }
             `edge: any;
             for `edge in edges {
@@ -4406,26 +4302,7 @@ class CodeParser(builtins.object) {
             all_edges.extend(edges);
         }
         if test_file {
-            test_qnames: any = set[any]();
-            for n in all_nodes {
-                if n.is_test {
-                    qn: any = self._qualify(n.name, n.file_path, n.parent_name);
-                    test_qnames.add(qn);
-                }
-            }
-            for `edge in `list(all_edges) {
-                if `edge.kind == "CALLS" and `edge.source in test_qnames {
-                    all_edges.append(
-                        EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
-                        ),
-                    );
-                }
-            }
+            self._add_tested_by(all_nodes, all_edges);
         }
 
         return (all_nodes, all_edges);
@@ -5239,26 +5116,7 @@ class CodeParser(builtins.object) {
             }
         }
         if test_file {
-            test_qnames: any = set[any]();
-            for n in all_nodes {
-                if n.is_test {
-                    qn: any = self._qualify(n.name, n.file_path, n.parent_name);
-                    test_qnames.add(qn);
-                }
-            }
-            for `edge in `list(all_edges) {
-                if `edge.kind == "CALLS" and `edge.source in test_qnames {
-                    all_edges.append(
-                        EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
-                        ),
-                    );
-                }
-            }
+            self._add_tested_by(all_nodes, all_edges);
         }
 
         return (all_nodes, all_edges);
@@ -6505,26 +6363,7 @@ class CodeParser(builtins.object) {
         edges = self._resolve_call_targets(nodes, edges, file_path_str);
 
         if test_file {
-            test_qnames: any = set[any]();
-            for n in nodes {
-                if n.is_test {
-                    qn: any = self._qualify(n.name, n.file_path, n.parent_name);
-                    test_qnames.add(qn);
-                }
-            }
-            for `edge in `list(edges) {
-                if `edge.kind == "CALLS" and `edge.source in test_qnames {
-                    edges.append(
-                        EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
-                        ),
-                    );
-                }
-            }
+            self._add_tested_by(nodes, edges);
         }
 
         return (nodes, edges);
