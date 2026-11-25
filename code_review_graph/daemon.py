@@ -199,30 +199,22 @@ class _WindowsJob:
 
 @dataclass
 class WatchRepo:
-    """A single repository to watch."""
 
     path: str
-    """Resolved absolute path to the repository root."""
 
     alias: str
-    """Short name for this repo (derived from directory name when not specified)."""
 
 
 @dataclass
 class DaemonConfig:
-    """Top-level daemon configuration."""
 
     session_name: str = "crg-watch"
-    """Logical daemon name (used in log messages and status output)."""
 
     log_dir: Path = field(default_factory=default_log_dir)
-    """Directory for per-repo log files."""
 
     poll_interval: int = 2
-    """Seconds between file-system polls for config changes."""
 
     repos: list[WatchRepo] = field(default_factory=list)
-    """Repositories the daemon watches."""
 
 
 # ---------------------------------------------------------------------------
@@ -498,7 +490,8 @@ class DaemonAlreadyRunningError(RuntimeError):
         self.pid = pid
         self.lock_path = lock_path
         holder = f"PID {pid}" if pid is not None else "an unrecorded PID"
-        super().__init__(
+        RuntimeError.__init__(
+            self,
             f"another code-review-graph daemon ({holder}) holds {lock_path}"
         )
 

@@ -11,6 +11,7 @@ Supports multiple providers:
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import heapq
 import logging
@@ -207,9 +208,10 @@ class GoogleEmbeddingProvider(EmbeddingProvider):
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i + batch_size]
             response = self._call_with_retry(
-                lambda b=batch: self._client.models.embed_content(
+                functools.partial(
+                    self._client.models.embed_content,
                     model=self.model,
-                    contents=b,
+                    contents=batch,
                     config={"task_type": "RETRIEVAL_DOCUMENT"},
                 )
             )

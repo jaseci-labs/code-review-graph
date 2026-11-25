@@ -2843,7 +2843,9 @@ _NO_GRAMMAR_LANGUAGES = frozenset({"rescript", "vbnet", "yaml", "properties"})
 def _prewarm_parser_probes(parser: Any, rel_paths: list[str]) -> None:
     """Pre-warm grammar load probes concurrently before spawning worker pool."""
     try:
-        from . import parser as parser_mod
+        import importlib
+
+        parser_mod = importlib.import_module("code_review_graph.parser")
     except Exception:
         return
     probe_fn = getattr(parser_mod, "_parser_load_probe_succeeds", None)

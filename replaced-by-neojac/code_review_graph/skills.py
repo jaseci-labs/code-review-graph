@@ -1068,7 +1068,9 @@ def _merge_dsh_patch_server(config_path: Path, server_entry: dict[str, Any]) -> 
     (or, in a plan, would be) changed, False when the row is already there,
     None when the edit was refused (the reason is printed).
     """
-    from . import dsh
+    import importlib
+
+    dsh = importlib.import_module("code_review_graph.dsh")
 
     raw = ""
     row = dsh.server_row(server_entry)

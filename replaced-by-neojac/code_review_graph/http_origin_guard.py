@@ -125,6 +125,56 @@ def split_host_port(value: str) -> tuple[str, str | None]:
     return host, port
 
 
+async def _forbid(send: Send, message: str) -> None:
+    body = message.encode()
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 403,
+            "headers": [
+                (b"content-type", b"text/plain; charset=utf-8"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        }
+    )
+    await send({"type": "http.response.body", "body": body})
+
+
+async def _guard_call(guard, scope: Scope, receive: Receive, send: Send) -> None:
+    if not guard.enabled or scope["type"] != "http":
+        await guard.app(scope, receive, send)
+        return
+
+    headers = {
+        key.decode("latin-1").lower(): value.decode("latin-1")
+        for key, value in scope["headers"]
+    }
+
+    # DNS rebinding: the browser resolves an attacker-controlled name to
+    # 127.0.0.1 but still sends that name in Host.
+    if not guard._authority_allowed(headers.get("host")):
+        await _forbid(send, "Forbidden: unrecognized Host header")
+        return
+
+    # Cross-site browser requests carry Origin; non-browser MCP clients omit
+    # it, so an absent Origin is not treated as suspicious.
+    origin = headers.get("origin")
+    if origin is not None:
+        scheme, separator, authority = origin.partition("://")
+        if (
+            not separator
+            or scheme.lower() not in _ALLOWED_ORIGIN_SCHEMES
+            or not guard._authority_allowed(
+                authority,
+                implicit_port="443" if scheme.lower() == "https" else "80",
+            )
+        ):
+            await _forbid(send, "Forbidden: cross-origin request")
+            return
+
+    await guard.app(scope, receive, send)
+
+
 class LoopbackOriginGuard:
     """Reject cross-origin and rebound-``Host`` requests to a loopback server.
 
@@ -153,55 +203,7 @@ class LoopbackOriginGuard:
             return False
         return is_loopback_host(host)
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if not self.enabled or scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        headers = {
-            key.decode("latin-1").lower(): value.decode("latin-1")
-            for key, value in scope["headers"]
-        }
-
-        # DNS rebinding: the browser resolves an attacker-controlled name to
-        # 127.0.0.1 but still sends that name in Host.
-        if not self._authority_allowed(headers.get("host")):
-            await self._forbid(send, "Forbidden: unrecognized Host header")
-            return
-
-        # Cross-site browser requests carry Origin; non-browser MCP clients omit
-        # it, so an absent Origin is not treated as suspicious.
-        origin = headers.get("origin")
-        if origin is not None:
-            scheme, separator, authority = origin.partition("://")
-            if (
-                not separator
-                or scheme.lower() not in _ALLOWED_ORIGIN_SCHEMES
-                or not self._authority_allowed(
-                    authority,
-                    implicit_port="443" if scheme.lower() == "https" else "80",
-                )
-            ):
-                await self._forbid(send, "Forbidden: cross-origin request")
-                return
-
-        await self.app(scope, receive, send)
-
-    @staticmethod
-    async def _forbid(send: Send, message: str) -> None:
-        body = message.encode()
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 403,
-                "headers": [
-                    (b"content-type", b"text/plain; charset=utf-8"),
-                    (b"content-length", str(len(body)).encode()),
-                ],
-            }
-        )
-        await send({"type": "http.response.body", "body": body})
-
+    __call__ = _guard_call
 
 def build_http_middleware(host: str, port: int) -> list[Middleware]:
     """Return the ASGI middleware stack for the ``serve --http`` transport.

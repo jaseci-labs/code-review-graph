@@ -6021,9 +6021,9 @@ def edge_to_dict(e: GraphEdge) -> dict:
 
 def __getattr__(name: str) -> Any:
     if name in ("EdgeInfo", "NodeInfo", "is_test_file"):
-        from . import parser as _parser
+        import importlib
 
-        val = getattr(_parser, name)
+        val = getattr(importlib.import_module("code_review_graph.parser"), name)
         globals()[name] = val
         return val
     if name == "nx":

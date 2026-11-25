@@ -33,7 +33,7 @@ def read_only_requested() -> bool:
 # numeric override in the package, keeps that impossible: an unusable value
 # falls back to the documented default and says so once, by name.
 
-_warned_env_vars: set[str] = set()
+_warned_env_vars = set()
 
 
 def _warn_invalid_env(name: str, raw: str, default: object) -> None:

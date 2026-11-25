@@ -104,6 +104,7 @@ def _get_version() -> str:
     # Fallback: read __version__ directly from the package.
     try:
         from . import __version__ as fallback_version
+
         if fallback_version:
             return fallback_version
     except ImportError:
@@ -426,7 +427,9 @@ def _report_gitignore_block(
     from the files the plan creates and the dry run lists exactly what a real
     install writes.
     """
-    from . import install_gitignore
+    import importlib
+
+    install_gitignore = importlib.import_module("code_review_graph.install_gitignore")
 
     result = install_gitignore.apply(repo_root, plan, dry_run=False)
     lead = "[dry-run] " if dry_run else ""
@@ -485,9 +488,9 @@ def _handle_init(args: argparse.Namespace) -> None:
     # planned, so only files this run creates are added to .gitignore.
     gitignore_plan: _GitignorePlan | None = None
     if getattr(args, "gitignore", False):
-        from . import install_gitignore
+        from .install_gitignore import plan as _plan_gitignore
 
-        gitignore_plan = install_gitignore.plan(
+        gitignore_plan = _plan_gitignore(
             repo_root,
             target,
             with_skills=not getattr(args, "no_skills", False),
@@ -1070,7 +1073,9 @@ def _handle_context_history(args) -> None:
     """
     from datetime import datetime, time, timedelta, timezone
 
-    from . import context_history as ch
+    import importlib
+
+    ch = importlib.import_module("code_review_graph.context_history")
     from .incremental import find_project_root, get_data_dir
 
     if args.repo:
@@ -1137,7 +1142,9 @@ def _handle_context_history(args) -> None:
 
 def _run_graph_tool_command(args, repo_root: Path) -> None:
     """Run one graph-tool CLI wrapper and emit exactly one JSON value."""
-    from . import tools
+    import importlib
+
+    tools = importlib.import_module("code_review_graph.tools")
 
     root = str(repo_root)
     if args.command == "query":
@@ -2761,7 +2768,9 @@ def _dispatch() -> None:
         return
 
     if args.command in {"hook-update", "hook-status"}:
-        from . import hook_update
+        import importlib
+
+        hook_update = importlib.import_module("code_review_graph.hook_update")
 
         if args.command == "hook-update":
             hook_update.run_update_hook(existing_only=args.existing_only)

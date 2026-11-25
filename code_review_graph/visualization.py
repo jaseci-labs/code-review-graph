@@ -131,7 +131,7 @@ class _NameIndex(dict[str, list[str]]):
     """
 
     def __init__(self) -> None:
-        super().__init__()
+        dict.__init__(self)
         self._sorted: dict[str, list[str]] = {}
 
     def only_under_prefix(self, key: str, prefix: str) -> str | None:

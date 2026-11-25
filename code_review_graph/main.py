@@ -118,12 +118,16 @@ def _resolve_attr(name: str):
 
 def __getattr__(name: str):
     if name in _LAZY_TOOL_NAMES:
-        from . import tools as _tools_mod
+        import importlib
+
+        _tools_mod = importlib.import_module("code_review_graph.tools")
         val = getattr(_tools_mod, name)
         globals()[name] = val
         return val
     if name in _LAZY_PROMPT_NAMES:
-        from . import prompts as _prompts_mod
+        import importlib
+
+        _prompts_mod = importlib.import_module("code_review_graph.prompts")
         val = getattr(_prompts_mod, name)
         globals()[name] = val
         return val

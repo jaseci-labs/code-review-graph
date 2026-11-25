@@ -105,31 +105,17 @@ graph import {
         GraphNode,
         SqliteReader,
     }
-    code_review_graph.context_savings --> code_review_graph {
-        attach_context_savings,
-        estimate_context_savings,
-        estimate_file_tokens,
-        estimate_tokens,
-        format_context_savings,
-    }
-    code_review_graph.context_history --> code_review_graph.context_savings {
-        CallInfo,
-        record_call,
-    }
-    code_review_graph.constants --> code_review_graph.context_history { read_only_requested }
     code_review_graph.cli --> code_review_graph.__main__ { main }
     code_review_graph.install_manifest --> code_review_graph.cli;
     code_review_graph.install_plan --> code_review_graph.cli;
     code_review_graph.errors --> code_review_graph.cli { CodeReviewGraphError, is_lock_error }
-    code_review_graph.install_gitignore --> code_review_graph.cli;
-    code_review_graph.install_gitignore --> code_review_graph.cli { Plan }
+    code_review_graph.install_gitignore --> code_review_graph.cli { Plan, plan }
     code_review_graph.neighbourhood --> code_review_graph.cli {
         DEFAULT_DEPTH,
         DEFAULT_MAX_NODES,
         SeedResolutionError,
     }
     code_review_graph.stdio --> code_review_graph.cli { configure_utf8_stdio }
-    code_review_graph --> code_review_graph.cli { __version__ }
     code_review_graph.skills --> code_review_graph.cli {
         PLATFORMS,
         _CLAUDE_MD_SECTION,
@@ -185,9 +171,7 @@ graph import {
         parse_detail_sections,
     }
     code_review_graph.doctor --> code_review_graph.cli { run_doctor }
-    code_review_graph.context_history --> code_review_graph.cli;
     code_review_graph.context_history --> code_review_graph.cli { CallInfo, recorded_as }
-    code_review_graph.tools --> code_review_graph.cli;
     code_review_graph.tools._common --> code_review_graph.cli { _open_graph_store }
     code_review_graph.tools.build --> code_review_graph.cli {
         _lock_or_skip,
@@ -212,7 +196,6 @@ graph import {
     code_review_graph.forget --> code_review_graph.cli { forget_files }
     code_review_graph.constants --> code_review_graph.cli { QUERY_PATTERNS }
     code_review_graph.enrich --> code_review_graph.cli { run_hook }
-    code_review_graph.hook_update --> code_review_graph.cli;
     code_review_graph.multi_worktree --> code_review_graph.cli {
         MultiWorktreeError,
         run_multi_worktree_server,
@@ -247,20 +230,7 @@ graph import {
     code_review_graph.visualization --> code_review_graph.cli { generate_html }
     code_review_graph.wiki --> code_review_graph.cli { generate_wiki }
     code_review_graph.parser --> code_review_graph.cli { normalize_file_path }
-    code_review_graph.install_plan --> code_review_graph.install_manifest;
-    code_review_graph.codex_skill --> code_review_graph.install_gitignore;
-    code_review_graph.skills --> code_review_graph.install_gitignore;
-    code_review_graph.install_plan --> code_review_graph.install_gitignore;
-    code_review_graph.install_plan --> code_review_graph.codex_skill;
-    code_review_graph.install_plan --> code_review_graph.skills;
-    code_review_graph.jsonc --> code_review_graph.skills;
-    code_review_graph._legacy_instructions --> code_review_graph.skills {
-        LEGACY_INSTRUCTION_SECTIONS,
-    }
-    code_review_graph.codex_skill --> code_review_graph.skills { codex_home, install_codex_skill }
-    code_review_graph.dsh --> code_review_graph.skills;
     code_review_graph.graph --> code_review_graph.neighbourhood { _sanitize_name }
-    code_review_graph.parser --> code_review_graph.graph;
     code_review_graph.parser --> code_review_graph.graph { EdgeInfo, NodeInfo, is_test_file }
     code_review_graph.constants --> code_review_graph.graph {
         BFS_ENGINE,
@@ -353,7 +323,6 @@ graph import {
     }
     code_review_graph.graph --> code_review_graph.incremental { GraphStore }
     code_review_graph.locking --> code_review_graph.incremental { WriteLock, write_lock_path }
-    code_review_graph.parser --> code_review_graph.incremental;
     code_review_graph.parser --> code_review_graph.incremental { CodeParser }
     code_review_graph.python_resolver --> code_review_graph.incremental { resolve_python_imports }
     code_review_graph.rescript_resolver --> code_review_graph.incremental {
@@ -404,7 +373,6 @@ graph import {
         normalize_file_path,
     }
     code_review_graph.graph --> code_review_graph.jedi_resolver { GraphEdge }
-    code_review_graph.constants --> code_review_graph.registry { crg_home }
     code_review_graph.constants --> code_review_graph.communities { env_int }
     code_review_graph.graph --> code_review_graph.communities {
         GraphEdge,
@@ -436,7 +404,6 @@ graph import {
     code_review_graph.install_plan --> code_review_graph.uninstall;
     code_review_graph.jsonc --> code_review_graph.uninstall;
     code_review_graph.skills --> code_review_graph.uninstall;
-    code_review_graph.dsh --> code_review_graph.uninstall;
     code_review_graph.codex_skill --> code_review_graph.uninstall {
         codex_home,
         codex_skill_dir,
@@ -599,7 +566,6 @@ graph import {
     code_review_graph.constants --> code_review_graph.main { MAX_IMPACT_NODES, env_int }
     code_review_graph.graph --> code_review_graph.main { GraphStore, _sanitize_name }
     code_review_graph.registry --> code_review_graph.main { Registry }
-    code_review_graph.tools --> code_review_graph.main;
     code_review_graph.tools --> code_review_graph.main {
         apply_refactor_func,
         build_or_update_graph,
@@ -630,7 +596,6 @@ graph import {
         semantic_search_nodes,
         traverse_graph_func,
     }
-    code_review_graph.prompts --> code_review_graph.main;
     code_review_graph.postprocessing --> code_review_graph.main { run_post_processing }
     code_review_graph.embeddings --> code_review_graph.main { prewarm_local_embeddings }
     code_review_graph.http_origin_guard --> code_review_graph.main { build_http_middleware }
@@ -878,7 +843,6 @@ graph import {
         compute_precision_recall,
         compute_token_efficiency,
     }
-    code_review_graph.eval.runner --> code_review_graph.eval;
     code_review_graph.tools.context --> code_review_graph.eval.token_benchmark {
         get_minimal_context,
     }
@@ -3142,4 +3106,31 @@ graph import {
     code_review_graph.graph --> tests.test_yaml_parser { GraphStore }
     code_review_graph.incremental --> tests.test_yaml_parser { full_build }
     code_review_graph.tools.query --> tests.test_yaml_parser { query_graph }
+    code_review_graph.install_plan as install_plan ++> code_review_graph.codex_skill;
+    code_review_graph.install_plan as install_plan ++> code_review_graph.install_manifest;
+    code_review_graph.constants ++> code_review_graph.context_history { read_only_requested }
+    code_review_graph.context_history ++> code_review_graph.context_savings {
+        CallInfo,
+        record_call,
+    }
+    include code_review_graph.context_savings ++> code_review_graph {
+        attach_context_savings,
+        estimate_context_savings,
+        estimate_file_tokens,
+        estimate_tokens,
+        format_context_savings,
+    }
+    code_review_graph.constants ++> code_review_graph.registry { crg_home }
+    code_review_graph.codex_skill as codex_skill ++> code_review_graph.install_gitignore;
+    code_review_graph.skills as skills ++> code_review_graph.install_gitignore;
+    code_review_graph.install_plan as planned_files ++> code_review_graph.install_gitignore;
+    code_review_graph.install_plan as install_plan ++> code_review_graph.skills;
+    code_review_graph.jsonc as jsonc ++> code_review_graph.skills;
+    code_review_graph._legacy_instructions ++> code_review_graph.skills {
+        LEGACY_INSTRUCTION_SECTIONS,
+    }
+    code_review_graph.codex_skill ++> code_review_graph.skills {
+        codex_home,
+        install_codex_skill as _install,
+    }
 }

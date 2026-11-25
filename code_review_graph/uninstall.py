@@ -345,7 +345,9 @@ def _remove_dsh_patch_entry(
     operation stay byte-for-byte. A row someone merged into an ``insert`` of
     their own is reported, not edited.
     """
-    from . import dsh
+    import importlib
+
+    dsh = importlib.import_module("code_review_graph.dsh")
 
     if not path.exists() or not _safe_path(path, boundary, report):
         return
