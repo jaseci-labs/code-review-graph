@@ -348,11 +348,11 @@ def resolve_aop_advice(store: "GraphStore") -> dict {
                 }
                 store.upsert_edge(
                     EdgeInfo(
-                        kind="CALLS",
-                        source=advice_method["qualified_name"],
-                        target=target["qualified_name"],
-                        file_path=advice_method["file_path"],
-                        line=0,
+                        "CALLS",
+                        advice_method["qualified_name"],
+                        target["qualified_name"],
+                        advice_method["file_path"],
+                        0,
                         extra={
                             _DERIVED_FLAG: True,
                             "pointcut_kind": pointcut_kind,

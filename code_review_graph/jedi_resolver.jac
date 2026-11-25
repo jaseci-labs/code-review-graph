@@ -172,11 +172,11 @@ def enrich_jedi_calls(store, repo_root: Path, files: Optional[Iterable[str]] = N
             } else {
                 store.upsert_edge(
                     EdgeInfo(
-                        kind="CALLS",
-                        source=enclosing,
-                        target=target,
-                        file_path=file_path,
-                        line=jedi_line,
+                        "CALLS",
+                        enclosing,
+                        target,
+                        file_path,
+                        jedi_line,
                         extra={"call_resolution": "jedi"},
                     ),
                 );

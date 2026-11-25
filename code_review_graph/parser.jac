@@ -3702,11 +3702,11 @@ class CodeParser(builtins.object) {
         }
         nodes.append(
             NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
+                "File",
+                file_path_str,
+                file_path_str,
+                1,
+                source.count(b"\n") + 1,
                 language=language,
                 is_test=test_file,
                 extra=file_extra,
@@ -3802,11 +3802,11 @@ class CodeParser(builtins.object) {
                 if `edge.kind == "CALLS" and `edge.source in test_qnames {
                     edges.append(
                         EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            "TESTED_BY",
+                            `edge.target,
+                            `edge.source,
+                            `edge.file_path,
+                            `edge.line,
                             extra=`edge.extra.copy(),
                         ),
                     );
@@ -4001,11 +4001,11 @@ class CodeParser(builtins.object) {
         file_path: any = normalize_file_path(path);
         nodes: any = [
             NodeInfo(
-                kind="File",
-                name=file_path,
-                file_path=file_path,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
+                "File",
+                file_path,
+                file_path,
+                1,
+                source.count(b"\n") + 1,
                 language="blade",
                 is_test=self._is_test_path(file_path),
             ),
@@ -4016,11 +4016,11 @@ class CodeParser(builtins.object) {
             target: any = `match.group(3);
             edges.append(
                 EdgeInfo(
-                    kind="REFERENCES" if directive == "livewire" else "IMPORTS_FROM",
-                    source=file_path,
-                    target=target,
-                    file_path=file_path,
-                    line=masked.count("\n", 0, `match.start()) + 1,
+                    "REFERENCES" if directive == "livewire" else "IMPORTS_FROM",
+                    file_path,
+                    target,
+                    file_path,
+                    masked.count("\n", 0, `match.start()) + 1,
                     extra={"blade_directive": directive},
                 ),
             );
@@ -4090,11 +4090,11 @@ class CodeParser(builtins.object) {
         file_path: any = normalize_file_path(path);
         nodes: any = [
             NodeInfo(
-                kind="File",
-                name=file_path,
-                file_path=file_path,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
+                "File",
+                file_path,
+                file_path,
+                1,
+                source.count(b"\n") + 1,
                 language="liquid",
                 is_test=self._is_test_path(file_path),
             ),
@@ -4118,12 +4118,11 @@ class CodeParser(builtins.object) {
                 if target {
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=file_path,
-                            target=self._resolve_liquid_snippet(path, target.group(2))
-                                or target.group(2),
-                            file_path=file_path,
-                            line=line_at(offset),
+                            "IMPORTS_FROM",
+                            file_path,
+                            self._resolve_liquid_snippet(path, target.group(2)) or target.group(2),
+                            file_path,
+                            line_at(offset),
                             extra={"liquid_directive": directive},
                         ),
                     );
@@ -4144,23 +4143,17 @@ class CodeParser(builtins.object) {
         for (name, (kind, lines, line_end)) in children.items() {
             nodes.append(
                 NodeInfo(
-                    kind=kind,
-                    name=name,
-                    file_path=file_path,
-                    line_start=lines[0],
-                    line_end=line_end,
+                    kind,
+                    name,
+                    file_path,
+                    lines[0],
+                    line_end,
                     language="liquid",
                     extra={"lines": lines} if len(lines) > 1 else {},
                 ),
             );
             edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path,
-                    target=f"{file_path}::{name}",
-                    file_path=file_path,
-                    line=lines[0],
-                ),
+                EdgeInfo("CONTAINS", file_path, f"{file_path}::{name}", file_path, lines[0])
             );
         }
 
@@ -4176,13 +4169,7 @@ class CodeParser(builtins.object) {
         for `edge in `list(edges) {
             if `edge.kind == "CALLS" and `edge.source in test_qnames {
                 edges.append(
-                    EdgeInfo(
-                        kind="TESTED_BY",
-                        source=`edge.target,
-                        target=`edge.source,
-                        file_path=`edge.file_path,
-                        line=`edge.line,
-                    ),
+                    EdgeInfo("TESTED_BY", `edge.target, `edge.source, `edge.file_path, `edge.line)
                 );
             }
         }
@@ -4210,11 +4197,11 @@ class CodeParser(builtins.object) {
 
         all_nodes: list[NodeInfo] = [
             NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
+                "File",
+                file_path_str,
+                file_path_str,
+                1,
+                source.count(b"\n") + 1,
                 language=language,
                 is_test=test_file,
             ),
@@ -4317,11 +4304,11 @@ class CodeParser(builtins.object) {
         file_path_str: any = normalize_file_path(path);
         test_file: any = self._is_test_path(file_path_str);
         file_node: any = NodeInfo(
-            kind="File",
-            name=file_path_str,
-            file_path=file_path_str,
-            line_start=1,
-            line_end=source.count(b"\n") + 1,
+            "File",
+            file_path_str,
+            file_path_str,
+            1,
+            source.count(b"\n") + 1,
             language="html",
             is_test=test_file,
         );
@@ -4379,11 +4366,11 @@ class CodeParser(builtins.object) {
             all_nodes.append(section);
             all_edges.append(
                 EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path_str,
-                    target=self._qualify(section.name, file_path_str, None),
-                    file_path=file_path_str,
-                    line=section.line_start,
+                    "CONTAINS",
+                    file_path_str,
+                    self._qualify(section.name, file_path_str, None),
+                    file_path_str,
+                    section.line_start,
                 ),
             );
         }
@@ -4403,11 +4390,11 @@ class CodeParser(builtins.object) {
                     seen.add(called);
                     all_edges.append(
                         EdgeInfo(
-                            kind="CALLS",
-                            source=file_path_str,
-                            target=page_functions[called],
-                            file_path=file_path_str,
-                            line=line,
+                            "CALLS",
+                            file_path_str,
+                            page_functions[called],
+                            file_path_str,
+                            line,
                             extra={"html_event": event},
                         ),
                     );
@@ -4424,11 +4411,7 @@ class CodeParser(builtins.object) {
                 if `edge.kind == "CALLS" and `edge.source in test_qnames {
                     all_edges.append(
                         EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            "TESTED_BY", `edge.target, `edge.source, `edge.file_path, `edge.line
                         ),
                     );
                 }
@@ -4470,11 +4453,11 @@ class CodeParser(builtins.object) {
             extra["docstring"] = heading;
         }
         sections[name] = NodeInfo(
-            kind="DocSection",
-            name=name,
-            file_path=file_path,
-            line_start=element.start_point[0] + 1,
-            line_end=element.end_point[0] + 1,
+            "DocSection",
+            name,
+            file_path,
+            element.start_point[0] + 1,
+            element.end_point[0] + 1,
             language="html",
             is_test=test_file,
             extra=extra,
@@ -4639,15 +4622,7 @@ class CodeParser(builtins.object) {
             module: any = relative if relative.startswith(".") else f"./{relative}";
             resolved = self._resolve_module_to_file(module, file_path, "javascript");
         }
-        edges.append(
-            EdgeInfo(
-                kind="IMPORTS_FROM",
-                source=file_path,
-                target=resolved or relative,
-                file_path=file_path,
-                line=line,
-            ),
-        );
+        edges.append(EdgeInfo("IMPORTS_FROM", file_path, resolved or relative, file_path, line));
     }
 
     def _parse_xslt(path: Path, source: bytes) -> tuple[list[NodeInfo], list[EdgeInfo]] {
@@ -4658,11 +4633,11 @@ class CodeParser(builtins.object) {
 
         file_path: any = normalize_file_path(path);
         file_node: any = NodeInfo(
-            kind="File",
-            name=file_path,
-            file_path=file_path,
-            line_start=1,
-            line_end=source.count(b"\n") + 1,
+            "File",
+            file_path,
+            file_path,
+            1,
+            source.count(b"\n") + 1,
             language="xslt",
             is_test=self._is_test_path(file_path),
         );
@@ -4700,11 +4675,11 @@ class CodeParser(builtins.object) {
                     nodes.append(template.node);
                     edges.append(
                         EdgeInfo(
-                            kind="CONTAINS",
-                            source=file_path,
-                            target=template.qualified,
-                            file_path=file_path,
-                            line=template.node.line_start,
+                            "CONTAINS",
+                            file_path,
+                            template.qualified,
+                            file_path,
+                            template.node.line_start,
                         ),
                     );
                 }
@@ -4741,11 +4716,11 @@ class CodeParser(builtins.object) {
         }
         edges.append(
             EdgeInfo(
-                kind="IMPORTS_FROM",
-                source=file_path,
-                target=target,
-                file_path=file_path,
-                line=element.start_point[0] + 1,
+                "IMPORTS_FROM",
+                file_path,
+                target,
+                file_path,
+                element.start_point[0] + 1,
                 extra={"xslt_import": how},
             ),
         );
@@ -4794,11 +4769,11 @@ class CodeParser(builtins.object) {
         }
         seen.add(identity or name);
         `node: any = NodeInfo(
-            kind="Function",
-            name=name,
-            file_path=file_path,
-            line_start=line_start,
-            line_end=element.end_point[0] + 1,
+            "Function",
+            name,
+            file_path,
+            line_start,
+            element.end_point[0] + 1,
             language="xslt",
             params=f"({", ".join(params)})" if params else None,
             extra=extra,
@@ -4837,11 +4812,11 @@ class CodeParser(builtins.object) {
                 if called {
                     edges.append(
                         EdgeInfo(
-                            kind="CALLS",
-                            source=source,
-                            target=named.get(called, called),
-                            file_path=file_path,
-                            line=line,
+                            "CALLS",
+                            source,
+                            named.get(called, called),
+                            file_path,
+                            line,
                             extra={"xslt_call": "call-template"},
                         ),
                     );
@@ -4912,16 +4887,7 @@ class CodeParser(builtins.object) {
             return;
         }
         for target in target_names {
-            edges.append(
-                EdgeInfo(
-                    kind="CALLS",
-                    source=source,
-                    target=target,
-                    file_path=file_path,
-                    line=line,
-                    extra=`dict(extra),
-                ),
-            );
+            edges.append(EdgeInfo("CALLS", source, target, file_path, line, extra=`dict(extra)));
         }
     }
 
@@ -4991,11 +4957,11 @@ class CodeParser(builtins.object) {
             return (
                 [
                     NodeInfo(
-                        kind="File",
-                        name=file_path_str,
-                        file_path=file_path_str,
-                        line_start=1,
-                        line_end=1,
+                        "File",
+                        file_path_str,
+                        file_path_str,
+                        1,
+                        1,
                         language=kernel_lang,
                         is_test=self._is_test_path(file_path_str),
                     ),
@@ -5029,13 +4995,7 @@ class CodeParser(builtins.object) {
                     for `match in _SQL_TABLE_RE.finditer(cell.source) {
                         table_name: any = `match.group(1).replace("`", "");
                         all_edges.append(
-                            EdgeInfo(
-                                kind="IMPORTS_FROM",
-                                source=file_path_str,
-                                target=table_name,
-                                file_path=file_path_str,
-                                line=1,
-                            ),
+                            EdgeInfo("IMPORTS_FROM", file_path_str, table_name, file_path_str, 1)
                         );
                     }
                 }
@@ -5094,11 +5054,11 @@ class CodeParser(builtins.object) {
             max_line = max(max_line, current_line);
         }
         file_node: any = NodeInfo(
-            kind="File",
-            name=file_path_str,
-            file_path=file_path_str,
-            line_start=1,
-            line_end=max_line,
+            "File",
+            file_path_str,
+            file_path_str,
+            1,
+            max_line,
             language=default_language,
             is_test=test_file,
         );
@@ -5182,11 +5142,11 @@ class CodeParser(builtins.object) {
         if not cells {
             file_path_str: any = normalize_file_path(path);
             file_node: any = NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=1,
+                "File",
+                file_path_str,
+                file_path_str,
+                1,
+                1,
                 language="python",
                 is_test=self._is_test_path(file_path_str),
             );
@@ -5221,13 +5181,7 @@ class CodeParser(builtins.object) {
 
         nodes: any = [
             NodeInfo(
-                kind="File",
-                name=file_path,
-                file_path=file_path,
-                line_start=1,
-                line_end=line_count,
-                language="vbnet",
-                is_test=test_file,
+                "File", file_path, file_path, 1, line_count, language="vbnet", is_test=test_file
             ),
         ];
         edges = [];
@@ -5296,11 +5250,11 @@ class CodeParser(builtins.object) {
                 for target in _vbnet_relationship_targets(`match.group(1)) {
                     edges.append(
                         EdgeInfo(
-                            kind=edge_kind,
-                            source=source_qn,
-                            target=target,
-                            file_path=file_path,
-                            line=line_no,
+                            edge_kind,
+                            source_qn,
+                            target,
+                            file_path,
+                            line_no,
                             extra={"vbnet_unresolved": True},
                         ),
                     );
@@ -5317,11 +5271,11 @@ class CodeParser(builtins.object) {
                 new_spans.append(`match.span());
                 edges.append(
                     EdgeInfo(
-                        kind="CALLS",
-                        source=source_qn,
-                        target=target,
-                        file_path=file_path,
-                        line=line_no,
+                        "CALLS",
+                        source_qn,
+                        target,
+                        file_path,
+                        line_no,
                         extra={"vbnet_unresolved": True, "constructor": True},
                     ),
                 );
@@ -5342,11 +5296,11 @@ class CodeParser(builtins.object) {
                 }
                 edges.append(
                     EdgeInfo(
-                        kind="CALLS",
-                        source=source_qn,
-                        target=target,
-                        file_path=file_path,
-                        line=line_no,
+                        "CALLS",
+                        source_qn,
+                        target,
+                        file_path,
+                        line_no,
                         extra={"vbnet_unresolved": True},
                     ),
                 );
@@ -5363,13 +5317,7 @@ class CodeParser(builtins.object) {
                 target: any;
                 for target in _vbnet_relationship_targets(import_match.group(1)) {
                     edges.append(
-                        EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=file_path,
-                            target=target,
-                            file_path=file_path,
-                            line=line_start,
-                        ),
+                        EdgeInfo("IMPORTS_FROM", file_path, target, file_path, line_start)
                     );
                 }
                 continue;
@@ -5394,11 +5342,11 @@ class CodeParser(builtins.object) {
                 node_index: any = len(nodes);
                 nodes.append(
                     NodeInfo(
-                        kind="Class",
-                        name=raw_name,
-                        file_path=file_path,
-                        line_start=line_start,
-                        line_end=line_end,
+                        "Class",
+                        raw_name,
+                        file_path,
+                        line_start,
+                        line_end,
                         language="vbnet",
                         parent_name=outer,
                         extra={"vbnet_kind": "namespace"},
@@ -5406,11 +5354,11 @@ class CodeParser(builtins.object) {
                 );
                 edges.append(
                     EdgeInfo(
-                        kind="CONTAINS",
-                        source=container_qn(outer),
-                        target=self._qualify(raw_name, file_path, outer),
-                        file_path=file_path,
-                        line=line_start,
+                        "CONTAINS",
+                        container_qn(outer),
+                        self._qualify(raw_name, file_path, outer),
+                        file_path,
+                        line_start,
                     ),
                 );
                 namespace_stack.append({"full": full_name, "node_index": node_index});
@@ -5448,11 +5396,11 @@ class CodeParser(builtins.object) {
                 node_index = len(nodes);
                 nodes.append(
                     NodeInfo(
-                        kind="Class",
-                        name=name,
-                        file_path=file_path,
-                        line_start=line_start,
-                        line_end=line_end,
+                        "Class",
+                        name,
+                        file_path,
+                        line_start,
+                        line_end,
                         language="vbnet",
                         parent_name=scope,
                         extra=extra,
@@ -5460,13 +5408,7 @@ class CodeParser(builtins.object) {
                 );
                 type_qn: any = self._qualify(name, file_path, scope);
                 edges.append(
-                    EdgeInfo(
-                        kind="CONTAINS",
-                        source=container_qn(scope),
-                        target=type_qn,
-                        file_path=file_path,
-                        line=line_start,
-                    ),
+                    EdgeInfo("CONTAINS", container_qn(scope), type_qn, file_path, line_start)
                 );
                 type_stack.append({"full": full_scope, "kind": kind, "node_index": node_index});
                 emit_relationships(type_match.group("rest"), type_qn, line_start);
@@ -5513,11 +5455,11 @@ class CodeParser(builtins.object) {
                     member_index = len(nodes);
                     nodes.append(
                         NodeInfo(
-                            kind="Test" if is_test else "Function",
-                            name=name,
-                            file_path=file_path,
-                            line_start=line_start,
-                            line_end=line_end,
+                            "Test" if is_test else "Function",
+                            name,
+                            file_path,
+                            line_start,
+                            line_end,
                             language="vbnet",
                             parent_name=scope,
                             params=params,
@@ -5529,13 +5471,7 @@ class CodeParser(builtins.object) {
                     );
                     member_nodes[key] = member_index;
                     edges.append(
-                        EdgeInfo(
-                            kind="CONTAINS",
-                            source=container_qn(scope),
-                            target=qn,
-                            file_path=file_path,
-                            line=line_start,
-                        ),
+                        EdgeInfo("CONTAINS", container_qn(scope), qn, file_path, line_start)
                     );
                 } else {
                     existing: any = nodes[member_index];
@@ -5551,11 +5487,11 @@ class CodeParser(builtins.object) {
                     for target in _vbnet_relationship_targets(implements.group(1)) {
                         edges.append(
                             EdgeInfo(
-                                kind="IMPLEMENTS",
-                                source=qn,
-                                target=target,
-                                file_path=file_path,
-                                line=line_start,
+                                "IMPLEMENTS",
+                                qn,
+                                target,
+                                file_path,
+                                line_start,
                                 extra={"vbnet_unresolved": True},
                             ),
                         );
@@ -5598,11 +5534,7 @@ class CodeParser(builtins.object) {
                 if `edge.kind == "CALLS" and `edge.source in test_qnames {
                     edges.append(
                         EdgeInfo(
-                            kind="TESTED_BY",
-                            source=`edge.target,
-                            target=`edge.source,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            "TESTED_BY", `edge.target, `edge.source, `edge.file_path, `edge.line
                         ),
                     );
                 }
@@ -5621,11 +5553,11 @@ class CodeParser(builtins.object) {
         lines: any = text.splitlines();
         nodes: any = [
             NodeInfo(
-                kind="File",
-                name=file_path,
-                file_path=file_path,
-                line_start=1,
-                line_end=max(1, len(lines)),
+                "File",
+                file_path,
+                file_path,
+                1,
+                max(1, len(lines)),
                 language="robot",
                 is_test=_is_test_file(file_path),
             ),
@@ -5672,11 +5604,7 @@ class CodeParser(builtins.object) {
         }
 
         def add_call(source_name: str, target: str, line: int) {
-            edges.append(
-                EdgeInfo(
-                    kind="CALLS", source=source_name, target=target, file_path=file_path, line=line
-                ),
-            );
+            edges.append(EdgeInfo("CALLS", source_name, target, file_path, line));
         }
 
         def finish(end_line: int) {
@@ -5745,11 +5673,11 @@ class CodeParser(builtins.object) {
                     }
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=file_path,
-                            target=target,
-                            file_path=file_path,
-                            line=line_number,
+                            "IMPORTS_FROM",
+                            file_path,
+                            target,
+                            file_path,
+                            line_number,
                             extra={"robot_setting": setting},
                         ),
                     );
@@ -5770,24 +5698,16 @@ class CodeParser(builtins.object) {
                 current = (node_kind, name, line_number, qname);
                 nodes.append(
                     NodeInfo(
-                        kind=node_kind,
-                        name=name,
-                        file_path=file_path,
-                        line_start=line_number,
-                        line_end=line_number,
+                        node_kind,
+                        name,
+                        file_path,
+                        line_number,
+                        line_number,
                         language="robot",
                         is_test=is_test,
                     ),
                 );
-                edges.append(
-                    EdgeInfo(
-                        kind="CONTAINS",
-                        source=file_path,
-                        target=qname,
-                        file_path=file_path,
-                        line=line_number,
-                    ),
-                );
+                edges.append(EdgeInfo("CONTAINS", file_path, qname, file_path, line_number));
                 continue;
             }
 
@@ -5894,11 +5814,11 @@ class CodeParser(builtins.object) {
             if `edge.kind == "CALLS" and `edge.source in test_qnames {
                 edges.append(
                     EdgeInfo(
-                        kind="TESTED_BY",
-                        source=`edge.target,
-                        target=`edge.source,
-                        file_path=`edge.file_path,
-                        line=`edge.line,
+                        "TESTED_BY",
+                        `edge.target,
+                        `edge.source,
+                        `edge.file_path,
+                        `edge.line,
                         extra=`edge.extra.copy(),
                     ),
                 );
@@ -5978,14 +5898,7 @@ class CodeParser(builtins.object) {
             extra: any = `dict(`edge.extra);
             extra.pop("vbnet_unresolved", None);
             resolved.append(
-                EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=target,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
-                    extra=extra,
-                ),
+                EdgeInfo(`edge.kind, `edge.source, target, `edge.file_path, `edge.line, extra=extra)
             );
         }
         return resolved;
@@ -6031,11 +5944,11 @@ class CodeParser(builtins.object) {
         }
         nodes.append(
             NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=text.count("\n") + 1,
+                "File",
+                file_path_str,
+                file_path_str,
+                1,
+                text.count("\n") + 1,
                 language="rescript",
                 is_test=test_file,
                 extra=file_extra,
@@ -6060,11 +5973,11 @@ class CodeParser(builtins.object) {
         for m in modules {
             nodes.append(
                 NodeInfo(
-                    kind="Class",
-                    name=m["name"],
-                    file_path=file_path_str,
-                    line_start=m["start_line"],
-                    line_end=m["end_line"],
+                    "Class",
+                    m["name"],
+                    file_path_str,
+                    m["start_line"],
+                    m["end_line"],
                     language="rescript",
                     parent_name=m["parent"],
                     extra={"rescript_kind": "module"},
@@ -6130,11 +6043,11 @@ class CodeParser(builtins.object) {
         for `entry in let_entries {
             nodes.append(
                 NodeInfo(
-                    kind="Test" if `entry["is_test"] else "Function",
-                    name=`entry["name"],
-                    file_path=file_path_str,
-                    line_start=`entry["line_start"],
-                    line_end=`entry["line_end"],
+                    "Test" if `entry["is_test"] else "Function",
+                    `entry["name"],
+                    file_path_str,
+                    `entry["line_start"],
+                    `entry["line_end"],
                     language="rescript",
                     parent_name=`entry["parent"],
                     is_test=`entry["is_test"],
@@ -6154,11 +6067,11 @@ class CodeParser(builtins.object) {
             line_start = offset_to_line(off);
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=name,
-                    file_path=file_path_str,
-                    line_start=line_start,
-                    line_end=line_start,
+                    "Function",
+                    name,
+                    file_path_str,
+                    line_start,
+                    line_start,
                     language="rescript",
                     parent_name=parent,
                     extra={"rescript_external": True},
@@ -6169,11 +6082,11 @@ class CodeParser(builtins.object) {
             for attr in _RESCRIPT_MODULE_ATTR_RE.finditer(snippet) {
                 edges.append(
                     EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path_str,
-                        target=attr.group(1),
-                        file_path=file_path_str,
-                        line=line_start,
+                        "IMPORTS_FROM",
+                        file_path_str,
+                        attr.group(1),
+                        file_path_str,
+                        line_start,
                         extra={"rescript_import_kind": "external_module"},
                     ),
                 );
@@ -6192,11 +6105,11 @@ class CodeParser(builtins.object) {
             line_start = offset_to_line(off);
             nodes.append(
                 NodeInfo(
-                    kind="Type",
-                    name=name,
-                    file_path=file_path_str,
-                    line_start=line_start,
-                    line_end=line_start,
+                    "Type",
+                    name,
+                    file_path_str,
+                    line_start,
+                    line_start,
                     language="rescript",
                     parent_name=parent,
                 ),
@@ -6209,11 +6122,11 @@ class CodeParser(builtins.object) {
             line: any = offset_to_line(off);
             edges.append(
                 EdgeInfo(
-                    kind="IMPORTS_FROM",
-                    source=file_path_str,
-                    target=target,
-                    file_path=file_path_str,
-                    line=line,
+                    "IMPORTS_FROM",
+                    file_path_str,
+                    target,
+                    file_path_str,
+                    line,
                     extra={"rescript_import_kind": kind},
                 ),
             );
@@ -6228,11 +6141,11 @@ class CodeParser(builtins.object) {
             line = offset_to_line(off);
             edges.append(
                 EdgeInfo(
-                    kind="IMPORTS_FROM",
-                    source=file_path_str,
-                    target=target,
-                    file_path=file_path_str,
-                    line=line,
+                    "IMPORTS_FROM",
+                    file_path_str,
+                    target,
+                    file_path_str,
+                    line,
                     extra={"rescript_import_kind": "module_alias", "alias_name": alias_name},
                 ),
             );
@@ -6245,11 +6158,11 @@ class CodeParser(builtins.object) {
                 line = offset_to_line(off);
                 edges.append(
                     EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path_str,
-                        target=`root,
-                        file_path=file_path_str,
-                        line=line,
+                        "IMPORTS_FROM",
+                        file_path_str,
+                        `root,
+                        file_path_str,
+                        line,
                         extra={"rescript_import_kind": "jsx"},
                     ),
                 );
@@ -6266,11 +6179,11 @@ class CodeParser(builtins.object) {
                 if caller is not None {
                     edges.append(
                         EdgeInfo(
-                            kind="CALLS",
-                            source=self._qualify(caller, file_path_str, caller_parent),
-                            target=target,
-                            file_path=file_path_str,
-                            line=line,
+                            "CALLS",
+                            self._qualify(caller, file_path_str, caller_parent),
+                            target,
+                            file_path_str,
+                            line,
                             extra={"rescript_call_kind": "jsx"},
                         ),
                     );
@@ -6306,15 +6219,7 @@ class CodeParser(builtins.object) {
                 }
                 line = offset_to_line(off);
                 source_qn: any = self._qualify(caller, file_path_str, caller_parent);
-                edges.append(
-                    EdgeInfo(
-                        kind="CALLS",
-                        source=source_qn,
-                        target=target,
-                        file_path=file_path_str,
-                        line=line,
-                    ),
-                );
+                edges.append(EdgeInfo("CALLS", source_qn, target, file_path_str, line));
             }
         }
         n: any;
@@ -6322,11 +6227,11 @@ class CodeParser(builtins.object) {
             if n.kind in ("Function", "Type", "Test") and n.parent_name {
                 edges.append(
                     EdgeInfo(
-                        kind="CONTAINS",
-                        source=self._qualify(n.parent_name, file_path_str, None),
-                        target=self._qualify(n.name, file_path_str, n.parent_name),
-                        file_path=file_path_str,
-                        line=n.line_start,
+                        "CONTAINS",
+                        self._qualify(n.parent_name, file_path_str, None),
+                        self._qualify(n.name, file_path_str, n.parent_name),
+                        file_path_str,
+                        n.line_start,
                     ),
                 );
             }
@@ -6645,11 +6550,11 @@ class CodeParser(builtins.object) {
 
         nodes.append(
             NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=text.count("\n") + 1,
+                "File",
+                file_path_str,
+                file_path_str,
+                1,
+                text.count("\n") + 1,
                 language="sql",
                 is_test=test_file,
             ),
@@ -6692,24 +6597,16 @@ class CodeParser(builtins.object) {
             }
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=name,
-                    file_path=file_path_str,
-                    line_start=line,
-                    line_end=line_end,
+                    "Function",
+                    name,
+                    file_path_str,
+                    line,
+                    line_end,
                     language="sql",
                     extra={"sql_kind": "procedure"},
                 ),
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path_str,
-                    target=qualified,
-                    file_path=file_path_str,
-                    line=line,
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", file_path_str, qualified, file_path_str, line));
             if is_plsql {
                 self._extract_plsql_calls(
                     clean_text, m.end(), body_end, qualified, file_path_str, edges
@@ -6727,24 +6624,16 @@ class CodeParser(builtins.object) {
             body_end = self._plsql_block_end(clean_text, m.end(), name);
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=name,
-                    file_path=file_path_str,
-                    line_start=line,
-                    line_end=clean_text[:body_end].count("\n") + 1,
+                    "Function",
+                    name,
+                    file_path_str,
+                    line,
+                    clean_text[:body_end].count("\n") + 1,
                     language="sql",
                     extra={"sql_kind": "function"},
                 ),
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path_str,
-                    target=qualified,
-                    file_path=file_path_str,
-                    line=line,
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", file_path_str, qualified, file_path_str, line));
             self._extract_plsql_calls(
                 clean_text, m.end(), body_end, qualified, file_path_str, edges
             );
@@ -6757,24 +6646,16 @@ class CodeParser(builtins.object) {
             body_end = self._plsql_block_end(clean_text, m.end(), name);
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=name,
-                    file_path=file_path_str,
-                    line_start=line,
-                    line_end=clean_text[:body_end].count("\n") + 1,
+                    "Function",
+                    name,
+                    file_path_str,
+                    line,
+                    clean_text[:body_end].count("\n") + 1,
                     language="sql",
                     extra={"sql_kind": "trigger"},
                 ),
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path_str,
-                    target=qualified,
-                    file_path=file_path_str,
-                    line=line,
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", file_path_str, qualified, file_path_str, line));
             self._extract_plsql_calls(
                 clean_text, m.end(), body_end, qualified, file_path_str, edges
             );
@@ -6787,24 +6668,16 @@ class CodeParser(builtins.object) {
             body_end = self._plsql_block_end(clean_text, m.end(), name);
             nodes.append(
                 NodeInfo(
-                    kind="Class",
-                    name=name,
-                    file_path=file_path_str,
-                    line_start=line,
-                    line_end=clean_text[:body_end].count("\n") + 1,
+                    "Class",
+                    name,
+                    file_path_str,
+                    line,
+                    clean_text[:body_end].count("\n") + 1,
                     language="sql",
                     extra={"sql_kind": "package"},
                 ),
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path_str,
-                    target=qualified,
-                    file_path=file_path_str,
-                    line=line,
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", file_path_str, qualified, file_path_str, line));
         }
         for m in self._SQL_PACKAGE_BODY_RE.finditer(clean_text) if is_plsql else iter(()) {
             raw_name = m.group(1);
@@ -6816,8 +6689,8 @@ class CodeParser(builtins.object) {
             body_end = self._plsql_block_end(clean_text, body_start, pkg_name, package=True);
             nodes.append(
                 NodeInfo(
-                    kind="Class",
-                    name=pkg_name,
+                    "Class",
+                    pkg_name,
                     identity_name=body_identity,
                     file_path=file_path_str,
                     line_start=line,
@@ -6826,15 +6699,7 @@ class CodeParser(builtins.object) {
                     extra={"sql_kind": "package_body"},
                 ),
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path_str,
-                    target=body_qualified,
-                    file_path=file_path_str,
-                    line=line,
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", file_path_str, body_qualified, file_path_str, line));
 
             body_text: any = clean_text[body_start:body_end];
             named_ends: dict[str, list[int]] = {};
@@ -6865,8 +6730,8 @@ class CodeParser(builtins.object) {
                 member_qualified: any = f"{body_qualified}.{member_identity}";
                 nodes.append(
                     NodeInfo(
-                        kind="Function",
-                        name=member_name,
+                        "Function",
+                        member_name,
                         identity_name=member_identity,
                         file_path=file_path_str,
                         line_start=member_line,
@@ -6880,11 +6745,7 @@ class CodeParser(builtins.object) {
                 );
                 edges.append(
                     EdgeInfo(
-                        kind="CONTAINS",
-                        source=body_qualified,
-                        target=member_qualified,
-                        file_path=file_path_str,
-                        line=member_line,
+                        "CONTAINS", body_qualified, member_qualified, file_path_str, member_line
                     ),
                 );
                 self._extract_plsql_calls(
@@ -6904,15 +6765,7 @@ class CodeParser(builtins.object) {
             if ref and ref.upper() not in _SQL_KEYWORDS and ref not in seen_refs {
                 seen_refs.add(ref);
                 line = clean_text[:m.start()].count("\n") + 1;
-                edges.append(
-                    EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path_str,
-                        target=ref,
-                        file_path=file_path_str,
-                        line=line,
-                    ),
-                );
+                edges.append(EdgeInfo("IMPORTS_FROM", file_path_str, ref, file_path_str, line));
             }
         }
 
@@ -6998,25 +6851,17 @@ class CodeParser(builtins.object) {
         qualified: any = f"{file_path_str}::{model_name}";
         nodes.append(
             NodeInfo(
-                kind="Class",
-                name=model_name,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=text.count("\n") + 1,
+                "Class",
+                model_name,
+                file_path_str,
+                1,
+                text.count("\n") + 1,
                 language="sql",
                 is_test=test_file,
                 extra={"sql_kind": "dbt_model"},
             ),
         );
-        edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=file_path_str,
-                target=qualified,
-                file_path=file_path_str,
-                line=1,
-            ),
-        );
+        edges.append(EdgeInfo("CONTAINS", file_path_str, qualified, file_path_str, 1));
 
         seen_targets: set[str] = set[any]();
         for m in dbt_refs {
@@ -7038,11 +6883,11 @@ class CodeParser(builtins.object) {
                 seen_targets.add(target);
                 edges.append(
                     EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path_str,
-                        target=target,
-                        file_path=file_path_str,
-                        line=text[:m.start()].count("\n") + 1,
+                        "IMPORTS_FROM",
+                        file_path_str,
+                        target,
+                        file_path_str,
+                        text[:m.start()].count("\n") + 1,
                     ),
                 );
             }
@@ -7152,11 +6997,11 @@ class CodeParser(builtins.object) {
             counted_to = m.start();
             edges.append(
                 EdgeInfo(
-                    kind="CALLS",
-                    source=caller_qualified,
-                    target=last,
-                    file_path=file_path_str,
-                    line=line,
+                    "CALLS",
+                    caller_qualified,
+                    last,
+                    file_path_str,
+                    line,
                     extra={"receiver": receiver} if receiver else {},
                 ),
             );
@@ -7222,24 +7067,16 @@ class CodeParser(builtins.object) {
         qualified: any = f"{file_path_str}::{name}";
         nodes.append(
             NodeInfo(
-                kind=kind,
-                name=name,
-                file_path=file_path_str,
-                line_start=line_start,
-                line_end=line_end,
+                kind,
+                name,
+                file_path_str,
+                line_start,
+                line_end,
                 language="sql",
                 extra={"sql_kind": sql_kind},
             ),
         );
-        edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=file_path_str,
-                target=qualified,
-                file_path=file_path_str,
-                line=line_start,
-            ),
-        );
+        edges.append(EdgeInfo("CONTAINS", file_path_str, qualified, file_path_str, line_start));
     }
 
     def _resolve_call_targets(
@@ -7355,11 +7192,11 @@ class CodeParser(builtins.object) {
                 local: any = [qualified for (qualified, parent) in entries if parent == scope];
                 if len(local) == 1 {
                     `edge = EdgeInfo(
-                        kind=`edge.kind,
-                        source=`edge.source,
-                        target=local[0],
-                        file_path=`edge.file_path,
-                        line=`edge.line,
+                        `edge.kind,
+                        `edge.source,
+                        local[0],
+                        `edge.file_path,
+                        `edge.line,
                         extra=`edge.extra,
                     );
                     resolved.append(`edge);
@@ -7367,11 +7204,11 @@ class CodeParser(builtins.object) {
                 }
                 if entries and not `any(parent is None for (_, parent) in entries) {
                     `edge = EdgeInfo(
-                        kind=`edge.kind,
-                        source=`edge.source,
-                        target=`edge.target,
-                        file_path=`edge.file_path,
-                        line=`edge.line,
+                        `edge.kind,
+                        `edge.source,
+                        `edge.target,
+                        `edge.file_path,
+                        `edge.line,
                         extra={**`edge.extra, "receiver_binding": "class", "receiver_class": scope},
                     );
                     resolved.append(`edge);
@@ -7390,11 +7227,11 @@ class CodeParser(builtins.object) {
                 ];
                 if len(candidates) == 1 {
                     `edge = EdgeInfo(
-                        kind=`edge.kind,
-                        source=`edge.source,
-                        target=candidates[0],
-                        file_path=`edge.file_path,
-                        line=`edge.line,
+                        `edge.kind,
+                        `edge.source,
+                        candidates[0],
+                        `edge.file_path,
+                        `edge.line,
                         extra=`edge.extra,
                     );
                     resolved.append(`edge);
@@ -7406,11 +7243,11 @@ class CodeParser(builtins.object) {
                 member_candidates: any = symbols.get(member_call, []);
                 if member_candidates {
                     `edge = EdgeInfo(
-                        kind=`edge.kind,
-                        source=`edge.source,
-                        target=member_candidates[0][0],
-                        file_path=`edge.file_path,
-                        line=`edge.line,
+                        `edge.kind,
+                        `edge.source,
+                        member_candidates[0][0],
+                        `edge.file_path,
+                        `edge.line,
                         extra=`edge.extra,
                     );
                     resolved.append(`edge);
@@ -7429,11 +7266,11 @@ class CodeParser(builtins.object) {
                     for (qualified, _) in candidate_entries(`edge.target, `edge.kind)
                 ];
                 `edge = EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=`edge.target,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
+                    `edge.kind,
+                    `edge.source,
+                    `edge.target,
+                    `edge.file_path,
+                    `edge.line,
                     extra=cpp_resolution_extra(`edge.extra, "unresolved", receiver_candidates),
                 );
                 resolved.append(`edge);
@@ -7485,20 +7322,20 @@ class CodeParser(builtins.object) {
                 if scoped_candidates {
                     if len(scoped_candidates) > 1 {
                         `edge = EdgeInfo(
-                            kind=`edge.kind,
-                            source=`edge.source,
-                            target=`edge.target,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            `edge.kind,
+                            `edge.source,
+                            `edge.target,
+                            `edge.file_path,
+                            `edge.line,
                             extra=cpp_resolution_extra(`edge.extra, "ambiguous", scoped_candidates),
                         );
                     } else {
                         `edge = EdgeInfo(
-                            kind=`edge.kind,
-                            source=`edge.source,
-                            target=scoped_candidates[0],
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            `edge.kind,
+                            `edge.source,
+                            scoped_candidates[0],
+                            `edge.file_path,
+                            `edge.line,
                             extra=`edge.extra,
                         );
                     }
@@ -7535,11 +7372,11 @@ class CodeParser(builtins.object) {
                     }
                     if not candidates {
                         `edge = EdgeInfo(
-                            kind=`edge.kind,
-                            source=`edge.source,
-                            target=`edge.target,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            `edge.kind,
+                            `edge.source,
+                            `edge.target,
+                            `edge.file_path,
+                            `edge.line,
                             extra=cpp_resolution_extra(
                                 `edge.extra, "unresolved", [qualified for (qualified, _) in entries]
                             ),
@@ -7551,22 +7388,22 @@ class CodeParser(builtins.object) {
                 if candidates {
                     if is_cpp and len(candidates) > 1 {
                         `edge = EdgeInfo(
-                            kind=`edge.kind,
-                            source=`edge.source,
-                            target=`edge.target,
-                            file_path=`edge.file_path,
-                            line=`edge.line,
+                            `edge.kind,
+                            `edge.source,
+                            `edge.target,
+                            `edge.file_path,
+                            `edge.line,
                             extra=cpp_resolution_extra(`edge.extra, "ambiguous", candidates),
                         );
                         resolved.append(`edge);
                         continue;
                     }
                     `edge = EdgeInfo(
-                        kind=`edge.kind,
-                        source=`edge.source,
-                        target=candidates[0],
-                        file_path=`edge.file_path,
-                        line=`edge.line,
+                        `edge.kind,
+                        `edge.source,
+                        candidates[0],
+                        `edge.file_path,
+                        `edge.line,
                         extra=`edge.extra,
                     );
                 }
@@ -7669,12 +7506,7 @@ class CodeParser(builtins.object) {
             }
             if target is not None {
                 `edge = EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=target,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
-                    extra=`edge.extra,
+                    `edge.kind, `edge.source, target, `edge.file_path, `edge.line, extra=`edge.extra
                 );
             }
             resolved.append(`edge);
@@ -8302,11 +8134,11 @@ class CodeParser(builtins.object) {
                     }
                 }
                 `edge = EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=resolved_target,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
+                    `edge.kind,
+                    `edge.source,
+                    resolved_target,
+                    `edge.file_path,
+                    `edge.line,
                     extra=extra,
                 );
             }
@@ -8732,11 +8564,11 @@ class CodeParser(builtins.object) {
                             else file_path;
                         property_read_edges.append(
                             EdgeInfo(
-                                kind="CALLS",
-                                source=caller,
-                                target=self._qualify(property_name, target_file, target_class),
-                                file_path=file_path,
-                                line=`node.start_point[0] + 1,
+                                "CALLS",
+                                caller,
+                                self._qualify(property_name, target_file, target_class),
+                                file_path,
+                                `node.start_point[0] + 1,
                                 extra={"python_property_read": True},
                             ),
                         );
@@ -9796,12 +9628,7 @@ class CodeParser(builtins.object) {
             }
             annotated.append(
                 EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=`edge.target,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
-                    extra=extra,
+                    `edge.kind, `edge.source, `edge.target, `edge.file_path, `edge.line, extra=extra
                 ),
             );
         }
@@ -10124,11 +9951,11 @@ class CodeParser(builtins.object) {
             return (
                 [
                     NodeInfo(
-                        kind="File",
-                        name=locale_file_path,
-                        file_path=locale_file_path,
-                        line_start=1,
-                        line_end=source.count(b"\n") + 1,
+                        "File",
+                        locale_file_path,
+                        locale_file_path,
+                        1,
+                        source.count(b"\n") + 1,
                         language="yaml",
                         extra={
                             "config_format": path.suffix.lower().lstrip("."),
@@ -10176,11 +10003,11 @@ class CodeParser(builtins.object) {
         };
         nodes: any = [
             NodeInfo(
-                kind="File",
-                name=file_path,
-                file_path=file_path,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
+                "File",
+                file_path,
+                file_path,
+                1,
+                source.count(b"\n") + 1,
                 language="yaml",
                 extra=file_extra,
             ),
@@ -10225,11 +10052,7 @@ class CodeParser(builtins.object) {
                 return;
             }
             contains_edges.add(edge_key);
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS", source=parent, target=target, file_path=file_path, line=line
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", parent, target, file_path, line));
         }
 
         def next_alias_line(value_node: object, fallback: int) -> int {
@@ -10273,11 +10096,11 @@ class CodeParser(builtins.object) {
             target: any = qualified(alias_identity, document_index);
             nodes.append(
                 NodeInfo(
-                    kind="YamlPath",
-                    name=exact_path,
-                    file_path=file_path,
-                    line_start=node_line_start,
-                    line_end=node_line_end,
+                    "YamlPath",
+                    exact_path,
+                    file_path,
+                    node_line_start,
+                    node_line_end,
                     language="yaml",
                     extra={
                         "document_index": document_index,
@@ -10295,11 +10118,11 @@ class CodeParser(builtins.object) {
             add_contains(parent_qualified, target, node_line_start);
             edges.append(
                 EdgeInfo(
-                    kind="REFERENCES",
-                    source=target,
-                    target=original_target,
-                    file_path=file_path,
-                    line=reference_line,
+                    "REFERENCES",
+                    target,
+                    original_target,
+                    file_path,
+                    reference_line,
                     extra={"yaml_alias": True, "yaml_merge": yaml_merge},
                 ),
             );
@@ -10379,11 +10202,11 @@ class CodeParser(builtins.object) {
                 }
                 nodes.append(
                     NodeInfo(
-                        kind="YamlPath",
-                        name=schema_path,
-                        file_path=file_path,
-                        line_start=line_start,
-                        line_end=max(line_start, line_end),
+                        "YamlPath",
+                        schema_path,
+                        file_path,
+                        line_start,
+                        max(line_start, line_end),
                         language="yaml",
                         extra=node_extra,
                         identity_name=f"yaml:{document_index}:{anchor_identity}",
@@ -10441,11 +10264,11 @@ class CodeParser(builtins.object) {
                     **extra,
                 };
                 `node = NodeInfo(
-                    kind="YamlPath",
-                    name=schema_path,
-                    file_path=file_path,
-                    line_start=line_start,
-                    line_end=max(line_start, line_end),
+                    "YamlPath",
+                    schema_path,
+                    file_path,
+                    line_start,
+                    max(line_start, line_end),
                     language="yaml",
                     extra=node_extra,
                     identity_name=f"yaml:{document_index}:{schema_path}",
@@ -10719,11 +10542,11 @@ class CodeParser(builtins.object) {
         };
         nodes: any = [
             NodeInfo(
-                kind="File",
-                name=file_path,
-                file_path=file_path,
-                line_start=1,
-                line_end=source.count(b"\n") + 1,
+                "File",
+                file_path,
+                file_path,
+                1,
+                source.count(b"\n") + 1,
                 language="json",
                 extra=file_extra,
             ),
@@ -10781,11 +10604,11 @@ class CodeParser(builtins.object) {
                     continue;
                 }
                 `node = NodeInfo(
-                    kind="JsonPath",
-                    name=schema_path,
-                    file_path=file_path,
-                    line_start=line_start,
-                    line_end=line_end,
+                    "JsonPath",
+                    schema_path,
+                    file_path,
+                    line_start,
+                    line_end,
                     language="json",
                     extra={
                         "path": schema_path,
@@ -10805,13 +10628,7 @@ class CodeParser(builtins.object) {
                 path_nodes[schema_path] = `node;
                 path_value_types[schema_path] = {value_type};
                 edges.append(
-                    EdgeInfo(
-                        kind="CONTAINS",
-                        source=parent,
-                        target=qualified(schema_path),
-                        file_path=file_path,
-                        line=line_start,
-                    ),
+                    EdgeInfo("CONTAINS", parent, qualified(schema_path), file_path, line_start)
                 );
             } else {
                 `node.line_start = min(`node.line_start, line_start);
@@ -10871,11 +10688,11 @@ class CodeParser(builtins.object) {
     static def _spring_config_file_node(path: Path, source: bytes, language: str) -> NodeInfo {
         file_path: any = normalize_file_path(path);
         return NodeInfo(
-            kind="File",
-            name=file_path,
-            file_path=file_path,
-            line_start=1,
-            line_end=source.count(b"\n") + 1,
+            "File",
+            file_path,
+            file_path,
+            1,
+            source.count(b"\n") + 1,
             language=language,
             extra={"config_format": path.suffix.lower().lstrip(".")},
         );
@@ -10918,11 +10735,11 @@ class CodeParser(builtins.object) {
             }
             nodes.append(
                 NodeInfo(
-                    kind="ConfigProperty",
-                    name=key,
-                    file_path=file_path,
-                    line_start=_yaml_line(value_node),
-                    line_end=_yaml_end_line(value_node),
+                    "ConfigProperty",
+                    key,
+                    file_path,
+                    _yaml_line(value_node),
+                    _yaml_end_line(value_node),
                     language="yaml",
                     extra={
                         "document_index": document_index,
@@ -11069,11 +10886,11 @@ class CodeParser(builtins.object) {
             emitted.add(key);
             nodes.append(
                 NodeInfo(
-                    kind="ConfigProperty",
-                    name=key,
-                    file_path=file_path,
-                    line_start=line_number,
-                    line_end=line_number,
+                    "ConfigProperty",
+                    key,
+                    file_path,
+                    line_number,
+                    line_number,
                     language="properties",
                     extra={"raw_key": raw_key, "source_file": path.name, "value_type": "scalar"},
                 ),
@@ -11096,14 +10913,7 @@ class CodeParser(builtins.object) {
         file_path_str: any = normalize_file_path(path);
         line_count: any = source.count(b"\n") + 1;
         nodes: list[NodeInfo] = [
-            NodeInfo(
-                kind="File",
-                name=file_path_str,
-                file_path=file_path_str,
-                line_start=1,
-                line_end=line_count,
-                language="ansible",
-            ),
+            NodeInfo("File", file_path_str, file_path_str, 1, line_count, language="ansible"),
         ];
         edges: list[EdgeInfo] = [];
 
@@ -11197,11 +11007,11 @@ class CodeParser(builtins.object) {
             }
             resolved.append(
                 EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=candidates[0],
-                    file_path=`edge.file_path,
-                    line=`edge.line,
+                    `edge.kind,
+                    `edge.source,
+                    candidates[0],
+                    `edge.file_path,
+                    `edge.line,
                     extra=`edge.extra,
                 ),
             );
@@ -11226,11 +11036,11 @@ class CodeParser(builtins.object) {
                 if target {
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=file_path,
-                            target=target,
-                            file_path=file_path,
-                            line=_yaml_line(item),
+                            "IMPORTS_FROM",
+                            file_path,
+                            target,
+                            file_path,
+                            _yaml_line(item),
                             extra={"ansible_kind": "import_playbook"},
                         ),
                     );
@@ -11260,24 +11070,16 @@ class CodeParser(builtins.object) {
 
             nodes.append(
                 NodeInfo(
-                    kind="Class",
-                    name=play_name,
-                    file_path=file_path,
-                    line_start=play_line_start,
-                    line_end=play_line_end,
+                    "Class",
+                    play_name,
+                    file_path,
+                    play_line_start,
+                    play_line_end,
                     language="ansible",
                     extra={"ansible_kind": "play"},
                 ),
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path,
-                    target=play_qn,
-                    file_path=file_path,
-                    line=play_line_start,
-                ),
-            );
+            edges.append(EdgeInfo("CONTAINS", file_path, play_qn, file_path, play_line_start));
             vars_files_node: any = _yaml_get_key(item, "vars_files");
             if isinstance(vars_files_node, _YamlSequence) {
                 for vf in vars_files_node.value {
@@ -11285,11 +11087,11 @@ class CodeParser(builtins.object) {
                     if vf_path {
                         edges.append(
                             EdgeInfo(
-                                kind="IMPORTS_FROM",
-                                source=play_qn,
-                                target=vf_path,
-                                file_path=file_path,
-                                line=_yaml_line(vf),
+                                "IMPORTS_FROM",
+                                play_qn,
+                                vf_path,
+                                file_path,
+                                _yaml_line(vf),
                                 extra={"ansible_kind": "vars_files"},
                             ),
                         );
@@ -11303,11 +11105,11 @@ class CodeParser(builtins.object) {
                     if role_name {
                         edges.append(
                             EdgeInfo(
-                                kind="IMPORTS_FROM",
-                                source=play_qn,
-                                target=role_name,
-                                file_path=file_path,
-                                line=_yaml_line(role_item),
+                                "IMPORTS_FROM",
+                                play_qn,
+                                role_name,
+                                file_path,
+                                _yaml_line(role_item),
                                 extra={"ansible_kind": "role_reference"},
                             ),
                         );
@@ -11397,11 +11199,11 @@ class CodeParser(builtins.object) {
 
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=task_name,
-                    file_path=file_path,
-                    line_start=_yaml_line(task_node),
-                    line_end=_yaml_end_line(task_node),
+                    "Function",
+                    task_name,
+                    file_path,
+                    _yaml_line(task_node),
+                    _yaml_end_line(task_node),
                     language="ansible",
                     parent_name=parent_play,
                     extra=task_extra,
@@ -11409,13 +11211,13 @@ class CodeParser(builtins.object) {
             );
             edges.append(
                 EdgeInfo(
-                    kind="CONTAINS",
-                    source=self._qualify(parent_play, file_path, None)
+                    "CONTAINS",
+                    self._qualify(parent_play, file_path, None)
                         if parent_play is not None
                         else file_path,
-                    target=task_qn,
-                    file_path=file_path,
-                    line=_yaml_line(task_node),
+                    task_qn,
+                    file_path,
+                    _yaml_line(task_node),
                 ),
             );
             notify_node: any = _yaml_get_key(task_node, "notify");
@@ -11423,11 +11225,11 @@ class CodeParser(builtins.object) {
                 for handler_name in self._ansible_extract_notify_targets(notify_node) {
                     edges.append(
                         EdgeInfo(
-                            kind="CALLS",
-                            source=task_qn,
-                            target=handler_name,
-                            file_path=file_path,
-                            line=_yaml_line(notify_node),
+                            "CALLS",
+                            task_qn,
+                            handler_name,
+                            file_path,
+                            _yaml_line(notify_node),
                             extra={"ansible_kind": "notify"},
                         ),
                     );
@@ -11438,11 +11240,11 @@ class CodeParser(builtins.object) {
                 if target_file {
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=task_qn,
-                            target=target_file,
-                            file_path=file_path,
-                            line=_yaml_line(task_node),
+                            "IMPORTS_FROM",
+                            task_qn,
+                            target_file,
+                            file_path,
+                            _yaml_line(task_node),
                             extra={"ansible_kind": module_short},
                         ),
                     );
@@ -11453,11 +11255,11 @@ class CodeParser(builtins.object) {
                 if role_name {
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=task_qn,
-                            target=role_name,
-                            file_path=file_path,
-                            line=_yaml_line(task_node),
+                            "IMPORTS_FROM",
+                            task_qn,
+                            role_name,
+                            file_path,
+                            _yaml_line(task_node),
                             extra={"ansible_kind": module_short},
                         ),
                     );
@@ -11468,11 +11270,11 @@ class CodeParser(builtins.object) {
                 if var_target {
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=task_qn,
-                            target=var_target,
-                            file_path=file_path,
-                            line=_yaml_line(task_node),
+                            "IMPORTS_FROM",
+                            task_qn,
+                            var_target,
+                            file_path,
+                            _yaml_line(task_node),
                             extra={"ansible_kind": "include_vars"},
                         ),
                     );
@@ -11509,11 +11311,11 @@ class CodeParser(builtins.object) {
             if dep_name {
                 edges.append(
                     EdgeInfo(
-                        kind="DEPENDS_ON",
-                        source=file_path,
-                        target=dep_name,
-                        file_path=file_path,
-                        line=_yaml_line(dep_item),
+                        "DEPENDS_ON",
+                        file_path,
+                        dep_name,
+                        file_path,
+                        _yaml_line(dep_item),
                         extra={"ansible_kind": "role_dependency"},
                     ),
                 );
@@ -12048,23 +11850,17 @@ class CodeParser(builtins.object) {
             qualified: any = self._qualify(mod_name, file_path, None);
             nodes.append(
                 NodeInfo(
-                    kind="Class",
-                    name=mod_name,
-                    file_path=file_path,
-                    line_start=`node.start_point[0] + 1,
-                    line_end=`node.end_point[0] + 1,
+                    "Class",
+                    mod_name,
+                    file_path,
+                    `node.start_point[0] + 1,
+                    `node.end_point[0] + 1,
                     language=language,
                     parent_name=None,
                 ),
             );
             edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path,
-                    target=qualified,
-                    file_path=file_path,
-                    line=`node.start_point[0] + 1,
-                ),
+                EdgeInfo("CONTAINS", file_path, qualified, file_path, `node.start_point[0] + 1)
             );
             if do_block is not None {
                 self._extract_from_tree(
@@ -12107,11 +11903,11 @@ class CodeParser(builtins.object) {
             qualified = self._qualify(fn_name, file_path, enclosing_class);
             nodes.append(
                 NodeInfo(
-                    kind=kind,
-                    name=fn_name,
-                    file_path=file_path,
-                    line_start=`node.start_point[0] + 1,
-                    line_end=`node.end_point[0] + 1,
+                    kind,
+                    fn_name,
+                    file_path,
+                    `node.start_point[0] + 1,
+                    `node.end_point[0] + 1,
                     language=language,
                     parent_name=enclosing_class,
                     params=params,
@@ -12122,13 +11918,7 @@ class CodeParser(builtins.object) {
                 if enclosing_class
                 else file_path;
             edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=container,
-                    target=qualified,
-                    file_path=file_path,
-                    line=`node.start_point[0] + 1,
-                ),
+                EdgeInfo("CONTAINS", container, qualified, file_path, `node.start_point[0] + 1)
             );
             if do_block is not None {
                 self._extract_from_tree(
@@ -12172,11 +11962,7 @@ class CodeParser(builtins.object) {
                     if mod is not None {
                         edges.append(
                             EdgeInfo(
-                                kind="IMPORTS_FROM",
-                                source=file_path,
-                                target=mod,
-                                file_path=file_path,
-                                line=`node.start_point[0] + 1,
+                                "IMPORTS_FROM", file_path, mod, file_path, `node.start_point[0] + 1
                             ),
                         );
                     }
@@ -12192,15 +11978,7 @@ class CodeParser(builtins.object) {
         target: any = self._resolve_call_target(
             call_name, file_path, language, import_map or {}, defined_names or set[any]()
         );
-        edges.append(
-            EdgeInfo(
-                kind="CALLS",
-                source=caller,
-                target=target,
-                file_path=file_path,
-                line=`node.start_point[0] + 1,
-            ),
-        );
+        edges.append(EdgeInfo("CALLS", caller, target, file_path, `node.start_point[0] + 1));
         for sub in `node.children {
             if sub.type in ("arguments", "do_block") {
                 self._extract_from_tree(
@@ -12442,15 +12220,7 @@ class CodeParser(builtins.object) {
                 }
             }
             if url {
-                edges.append(
-                    EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path,
-                        target=url,
-                        file_path=file_path,
-                        line=line,
-                    ),
-                );
+                edges.append(EdgeInfo("IMPORTS_FROM", file_path, url, file_path, line));
                 return True;
             }
         }
@@ -12459,25 +12229,17 @@ class CodeParser(builtins.object) {
             and rhs_node.type == "attrset_expression"
         {
             for (url, uline) in self._extract_nix_flake_input_urls(rhs_node) {
-                edges.append(
-                    EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path,
-                        target=url,
-                        file_path=file_path,
-                        line=uline,
-                    ),
-                );
+                edges.append(EdgeInfo("IMPORTS_FROM", file_path, url, file_path, uline));
             }
         }
         qualified: any = self._qualify(name, file_path, enclosing_class);
         nodes.append(
             NodeInfo(
-                kind="Function",
-                name=name,
-                file_path=file_path,
-                line_start=line,
-                line_end=`node.end_point[0] + 1,
+                "Function",
+                name,
+                file_path,
+                line,
+                `node.end_point[0] + 1,
                 language=language,
                 parent_name=enclosing_class,
             ),
@@ -12485,22 +12247,10 @@ class CodeParser(builtins.object) {
         container: any = self._qualify(enclosing_class, file_path, None)
             if enclosing_class
             else file_path;
-        edges.append(
-            EdgeInfo(
-                kind="CONTAINS", source=container, target=qualified, file_path=file_path, line=line
-            ),
-        );
+        edges.append(EdgeInfo("CONTAINS", container, qualified, file_path, line));
         for (target, tline) in self._extract_nix_import_targets(rhs_node) {
             resolved: any = self._resolve_module_to_file(target, file_path, "nix");
-            edges.append(
-                EdgeInfo(
-                    kind="IMPORTS_FROM",
-                    source=file_path,
-                    target=resolved or target,
-                    file_path=file_path,
-                    line=tline,
-                ),
-            );
+            edges.append(EdgeInfo("IMPORTS_FROM", file_path, resolved or target, file_path, tline));
         }
         self._extract_from_tree(
             rhs_node,
@@ -12566,24 +12316,16 @@ class CodeParser(builtins.object) {
         qualified: any = self._qualify(name, file_path, None);
         nodes.append(
             NodeInfo(
-                kind=kind,
-                name=name,
-                file_path=file_path,
-                line_start=line_start,
-                line_end=`node.end_point[0] + 1,
+                kind,
+                name,
+                file_path,
+                line_start,
+                `node.end_point[0] + 1,
                 language="hcl",
                 extra={"hcl_type": block_type},
             ),
         );
-        edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=file_path,
-                target=qualified,
-                file_path=file_path,
-                line=line_start,
-            ),
-        );
+        edges.append(EdgeInfo("CONTAINS", file_path, qualified, file_path, line_start));
 
         if body_node is None {
             return True;
@@ -12594,13 +12336,7 @@ class CodeParser(builtins.object) {
             if src {
                 resolved: any = self._resolve_module_to_file(src, file_path, "hcl");
                 edges.append(
-                    EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path,
-                        target=resolved or src,
-                        file_path=file_path,
-                        line=line_start,
-                    ),
+                    EdgeInfo("IMPORTS_FROM", file_path, resolved or src, file_path, line_start)
                 );
             }
         }
@@ -12640,22 +12376,18 @@ class CodeParser(builtins.object) {
             lline: any = attr.start_point[0] + 1;
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=lname,
-                    file_path=file_path,
-                    line_start=lline,
-                    line_end=attr.end_point[0] + 1,
+                    "Function",
+                    lname,
+                    file_path,
+                    lline,
+                    attr.end_point[0] + 1,
                     language="hcl",
                     extra={"hcl_type": "local"},
                 ),
             );
             edges.append(
                 EdgeInfo(
-                    kind="CONTAINS",
-                    source=file_path,
-                    target=self._qualify(lname, file_path, None),
-                    file_path=file_path,
-                    line=lline,
+                    "CONTAINS", file_path, self._qualify(lname, file_path, None), file_path, lline
                 ),
             );
             self._walk_hcl_expressions(attr, file_path, edges, lname);
@@ -12709,11 +12441,11 @@ class CodeParser(builtins.object) {
                 if ref {
                     edges.append(
                         EdgeInfo(
-                            kind="REFERENCES",
-                            source=self._qualify(enclosing_name, file_path, None),
-                            target=self._qualify(ref, file_path, None),
-                            file_path=file_path,
-                            line=line,
+                            "REFERENCES",
+                            self._qualify(enclosing_name, file_path, None),
+                            self._qualify(ref, file_path, None),
+                            file_path,
+                            line,
                         ),
                     );
                 }
@@ -12778,11 +12510,11 @@ class CodeParser(builtins.object) {
             resolved: any = self._resolve_module_to_file(target, file_path, "bash");
             edges.append(
                 EdgeInfo(
-                    kind="IMPORTS_FROM",
-                    source=file_path,
-                    target=resolved or target,
-                    file_path=file_path,
-                    line=`node.start_point[0] + 1,
+                    "IMPORTS_FROM",
+                    file_path,
+                    resolved or target,
+                    file_path,
+                    `node.start_point[0] + 1,
                 ),
             );
             return True;
@@ -12827,13 +12559,7 @@ class CodeParser(builtins.object) {
                         if enclosing_func
                         else file_path;
                     edges.append(
-                        EdgeInfo(
-                            kind="CALLS",
-                            source=src_qn,
-                            target=call_name,
-                            file_path=file_path,
-                            line=parent.start_point[0] + 1,
-                        ),
+                        EdgeInfo("CALLS", src_qn, call_name, file_path, parent.start_point[0] + 1)
                     );
                     call_name = None;
                 }
@@ -13148,11 +12874,11 @@ class CodeParser(builtins.object) {
                     qualified: any = self._qualify(name, file_path, enclosing_class);
                     nodes.append(
                         NodeInfo(
-                            kind="Type",
-                            name=name,
-                            file_path=file_path,
-                            line_start=child.start_point[0] + 1,
-                            line_end=child.end_point[0] + 1,
+                            "Type",
+                            name,
+                            file_path,
+                            child.start_point[0] + 1,
+                            child.end_point[0] + 1,
                             language=language,
                             parent_name=enclosing_class,
                         ),
@@ -13162,11 +12888,7 @@ class CodeParser(builtins.object) {
                         else file_path;
                     edges.append(
                         EdgeInfo(
-                            kind="CONTAINS",
-                            source=container,
-                            target=qualified,
-                            file_path=file_path,
-                            line=child.start_point[0] + 1,
+                            "CONTAINS", container, qualified, file_path, child.start_point[0] + 1
                         ),
                     );
                     return True;
@@ -13200,11 +12922,11 @@ class CodeParser(builtins.object) {
                     }
                     nodes.append(
                         NodeInfo(
-                            kind=kind,
-                            name=name,
-                            file_path=file_path,
-                            line_start=child.start_point[0] + 1,
-                            line_end=child.end_point[0] + 1,
+                            kind,
+                            name,
+                            file_path,
+                            child.start_point[0] + 1,
+                            child.end_point[0] + 1,
                             language=language,
                             parent_name=identity_parent,
                             is_test=is_test,
@@ -13216,21 +12938,17 @@ class CodeParser(builtins.object) {
                         else file_path;
                     edges.append(
                         EdgeInfo(
-                            kind="CONTAINS",
-                            source=container,
-                            target=qualified,
-                            file_path=file_path,
-                            line=child.start_point[0] + 1,
+                            "CONTAINS", container, qualified, file_path, child.start_point[0] + 1
                         ),
                     );
                     if qualifier {
                         edges.append(
                             EdgeInfo(
-                                kind="REFERENCES",
-                                source=qualified,
-                                target=qualifier,
-                                file_path=file_path,
-                                line=child.start_point[0] + 1,
+                                "REFERENCES",
+                                qualified,
+                                qualifier,
+                                file_path,
+                                child.start_point[0] + 1,
                                 extra={"julia_qualified_def": True},
                             ),
                         );
@@ -13287,11 +13005,11 @@ class CodeParser(builtins.object) {
                     resolved: any = self._resolve_module_to_file(path_arg, file_path, language);
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=file_path,
-                            target=resolved or path_arg,
-                            file_path=file_path,
-                            line=child.start_point[0] + 1,
+                            "IMPORTS_FROM",
+                            file_path,
+                            resolved or path_arg,
+                            file_path,
+                            child.start_point[0] + 1,
                         ),
                     );
                     return False;
@@ -13308,11 +13026,11 @@ class CodeParser(builtins.object) {
                     name = sub.text.decode("utf-8", errors="replace");
                     edges.append(
                         EdgeInfo(
-                            kind="REFERENCES",
-                            source=source_qual,
-                            target=name,
-                            file_path=file_path,
-                            line=child.start_point[0] + 1,
+                            "REFERENCES",
+                            source_qual,
+                            name,
+                            file_path,
+                            child.start_point[0] + 1,
                             extra={marker: True},
                         ),
                     );
@@ -13360,11 +13078,11 @@ class CodeParser(builtins.object) {
                     qualified_type: any = self._qualify(type_name, file_path, enclosing_class);
                     nodes.append(
                         NodeInfo(
-                            kind="Class",
-                            name=type_name,
-                            file_path=file_path,
-                            line_start=line_start,
-                            line_end=line_end,
+                            "Class",
+                            type_name,
+                            file_path,
+                            line_start,
+                            line_end,
                             language=language,
                             parent_name=enclosing_class,
                             extra={"julia_kind": "enum"},
@@ -13374,13 +13092,7 @@ class CodeParser(builtins.object) {
                         if enclosing_class
                         else file_path;
                     edges.append(
-                        EdgeInfo(
-                            kind="CONTAINS",
-                            source=container,
-                            target=qualified_type,
-                            file_path=file_path,
-                            line=line_start,
-                        ),
+                        EdgeInfo("CONTAINS", container, qualified_type, file_path, line_start)
                     );
                     for variant in variant_identifiers {
                         vname: any = variant.text.decode("utf-8", errors="replace");
@@ -13388,11 +13100,11 @@ class CodeParser(builtins.object) {
                         qualified_v: any = self._qualify(vname, file_path, variant_parent);
                         nodes.append(
                             NodeInfo(
-                                kind="Function",
-                                name=vname,
-                                file_path=file_path,
-                                line_start=variant.start_point[0] + 1,
-                                line_end=variant.end_point[0] + 1,
+                                "Function",
+                                vname,
+                                file_path,
+                                variant.start_point[0] + 1,
+                                variant.end_point[0] + 1,
                                 language=language,
                                 parent_name=variant_parent,
                                 extra={"julia_kind": "enum_variant"},
@@ -13400,11 +13112,11 @@ class CodeParser(builtins.object) {
                         );
                         edges.append(
                             EdgeInfo(
-                                kind="CONTAINS",
-                                source=qualified_type,
-                                target=qualified_v,
-                                file_path=file_path,
-                                line=variant.start_point[0] + 1,
+                                "CONTAINS",
+                                qualified_type,
+                                qualified_v,
+                                file_path,
+                                variant.start_point[0] + 1,
                             ),
                         );
                     }
@@ -13439,11 +13151,11 @@ class CodeParser(builtins.object) {
                 qualified = self._qualify(synth_name, file_path, lexical_parent);
                 nodes.append(
                     NodeInfo(
-                        kind="Test",
-                        name=synth_name,
-                        file_path=file_path,
-                        line_start=child.start_point[0] + 1,
-                        line_end=child.end_point[0] + 1,
+                        "Test",
+                        synth_name,
+                        file_path,
+                        child.start_point[0] + 1,
+                        child.end_point[0] + 1,
                         language=language,
                         parent_name=lexical_parent,
                         is_test=True,
@@ -13453,13 +13165,7 @@ class CodeParser(builtins.object) {
                     if lexical_parent
                     else file_path;
                 edges.append(
-                    EdgeInfo(
-                        kind="CONTAINS",
-                        source=container,
-                        target=qualified,
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
-                    ),
+                    EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
                 );
                 if body_parent is not None {
                     self._extract_from_tree(
@@ -13534,11 +13240,11 @@ class CodeParser(builtins.object) {
                 resolved: any = self._resolve_module_to_file(req_target, file_path, language);
                 edges.append(
                     EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path,
-                        target=resolved or req_target,
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
+                        "IMPORTS_FROM",
+                        file_path,
+                        resolved or req_target,
+                        file_path,
+                        child.start_point[0] + 1,
                     ),
                 );
                 return True;
@@ -13603,11 +13309,11 @@ class CodeParser(builtins.object) {
                     resolved: any = self._resolve_module_to_file(req_target, file_path, language);
                     edges.append(
                         EdgeInfo(
-                            kind="IMPORTS_FROM",
-                            source=file_path,
-                            target=resolved or req_target,
-                            file_path=file_path,
-                            line=child.start_point[0] + 1,
+                            "IMPORTS_FROM",
+                            file_path,
+                            resolved or req_target,
+                            file_path,
+                            child.start_point[0] + 1,
                         ),
                     );
                     return True;
@@ -13623,11 +13329,11 @@ class CodeParser(builtins.object) {
 
                 nodes.append(
                     NodeInfo(
-                        kind=kind,
-                        name=var_name,
-                        file_path=file_path,
-                        line_start=child.start_point[0] + 1,
-                        line_end=child.end_point[0] + 1,
+                        kind,
+                        var_name,
+                        file_path,
+                        child.start_point[0] + 1,
+                        child.end_point[0] + 1,
                         language=language,
                         parent_name=enclosing_class,
                         params=params,
@@ -13638,13 +13344,7 @@ class CodeParser(builtins.object) {
                     if enclosing_class
                     else file_path;
                 edges.append(
-                    EdgeInfo(
-                        kind="CONTAINS",
-                        source=container,
-                        target=qualified,
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
-                    ),
+                    EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
                 );
                 self._extract_from_tree(
                     expr,
@@ -13704,11 +13404,11 @@ class CodeParser(builtins.object) {
 
         nodes.append(
             NodeInfo(
-                kind=kind,
-                name=method_name,
-                file_path=file_path,
-                line_start=child.start_point[0] + 1,
-                line_end=child.end_point[0] + 1,
+                kind,
+                method_name,
+                file_path,
+                child.start_point[0] + 1,
+                child.end_point[0] + 1,
                 language=language,
                 parent_name=table_name,
                 params=params,
@@ -13717,13 +13417,7 @@ class CodeParser(builtins.object) {
         );
         container: any = self._qualify(table_name, file_path, None);
         edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=container,
-                target=qualified,
-                file_path=file_path,
-                line=child.start_point[0] + 1,
-            ),
+            EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
         );
         self._extract_from_tree(
             child,
@@ -13884,11 +13578,11 @@ class CodeParser(builtins.object) {
 
         nodes.append(
             NodeInfo(
-                kind=kind,
-                name=name,
-                file_path=file_path,
-                line_start=decl.start_point[0] + 1,
-                line_end=decl.end_point[0] + 1,
+                kind,
+                name,
+                file_path,
+                decl.start_point[0] + 1,
+                decl.end_point[0] + 1,
                 language=language,
                 parent_name=enclosing_class,
                 is_test=is_test,
@@ -13898,13 +13592,7 @@ class CodeParser(builtins.object) {
             if enclosing_class
             else file_path;
         edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=container,
-                target=qualified,
-                file_path=file_path,
-                line=decl.start_point[0] + 1,
-            ),
+            EdgeInfo("CONTAINS", container, qualified, file_path, decl.start_point[0] + 1)
         );
 
         if body_block is not None {
@@ -13959,11 +13647,11 @@ class CodeParser(builtins.object) {
                 resolved: any = self._resolve_module_to_file(target, file_path, language);
                 edges.append(
                     EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path,
-                        target=resolved or target,
-                        file_path=file_path,
-                        line=decl.start_point[0] + 1,
+                        "IMPORTS_FROM",
+                        file_path,
+                        resolved or target,
+                        file_path,
+                        decl.start_point[0] + 1,
                     ),
                 );
                 return True;
@@ -13994,11 +13682,11 @@ class CodeParser(builtins.object) {
 
             nodes.append(
                 NodeInfo(
-                    kind="Class",
-                    name=var_name,
-                    file_path=file_path,
-                    line_start=decl.start_point[0] + 1,
-                    line_end=decl.end_point[0] + 1,
+                    "Class",
+                    var_name,
+                    file_path,
+                    decl.start_point[0] + 1,
+                    decl.end_point[0] + 1,
                     language=language,
                     parent_name=enclosing_class,
                     extra={"zig_kind": kind_label},
@@ -14006,13 +13694,13 @@ class CodeParser(builtins.object) {
             );
             edges.append(
                 EdgeInfo(
-                    kind="CONTAINS",
-                    source=self._qualify(enclosing_class, file_path, None)
+                    "CONTAINS",
+                    self._qualify(enclosing_class, file_path, None)
                         if enclosing_class
                         else file_path,
-                    target=self._qualify(var_name, file_path, enclosing_class),
-                    file_path=file_path,
-                    line=decl.start_point[0] + 1,
+                    self._qualify(var_name, file_path, enclosing_class),
+                    file_path,
+                    decl.start_point[0] + 1,
                 ),
             );
             self._extract_from_tree(
@@ -14070,11 +13758,11 @@ class CodeParser(builtins.object) {
 
         nodes.append(
             NodeInfo(
-                kind="Test",
-                name=synthetic,
-                file_path=file_path,
-                line_start=child.start_point[0] + 1,
-                line_end=child.end_point[0] + 1,
+                "Test",
+                synthetic,
+                file_path,
+                child.start_point[0] + 1,
+                child.end_point[0] + 1,
                 language=language,
                 parent_name=enclosing_class,
                 is_test=True,
@@ -14082,13 +13770,11 @@ class CodeParser(builtins.object) {
         );
         edges.append(
             EdgeInfo(
-                kind="CONTAINS",
-                source=self._qualify(enclosing_class, file_path, None)
-                    if enclosing_class
-                    else file_path,
-                target=qualified,
-                file_path=file_path,
-                line=line_no,
+                "CONTAINS",
+                self._qualify(enclosing_class, file_path, None) if enclosing_class else file_path,
+                qualified,
+                file_path,
+                line_no,
             ),
         );
 
@@ -14152,13 +13838,7 @@ class CodeParser(builtins.object) {
                     }
                     if callee {
                         edges.append(
-                            EdgeInfo(
-                                kind="CALLS",
-                                source=src_qn,
-                                target=callee,
-                                file_path=file_path,
-                                line=`node.start_point[0] + 1,
-                            ),
+                            EdgeInfo("CALLS", src_qn, callee, file_path, `node.start_point[0] + 1)
                         );
                     }
                     break;
@@ -14338,11 +14018,11 @@ class CodeParser(builtins.object) {
 
             nodes.append(
                 NodeInfo(
-                    kind=kind,
-                    name=var_name,
-                    file_path=file_path,
-                    line_start=child.start_point[0] + 1,
-                    line_end=child.end_point[0] + 1,
+                    kind,
+                    var_name,
+                    file_path,
+                    child.start_point[0] + 1,
+                    child.end_point[0] + 1,
                     language=language,
                     parent_name=enclosing_class,
                     params=params,
@@ -14354,13 +14034,7 @@ class CodeParser(builtins.object) {
                 if enclosing_class
                 else file_path;
             edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=container,
-                    target=qualified,
-                    file_path=file_path,
-                    line=child.start_point[0] + 1,
-                ),
+                EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
             );
             self._extract_from_tree(
                 walk_node or func_node,
@@ -14482,11 +14156,11 @@ class CodeParser(builtins.object) {
 
         nodes.append(
             NodeInfo(
-                kind=kind,
-                name=prop_name,
-                file_path=file_path,
-                line_start=child.start_point[0] + 1,
-                line_end=child.end_point[0] + 1,
+                kind,
+                prop_name,
+                file_path,
+                child.start_point[0] + 1,
+                child.end_point[0] + 1,
                 language=language,
                 parent_name=enclosing_class,
                 params=params,
@@ -14497,13 +14171,7 @@ class CodeParser(builtins.object) {
             if enclosing_class
             else file_path;
         edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=container,
-                target=qualified,
-                file_path=file_path,
-                line=child.start_point[0] + 1,
-            ),
+            EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
         );
 
         self._extract_from_tree(
@@ -14578,11 +14246,11 @@ class CodeParser(builtins.object) {
 
         nodes.append(
             NodeInfo(
-                kind=kind,
-                name=member_name,
-                file_path=file_path,
-                line_start=child.start_point[0] + 1,
-                line_end=child.end_point[0] + 1,
+                kind,
+                member_name,
+                file_path,
+                child.start_point[0] + 1,
+                child.end_point[0] + 1,
                 language=language,
                 parent_name=enclosing_class,
                 params=params,
@@ -14594,13 +14262,7 @@ class CodeParser(builtins.object) {
             if enclosing_class
             else file_path;
         edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=container,
-                target=qualified,
-                file_path=file_path,
-                line=child.start_point[0] + 1,
-            ),
+            EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
         );
         self._extract_from_tree(
             right,
@@ -14751,11 +14413,11 @@ class CodeParser(builtins.object) {
                     }
                     edges.append(
                         EdgeInfo(
-                            kind="DEPENDS_ON_CONFIG",
-                            source=source,
-                            target=f"config:{key}.*",
-                            file_path=file_path,
-                            line=annotation.start_point[0] + 1,
+                            "DEPENDS_ON_CONFIG",
+                            source,
+                            f"config:{key}.*",
+                            file_path,
+                            annotation.start_point[0] + 1,
                             extra={"config_key": key, "resolution": "configuration_properties"},
                         ),
                     );
@@ -14791,11 +14453,11 @@ class CodeParser(builtins.object) {
                                 }
                                 edges.append(
                                     EdgeInfo(
-                                        kind="DEPENDS_ON_CONFIG",
-                                        source=source,
-                                        target=f"config:{key}",
-                                        file_path=file_path,
-                                        line=annotation.start_point[0] + 1,
+                                        "DEPENDS_ON_CONFIG",
+                                        source,
+                                        f"config:{key}",
+                                        file_path,
+                                        annotation.start_point[0] + 1,
                                         extra={"config_key": key, "resolution": "value_annotation"},
                                     ),
                                 );
@@ -14941,11 +14603,11 @@ class CodeParser(builtins.object) {
             }
             edges.append(
                 EdgeInfo(
-                    kind="INJECTS",
-                    source=qualified_source,
-                    target=field_type,
-                    file_path=file_path,
-                    line=field_node.start_point[0] + 1,
+                    "INJECTS",
+                    qualified_source,
+                    field_type,
+                    file_path,
+                    field_node.start_point[0] + 1,
                     extra=extra,
                 ),
             );
@@ -14991,11 +14653,11 @@ class CodeParser(builtins.object) {
                     }
                     edges.append(
                         EdgeInfo(
-                            kind="INJECTS",
-                            source=qualified_source,
-                            target=param_type,
-                            file_path=file_path,
-                            line=param.start_point[0] + 1,
+                            "INJECTS",
+                            qualified_source,
+                            param_type,
+                            file_path,
+                            param.start_point[0] + 1,
                             extra=extra,
                         ),
                     );
@@ -15204,11 +14866,11 @@ class CodeParser(builtins.object) {
                         };
                         nodes.append(
                             NodeInfo(
-                                kind="Endpoint",
-                                name=endpoint_name,
-                                file_path=file_path,
-                                line_start=annotation.start_point[0] + 1,
-                                line_end=annotation.end_point[0] + 1,
+                                "Endpoint",
+                                endpoint_name,
+                                file_path,
+                                annotation.start_point[0] + 1,
+                                annotation.end_point[0] + 1,
                                 language="java",
                                 parent_name=class_name,
                                 extra=metadata,
@@ -15216,11 +14878,11 @@ class CodeParser(builtins.object) {
                         );
                         edges.append(
                             EdgeInfo(
-                                kind="HANDLES",
-                                source=source,
-                                target=self._qualify(endpoint_name, file_path, class_name),
-                                file_path=file_path,
-                                line=annotation.start_point[0] + 1,
+                                "HANDLES",
+                                source,
+                                self._qualify(endpoint_name, file_path, class_name),
+                                file_path,
+                                annotation.start_point[0] + 1,
                                 extra=metadata,
                             ),
                         );
@@ -15394,25 +15056,18 @@ class CodeParser(builtins.object) {
         };
         nodes.append(
             NodeInfo(
-                kind="Endpoint",
-                name=endpoint_name,
-                file_path=file_path,
-                line_start=line,
-                line_end=invocation.end_point[0] + 1,
+                "Endpoint",
+                endpoint_name,
+                file_path,
+                line,
+                invocation.end_point[0] + 1,
                 language="java",
                 parent_name=enclosing_class,
                 extra=metadata,
             ),
         );
         edges.append(
-            EdgeInfo(
-                kind="HANDLES",
-                source=handler_target,
-                target=endpoint_target,
-                file_path=file_path,
-                line=line,
-                extra=metadata,
-            ),
+            EdgeInfo("HANDLES", handler_target, endpoint_target, file_path, line, extra=metadata)
         );
         return True;
     }
@@ -15455,11 +15110,11 @@ class CodeParser(builtins.object) {
             };
             nodes.append(
                 NodeInfo(
-                    kind="Scheduler",
-                    name=schedule_name,
-                    file_path=file_path,
-                    line_start=annotation.start_point[0] + 1,
-                    line_end=annotation.end_point[0] + 1,
+                    "Scheduler",
+                    schedule_name,
+                    file_path,
+                    annotation.start_point[0] + 1,
+                    annotation.end_point[0] + 1,
                     language="java",
                     parent_name=class_name,
                     extra=metadata,
@@ -15467,11 +15122,11 @@ class CodeParser(builtins.object) {
             );
             edges.append(
                 EdgeInfo(
-                    kind="TRIGGERS",
-                    source=self._qualify(schedule_name, file_path, class_name),
-                    target=target,
-                    file_path=file_path,
-                    line=annotation.start_point[0] + 1,
+                    "TRIGGERS",
+                    self._qualify(schedule_name, file_path, class_name),
+                    target,
+                    file_path,
+                    annotation.start_point[0] + 1,
                     extra=metadata,
                 ),
             );
@@ -15607,11 +15262,11 @@ class CodeParser(builtins.object) {
                 }
                 edges.append(
                     EdgeInfo(
-                        kind="HANDLES",
-                        source=source,
-                        target=f"event::{identity}",
-                        file_path=file_path,
-                        line=annotation.start_point[0] + 1,
+                        "HANDLES",
+                        source,
+                        f"event::{identity}",
+                        file_path,
+                        annotation.start_point[0] + 1,
                         extra=extra,
                     ),
                 );
@@ -15661,11 +15316,11 @@ class CodeParser(builtins.object) {
                             }
                             edges.append(
                                 EdgeInfo(
-                                    kind="PUBLISHES",
-                                    source=source,
-                                    target=f"event::{identity}",
-                                    file_path=file_path,
-                                    line=`node.start_point[0] + 1,
+                                    "PUBLISHES",
+                                    source,
+                                    f"event::{identity}",
+                                    file_path,
+                                    `node.start_point[0] + 1,
                                     extra=extra,
                                 ),
                             );
@@ -15731,11 +15386,11 @@ class CodeParser(builtins.object) {
 
                 edges.append(
                     EdgeInfo(
-                        kind="TEMPORAL_STUB",
-                        source=qualified_source,
-                        target=field_type,
-                        file_path=file_path,
-                        line=member.start_point[0] + 1,
+                        "TEMPORAL_STUB",
+                        qualified_source,
+                        field_type,
+                        file_path,
+                        member.start_point[0] + 1,
                         extra={
                             "field_name": field_name,
                             "stub_type": "activity"
@@ -15862,11 +15517,11 @@ class CodeParser(builtins.object) {
                     extra["kafka_type"] = outer_type;
                     edges.append(
                         EdgeInfo(
-                            kind="CONSUMES",
-                            source=qualified_source,
-                            target="kafka:config",
-                            file_path=file_path,
-                            line=member.start_point[0] + 1,
+                            "CONSUMES",
+                            qualified_source,
+                            "kafka:config",
+                            file_path,
+                            member.start_point[0] + 1,
                             extra=extra,
                         ),
                     );
@@ -15874,11 +15529,11 @@ class CodeParser(builtins.object) {
                     extra["kafka_type"] = outer_type;
                     edges.append(
                         EdgeInfo(
-                            kind="PRODUCES",
-                            source=qualified_source,
-                            target="kafka:config",
-                            file_path=file_path,
-                            line=member.start_point[0] + 1,
+                            "PRODUCES",
+                            qualified_source,
+                            "kafka:config",
+                            file_path,
+                            member.start_point[0] + 1,
                             extra=extra,
                         ),
                     );
@@ -15919,11 +15574,11 @@ class CodeParser(builtins.object) {
                     for topic in topics {
                         edges.append(
                             EdgeInfo(
-                                kind="CONSUMES",
-                                source=qualified_source,
-                                target=f"kafka:{topic}",
-                                file_path=file_path,
-                                line=method_node.start_point[0] + 1,
+                                "CONSUMES",
+                                qualified_source,
+                                f"kafka:{topic}",
+                                file_path,
+                                method_node.start_point[0] + 1,
                                 extra={"topic": topic, "kafka_type": "KafkaListener"},
                             ),
                         );
@@ -15931,11 +15586,11 @@ class CodeParser(builtins.object) {
                 } else {
                     edges.append(
                         EdgeInfo(
-                            kind="CONSUMES",
-                            source=qualified_source,
-                            target="kafka:config",
-                            file_path=file_path,
-                            line=method_node.start_point[0] + 1,
+                            "CONSUMES",
+                            qualified_source,
+                            "kafka:config",
+                            file_path,
+                            method_node.start_point[0] + 1,
                             extra={"kafka_type": ann_name},
                         ),
                     );
@@ -16246,11 +15901,11 @@ class CodeParser(builtins.object) {
         }
 
         `node: any = NodeInfo(
-            kind="Class",
-            name=name,
-            file_path=file_path,
-            line_start=child.start_point[0] + 1,
-            line_end=child.end_point[0] + 1,
+            "Class",
+            name,
+            file_path,
+            child.start_point[0] + 1,
+            child.end_point[0] + 1,
             language=language,
             parent_name=class_parent,
             modifiers=class_modifiers,
@@ -16262,11 +15917,11 @@ class CodeParser(builtins.object) {
             else file_path;
         edges.append(
             EdgeInfo(
-                kind="CONTAINS",
-                source=class_container,
-                target=self._qualify(name, file_path, class_parent),
-                file_path=file_path,
-                line=child.start_point[0] + 1,
+                "CONTAINS",
+                class_container,
+                self._qualify(name, file_path, class_parent),
+                file_path,
+                child.start_point[0] + 1,
             ),
         );
         bases: any = self._get_bases(child, language, source);
@@ -16277,11 +15932,11 @@ class CodeParser(builtins.object) {
             }
             edges.append(
                 EdgeInfo(
-                    kind="INHERITS",
-                    source=self._qualify(name, file_path, class_parent),
-                    target=base,
-                    file_path=file_path,
-                    line=child.start_point[0] + 1,
+                    "INHERITS",
+                    self._qualify(name, file_path, class_parent),
+                    base,
+                    file_path,
+                    child.start_point[0] + 1,
                     extra=inheritance_extra,
                 ),
             );
@@ -16577,11 +16232,11 @@ class CodeParser(builtins.object) {
         }
 
         `node: any = NodeInfo(
-            kind=kind,
-            name=name,
-            file_path=file_path,
-            line_start=child.start_point[0] + 1,
-            line_end=child.end_point[0] + 1,
+            kind,
+            name,
+            file_path,
+            child.start_point[0] + 1,
+            child.end_point[0] + 1,
             language=language,
             parent_name=parent_name,
             params=params,
@@ -16596,22 +16251,16 @@ class CodeParser(builtins.object) {
             if container_scope
             else file_path;
         edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=container,
-                target=qualified,
-                file_path=file_path,
-                line=child.start_point[0] + 1,
-            ),
+            EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
         );
         if julia_qualifier {
             edges.append(
                 EdgeInfo(
-                    kind="REFERENCES",
-                    source=qualified,
-                    target=julia_qualifier,
-                    file_path=file_path,
-                    line=child.start_point[0] + 1,
+                    "REFERENCES",
+                    qualified,
+                    julia_qualifier,
+                    file_path,
+                    child.start_point[0] + 1,
                     extra={"julia_qualified_def": True},
                 ),
             );
@@ -16623,11 +16272,11 @@ class CodeParser(builtins.object) {
                         if ident.type == "identifier" {
                             edges.append(
                                 EdgeInfo(
-                                    kind="CALLS",
-                                    source=qualified,
-                                    target=ident.text.decode("utf-8", errors="replace"),
-                                    file_path=file_path,
-                                    line=sub.start_point[0] + 1,
+                                    "CALLS",
+                                    qualified,
+                                    ident.text.decode("utf-8", errors="replace"),
+                                    file_path,
+                                    sub.start_point[0] + 1,
                                 ),
                             );
                             break;
@@ -16696,11 +16345,11 @@ class CodeParser(builtins.object) {
             }
             edges.append(
                 EdgeInfo(
-                    kind="IMPORTS_FROM",
-                    source=file_path,
-                    target=target,
-                    file_path=file_path,
-                    line=spec.line,
+                    "IMPORTS_FROM",
+                    file_path,
+                    target,
+                    file_path,
+                    spec.line,
                     extra={**csharp_extra, **extra},
                 ),
             );
@@ -16786,11 +16435,11 @@ class CodeParser(builtins.object) {
 
             nodes.append(
                 NodeInfo(
-                    kind="Test",
-                    name=synthetic_name,
-                    file_path=file_path,
-                    line_start=child.start_point[0] + 1,
-                    line_end=child.end_point[0] + 1,
+                    "Test",
+                    synthetic_name,
+                    file_path,
+                    child.start_point[0] + 1,
+                    child.end_point[0] + 1,
                     language=language,
                     parent_name=enclosing_class,
                     is_test=True,
@@ -16800,13 +16449,7 @@ class CodeParser(builtins.object) {
                 if enclosing_func
                 else file_path;
             edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=container,
-                    target=qualified,
-                    file_path=file_path,
-                    line=child.start_point[0] + 1,
-                ),
+                EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
             );
             self._extract_from_tree(
                 child,
@@ -16950,12 +16593,7 @@ class CodeParser(builtins.object) {
             }
             edges.append(
                 EdgeInfo(
-                    kind="CALLS",
-                    source=caller,
-                    target=target,
-                    file_path=file_path,
-                    line=child.start_point[0] + 1,
-                    extra=call_extra,
+                    "CALLS", caller, target, file_path, child.start_point[0] + 1, extra=call_extra
                 ),
             );
         }
@@ -17418,14 +17056,7 @@ class CodeParser(builtins.object) {
             extra: any = `dict(`edge.extra);
             extra["scoped_resolution"] = evidence;
             resolved.append(
-                EdgeInfo(
-                    kind=`edge.kind,
-                    source=`edge.source,
-                    target=target,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
-                    extra=extra,
-                ),
+                EdgeInfo(`edge.kind, `edge.source, target, `edge.file_path, `edge.line, extra=extra)
             );
         }
         return resolved;
@@ -18037,11 +17668,11 @@ class CodeParser(builtins.object) {
             metadata: any = {"http_method": method, "route": route, "handler": handler_name};
             nodes.append(
                 NodeInfo(
-                    kind="Endpoint",
-                    name=name,
-                    file_path=file_path,
-                    line_start=`node.start_point[0] + 1,
-                    line_end=`node.end_point[0] + 1,
+                    "Endpoint",
+                    name,
+                    file_path,
+                    `node.start_point[0] + 1,
+                    `node.end_point[0] + 1,
                     language="php",
                     extra=metadata,
                 ),
@@ -18049,13 +17680,13 @@ class CodeParser(builtins.object) {
             if handler {
                 edges.append(
                     EdgeInfo(
-                        kind="HANDLES",
-                        source=self._php_semantic_target(
+                        "HANDLES",
+                        self._php_semantic_target(
                             handler[0], namespace, imports, file_path, handler[1]
                         ),
-                        target=self._qualify(name, file_path, None),
-                        file_path=file_path,
-                        line=`node.start_point[0] + 1,
+                        self._qualify(name, file_path, None),
+                        file_path,
+                        `node.start_point[0] + 1,
                         extra=metadata,
                     ),
                 );
@@ -18123,11 +17754,11 @@ class CodeParser(builtins.object) {
         (controller, method) = handler as any;
         edges.append(
             EdgeInfo(
-                kind="CALLS",
-                source=self._php_laravel_caller(file_path, enclosing_class, enclosing_func),
-                target=self._php_semantic_target(controller, namespace, imports, file_path, method),
-                file_path=file_path,
-                line=`node.start_point[0] + 1,
+                "CALLS",
+                self._php_laravel_caller(file_path, enclosing_class, enclosing_func),
+                self._php_semantic_target(controller, namespace, imports, file_path, method),
+                file_path,
+                `node.start_point[0] + 1,
                 extra={"framework": "laravel", "laravel_kind": "route", "route_verb": verb},
             ),
         );
@@ -18188,11 +17819,11 @@ class CodeParser(builtins.object) {
 
         edges.append(
             EdgeInfo(
-                kind="REFERENCES",
-                source=self._php_laravel_caller(file_path, enclosing_class, enclosing_func),
-                target=self._php_semantic_target(target_model, namespace, imports, file_path),
-                file_path=file_path,
-                line=`node.start_point[0] + 1,
+                "REFERENCES",
+                self._php_laravel_caller(file_path, enclosing_class, enclosing_func),
+                self._php_semantic_target(target_model, namespace, imports, file_path),
+                file_path,
+                `node.start_point[0] + 1,
                 extra={
                     "framework": "laravel",
                     "laravel_kind": "eloquent_relationship",
@@ -18290,15 +17921,7 @@ class CodeParser(builtins.object) {
         caller: any = self._qualify(enclosing_func, file_path, enclosing_class)
             if enclosing_func
             else file_path;
-        edges.append(
-            EdgeInfo(
-                kind="CALLS",
-                source=caller,
-                target=target,
-                file_path=file_path,
-                line=child.start_point[0] + 1,
-            ),
-        );
+        edges.append(EdgeInfo("CALLS", caller, target, file_path, child.start_point[0] + 1));
     }
 
     def _resolve_jsx_component_target(
@@ -18478,11 +18101,7 @@ class CodeParser(builtins.object) {
         target: any = self._resolve_call_target(
             name, file_path, language, import_map, defined_names
         );
-        edges.append(
-            EdgeInfo(
-                kind="REFERENCES", source=caller, target=target, file_path=file_path, line=line
-            ),
-        );
+        edges.append(EdgeInfo("REFERENCES", caller, target, file_path, line));
     }
 
     def _ref_from_pair(
@@ -18643,11 +18262,11 @@ class CodeParser(builtins.object) {
                                 else file_path;
                             edges.append(
                                 EdgeInfo(
-                                    kind="CALLS",
-                                    source=caller,
-                                    target=ident.text.decode("utf-8", errors="replace"),
-                                    file_path=file_path,
-                                    line=child.start_point[0] + 1,
+                                    "CALLS",
+                                    caller,
+                                    ident.text.decode("utf-8", errors="replace"),
+                                    file_path,
+                                    child.start_point[0] + 1,
                                 ),
                             );
                         }
@@ -18676,11 +18295,11 @@ class CodeParser(builtins.object) {
                 qualified: any = self._qualify(var_name, file_path, enclosing_class);
                 nodes.append(
                     NodeInfo(
-                        kind="Function",
-                        name=var_name,
-                        file_path=file_path,
-                        line_start=child.start_point[0] + 1,
-                        line_end=child.end_point[0] + 1,
+                        "Function",
+                        var_name,
+                        file_path,
+                        child.start_point[0] + 1,
+                        child.end_point[0] + 1,
                         language="solidity",
                         parent_name=enclosing_class,
                         return_type=var_type,
@@ -18690,11 +18309,11 @@ class CodeParser(builtins.object) {
                 );
                 edges.append(
                     EdgeInfo(
-                        kind="CONTAINS",
-                        source=self._qualify(enclosing_class, file_path, None),
-                        target=qualified,
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
+                        "CONTAINS",
+                        self._qualify(enclosing_class, file_path, None),
+                        qualified,
+                        file_path,
+                        child.start_point[0] + 1,
                     ),
                 );
                 return True;
@@ -18715,11 +18334,11 @@ class CodeParser(builtins.object) {
                 qualified = self._qualify(var_name, file_path, enclosing_class);
                 nodes.append(
                     NodeInfo(
-                        kind="Function",
-                        name=var_name,
-                        file_path=file_path,
-                        line_start=child.start_point[0] + 1,
-                        line_end=child.end_point[0] + 1,
+                        "Function",
+                        var_name,
+                        file_path,
+                        child.start_point[0] + 1,
+                        child.end_point[0] + 1,
                         language="solidity",
                         parent_name=enclosing_class,
                         return_type=var_type,
@@ -18730,13 +18349,7 @@ class CodeParser(builtins.object) {
                     if enclosing_class
                     else file_path;
                 edges.append(
-                    EdgeInfo(
-                        kind="CONTAINS",
-                        source=container,
-                        target=qualified,
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
-                    ),
+                    EdgeInfo("CONTAINS", container, qualified, file_path, child.start_point[0] + 1)
                 );
                 return True;
             }
@@ -18759,11 +18372,7 @@ class CodeParser(builtins.object) {
                     else file_path;
                 edges.append(
                     EdgeInfo(
-                        kind="DEPENDS_ON",
-                        source=source_name,
-                        target=lib_name,
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
+                        "DEPENDS_ON", source_name, lib_name, file_path, child.start_point[0] + 1
                     ),
                 );
             }
@@ -18916,11 +18525,11 @@ class CodeParser(builtins.object) {
             if trait_target {
                 edges.append(
                     EdgeInfo(
-                        kind="IMPLEMENTS",
-                        source=self._qualify(target_name, file_path, None),
-                        target=trait_target,
-                        file_path=file_path,
-                        line=impl_node.start_point[0] + 1,
+                        "IMPLEMENTS",
+                        self._qualify(target_name, file_path, None),
+                        trait_target,
+                        file_path,
+                        impl_node.start_point[0] + 1,
                     ),
                 );
             }
@@ -18994,11 +18603,11 @@ class CodeParser(builtins.object) {
             qualified: any = self._qualify(name, file_path, enclosing_class);
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=name,
-                    file_path=file_path,
-                    line_start=source_node.start_point[0] + 1,
-                    line_end=source_node.end_point[0] + 1,
+                    "Function",
+                    name,
+                    file_path,
+                    source_node.start_point[0] + 1,
+                    source_node.end_point[0] + 1,
                     language="verilog",
                     parent_name=enclosing_class,
                     return_type=return_type,
@@ -19011,11 +18620,7 @@ class CodeParser(builtins.object) {
                 else file_path;
             edges.append(
                 EdgeInfo(
-                    kind="CONTAINS",
-                    source=container,
-                    target=qualified,
-                    file_path=file_path,
-                    line=source_node.start_point[0] + 1,
+                    "CONTAINS", container, qualified, file_path, source_node.start_point[0] + 1
                 ),
             );
         }
@@ -19271,11 +18876,11 @@ class CodeParser(builtins.object) {
             for signal in sorted(roots & known_signals) {
                 edges.append(
                     EdgeInfo(
-                        kind="REFERENCES",
-                        source=source_name,
-                        target=self._qualify(signal, file_path, enclosing_class),
-                        file_path=file_path,
-                        line=child.start_point[0] + 1,
+                        "REFERENCES",
+                        source_name,
+                        self._qualify(signal, file_path, enclosing_class),
+                        file_path,
+                        child.start_point[0] + 1,
                     ),
                 );
             }
@@ -20200,11 +19805,11 @@ class CodeParser(builtins.object) {
         }
         edges.append(
             EdgeInfo(
-                kind="IMPORTS_FROM",
-                source=file_path,
-                target=target,
-                file_path=file_path,
-                line=line,
+                "IMPORTS_FROM",
+                file_path,
+                target,
+                file_path,
+                line,
                 extra={IMPORT_CONTEXT_KEY: IMPORT_CONTEXT_DEFERRED} if deferred else {},
             ),
         );
@@ -24231,11 +23836,11 @@ class CodeParser(builtins.object) {
 
             nodes.append(
                 NodeInfo(
-                    kind=kind,
-                    name=name,
-                    file_path=file_path,
-                    line_start=right.start_point[0] + 1,
-                    line_end=right.end_point[0] + 1,
+                    kind,
+                    name,
+                    file_path,
+                    right.start_point[0] + 1,
+                    right.end_point[0] + 1,
                     language=language,
                     parent_name=enclosing_class,
                     params=params,
@@ -24247,13 +23852,7 @@ class CodeParser(builtins.object) {
                 if enclosing_class
                 else file_path;
             edges.append(
-                EdgeInfo(
-                    kind="CONTAINS",
-                    source=container,
-                    target=qualified,
-                    file_path=file_path,
-                    line=right.start_point[0] + 1,
-                ),
+                EdgeInfo("CONTAINS", container, qualified, file_path, right.start_point[0] + 1)
             );
 
             self._extract_from_tree(
@@ -24316,11 +23915,7 @@ class CodeParser(builtins.object) {
             for imp_target in imports {
                 edges.append(
                     EdgeInfo(
-                        kind="IMPORTS_FROM",
-                        source=file_path,
-                        target=imp_target,
-                        file_path=file_path,
-                        line=`node.start_point[0] + 1,
+                        "IMPORTS_FROM", file_path, imp_target, file_path, `node.start_point[0] + 1
                     ),
                 );
             }
@@ -24349,15 +23944,7 @@ class CodeParser(builtins.object) {
             target: any = self._resolve_call_target(
                 call_name, file_path, language, import_map or {}, defined_names or set[any]()
             );
-            edges.append(
-                EdgeInfo(
-                    kind="CALLS",
-                    source=caller,
-                    target=target,
-                    file_path=file_path,
-                    line=`node.start_point[0] + 1,
-                ),
-            );
+            edges.append(EdgeInfo("CALLS", caller, target, file_path, `node.start_point[0] + 1));
         }
 
         self._extract_from_tree(
@@ -24396,23 +23983,17 @@ class CodeParser(builtins.object) {
         qualified: any = self._qualify(class_name, file_path, enclosing_class);
         nodes.append(
             NodeInfo(
-                kind="Class",
-                name=class_name,
-                file_path=file_path,
-                line_start=`node.start_point[0] + 1,
-                line_end=`node.end_point[0] + 1,
+                "Class",
+                class_name,
+                file_path,
+                `node.start_point[0] + 1,
+                `node.end_point[0] + 1,
                 language=language,
                 parent_name=enclosing_class,
             ),
         );
         edges.append(
-            EdgeInfo(
-                kind="CONTAINS",
-                source=file_path,
-                target=qualified,
-                file_path=file_path,
-                line=`node.start_point[0] + 1,
-            ),
+            EdgeInfo("CONTAINS", file_path, qualified, file_path, `node.start_point[0] + 1)
         );
 
         methods_list: any = self._r_find_named_arg(`node, "methods");
@@ -24456,11 +24037,11 @@ class CodeParser(builtins.object) {
             params: any = self._get_params(func_def, language, source);
             nodes.append(
                 NodeInfo(
-                    kind="Function",
-                    name=method_name,
-                    file_path=file_path,
-                    line_start=func_def.start_point[0] + 1,
-                    line_end=func_def.end_point[0] + 1,
+                    "Function",
+                    method_name,
+                    file_path,
+                    func_def.start_point[0] + 1,
+                    func_def.end_point[0] + 1,
                     language=language,
                     parent_name=class_name,
                     params=params,
@@ -24468,11 +24049,11 @@ class CodeParser(builtins.object) {
             );
             edges.append(
                 EdgeInfo(
-                    kind="CONTAINS",
-                    source=self._qualify(class_name, file_path, None),
-                    target=qualified,
-                    file_path=file_path,
-                    line=func_def.start_point[0] + 1,
+                    "CONTAINS",
+                    self._qualify(class_name, file_path, None),
+                    qualified,
+                    file_path,
+                    func_def.start_point[0] + 1,
                 ),
             );
             self._extract_from_tree(

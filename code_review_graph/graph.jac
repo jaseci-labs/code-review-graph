@@ -1145,14 +1145,7 @@ class GraphStore(builtins.object) {
         if source == `edge.source and target == `edge.target {
             return `edge;
         }
-        return EdgeInfo(
-            kind=`edge.kind,
-            source=source,
-            target=target,
-            file_path=`edge.file_path,
-            line=`edge.line,
-            extra=extra,
-        );
+        return EdgeInfo(`edge.kind, source, target, `edge.file_path, `edge.line, extra=extra);
     }
 
     def _settle_collision_endpoints -> int {
@@ -1558,11 +1551,11 @@ class GraphStore(builtins.object) {
         if `edge.kind == "TESTED_BY" {
             call: any = self._align_edge_with_collisions(
                 EdgeInfo(
-                    kind="CALLS",
-                    source=`edge.target,
-                    target=`edge.source,
-                    file_path=`edge.file_path,
-                    line=`edge.line,
+                    "CALLS",
+                    `edge.target,
+                    `edge.source,
+                    `edge.file_path,
+                    `edge.line,
                     extra=`edge.extra,
                 ),
                 collisions,
@@ -1574,12 +1567,7 @@ class GraphStore(builtins.object) {
                 return `edge;
             }
             return EdgeInfo(
-                kind=`edge.kind,
-                source=call.target,
-                target=call.source,
-                file_path=`edge.file_path,
-                line=`edge.line,
-                extra=call.extra,
+                `edge.kind, call.target, call.source, `edge.file_path, `edge.line, extra=call.extra
             );
         }
         source = `edge.source;
@@ -1615,11 +1603,11 @@ class GraphStore(builtins.object) {
             target = source;
         } elif target_candidates and `edge.kind in _COLLISION_CALL_KINDS {
             return EdgeInfo(
-                kind=`edge.kind,
-                source=source,
-                target=_plain_collision_name(`edge.target),
-                file_path=`edge.file_path,
-                line=`edge.line,
+                `edge.kind,
+                source,
+                _plain_collision_name(`edge.target),
+                `edge.file_path,
+                `edge.line,
                 extra=_ambiguous_collision_extra(
                     `edge.extra or {},
                     `edge.target,
@@ -1631,14 +1619,7 @@ class GraphStore(builtins.object) {
         if source == `edge.source and target == `edge.target {
             return `edge;
         }
-        return EdgeInfo(
-            kind=`edge.kind,
-            source=source,
-            target=target,
-            file_path=`edge.file_path,
-            line=`edge.line,
-            extra=`edge.extra,
-        );
+        return EdgeInfo(`edge.kind, source, target, `edge.file_path, `edge.line, extra=`edge.extra);
     }
 
     def set_metadata(key: str, value: str) {

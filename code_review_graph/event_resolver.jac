@@ -71,11 +71,11 @@ def resolve_spring_events(store: GraphStore) -> dict[str, int] {
     for (target, identity) in sorted(event_types.items()) {
         store.upsert_node(
             NodeInfo(
-                kind="Event",
-                name=identity,
-                file_path=_EVENT_NODE_FILE,
-                line_start=0,
-                line_end=0,
+                "Event",
+                identity,
+                _EVENT_NODE_FILE,
+                0,
+                0,
                 language="java",
                 extra={"event_type": identity, "virtual": True},
             ),
@@ -96,11 +96,11 @@ def resolve_spring_events(store: GraphStore) -> dict[str, int] {
             for listener in event_listeners {
                 store.upsert_edge(
                     EdgeInfo(
-                        kind="CALLS",
-                        source=publisher["source_qualified"],
-                        target=listener["source_qualified"],
-                        file_path=publisher["file_path"],
-                        line=publisher["line"],
+                        "CALLS",
+                        publisher["source_qualified"],
+                        listener["source_qualified"],
+                        publisher["file_path"],
+                        publisher["line"],
                         extra={
                             _DERIVED_FLAG: True,
                             "event_type": identity,
