@@ -2,7 +2,8 @@
 exclude = ["tests/fixtures"]
 
 [check.lint]
-exclude = ["code_review_graph/main.jac", "code_review_graph/impl/main.impl.jac", "code_review_graph/prompts.jac", "code_review_graph/impl/prompts.impl.jac"]
+ignore = ["separate-impls", "impls-in-annex"]
+exclude = ["code_review_graph/main.jac", "code_review_graph/prompts.jac"]
 
 [pypi."."]
 [pypi.".".build-system]

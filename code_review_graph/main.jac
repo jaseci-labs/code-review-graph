@@ -49,9 +49,29 @@ glob _LAZY_PROMPT_NAMES: any = frozenset({
     "review_changes_prompt",
 });
 
-def _resolve_attr(name: str) -> any;
+def _resolve_attr(name: str) -> any {
+    g: any = globals();
+    if name in g {
+        return g[name];
+    }
+    return __getattr__(name);
+}
 
-def __getattr__(name: str) -> any;
+def __getattr__(name: str) -> any {
+    if name in _LAZY_TOOL_NAMES {
+        _tools_mod: any = lazy("tools");
+        val: any = getattr(_tools_mod, name);
+        globals()[name] = val;
+        return val;
+    }
+    if name in _LAZY_PROMPT_NAMES {
+        _prompts_mod: any = lazy("prompts");
+        val = getattr(_prompts_mod, name);
+        globals()[name] = val;
+        return val;
+    }
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}");
+}
 
 glob logger: any = logging.getLogger(__name__);
 
@@ -74,7 +94,12 @@ glob _multi_repo: bool = False;
     ``serve --repo <X>`` applies consistently, including
     ``get_docs_section_tool``. See: #222.
     """
-def _resolve_repo_root(repo_root: Optional[str]) -> Optional[str];
+def _resolve_repo_root(repo_root: Optional[str]) -> Optional[str] {
+    if _multi_repo {
+        return _registered_repo_root(repo_root);
+    }
+    return repo_root or _default_repo_root;
+}
 
 """Return the registered repository a ``--multi-repo`` call names.
 
@@ -88,7 +113,44 @@ def _resolve_repo_root(repo_root: Optional[str]) -> Optional[str];
     apply without a restart. This check comes on top of
     ``_validate_repo_root``, which every tool body still runs.
     """
-def _registered_repo_root(repo_root: Optional[str]) -> str;
+def _registered_repo_root(repo_root: Optional[str]) -> str {
+    if not repo_root {
+        raise ToolError(
+            "repo_root is required. This server serves several repositories (serve --multi-repo), so every call must name one: pass the absolute path of a registered repository. list_repos_tool lists them.",
+        );
+    }
+    candidate: any = Path(repo_root);
+    if not candidate.is_absolute() {
+        raise ToolError(
+            f"repo_root must be an absolute path on this server, got: {_sanitize_name(repo_root)}"
+        );
+    }
+    try {
+        wanted: any = candidate.resolve();
+        registered: any = Registry().list_repos();
+    } except (OSError, RuntimeError, ValueError) as exc {
+        raise ToolError(f"repo_root cannot be checked: {exc}") from exc;
+    }
+
+    wanted_key: any = os.path.normcase(`str(wanted));
+    for `entry in registered {
+        path: any = `entry.get("path") if isinstance(`entry, `dict) else None;
+        if not isinstance(path, `str) or not path {
+            continue;
+        }
+        try {
+            known: any = Path(path).resolve();
+        } except (OSError, RuntimeError, ValueError) {
+            continue;
+        }
+        if os.path.normcase(`str(known)) == wanted_key {
+            return `str(known);
+        }
+    }
+    raise ToolError(
+        f"repo_root is not a registered repository: {_sanitize_name(`str(wanted))}. This server only serves registered repositories: run `code-review-graph register <path>` to add one, or call list_repos_tool to see them.",
+    );
+}
 
 glob _TIMEOUT_HINT: any = "Narrow the request with whichever of changed_files, max_depth or max_results this tool accepts, or increase CRG_TOOL_TIMEOUT.";
 
@@ -109,7 +171,9 @@ glob _DETECT_CHANGES_TIMEOUT_HINT: any = "Reduce scope with CRG_MAX_CHANGED_FUNC
     without it, cancelling the await blocks until the thread finishes anyway
     and the timeout below could never fire.
     """
-async def _run_off_loop(work: Callable[[], dict]) -> dict;
+async def _run_off_loop(work: Callable[[], dict]) -> dict {
+    return await anyio.to_thread.run_sync(work, abandon_on_cancel=True);
+}
 
 glob timeout_hint_default_: any = _TIMEOUT_HINT;
 
@@ -171,7 +235,37 @@ async def _offload(
     provenance: bool = True,
     bounded: bool = True,
     timeout_hint: str = timeout_hint_default_,
-) -> dict;
+) -> dict {
+    def run_fn -> Any {
+        for name in getattr(getattr(work, "__code__", None), "co_names", ()) {
+            if name in _LAZY_TOOL_NAMES and name not in globals() {
+                _resolve_attr(name);
+            }
+        }
+        if provenance {
+            return _resolve_attr("with_provenance")(work(), `root);
+        }
+        return work();
+    }
+
+    tool_timeout: any = env_int("CRG_TOOL_TIMEOUT", 0);
+    if not bounded or tool_timeout <= 0 {
+        return await _run_off_loop(run_fn);
+    }
+
+    try {
+        return await asyncio.wait_for(_run_off_loop(run_fn), timeout=tool_timeout);
+    } except asyncio.TimeoutError {
+        message: any = f"{tool_name} timed out after {tool_timeout}s. {timeout_hint}";
+        error_response: any = {"status": "error", "error": message, "summary": message};
+        if not provenance {
+            return error_response;
+        }
+        return await _run_off_loop(
+            lambda -> any { _resolve_attr("with_provenance")(error_response, `root) }
+        );
+    }
+}
 
 glob SERVER_INSTRUCTIONS: any = "Code knowledge graph of this repo (Tree-sitter AST + call / import / test edges). Use it whenever the question is about RELATIONSHIPS between pieces of code, in any phase of work - coding, debugging, planning, brainstorming, refactoring, review - not only code review:\n- who calls / references symbol X -> query_graph_tool pattern=callers_of / references_to\n- which files import module or file X -> query_graph_tool pattern=importers_of\n- which tests cover X -> query_graph_tool pattern=tests_for\n- what breaks if X changes (blast radius) -> get_impact_radius_tool\n- what a diff or branch touches -> detect_changes_tool, get_review_context_tool\n- how modules depend on each other -> get_architecture_overview_tool, list_communities_tool\n- follow an execution flow -> list_flows_tool, get_flow_tool\nGraph answers include dependents reached through re-exports and barrel files that never spell the name, which text search silently misses.\nFor plain text - string literals, log messages, env var names, comments, config keys - use Grep; the graph does not index text.";
 
@@ -219,7 +313,26 @@ async def build_or_update_graph_tool(
     recurse_submodules: Optional[bool] = None,
     embedding_provider: Optional[str] = None,
     embedding_model: Optional[str] = None,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "build_or_update_graph_tool",
+        lambda -> any {
+            _resolve_attr("build_or_update_graph")(
+                full_rebuild=full_rebuild,
+                repo_root=`root,
+                base=base,
+                postprocess=postprocess,
+                recurse_submodules=recurse_submodules,
+                embedding_provider=embedding_provider,
+                embedding_model=embedding_model,
+            )
+        },
+        `root,
+        bounded=False,
+    );
+}
 
 """Run post-processing on existing graph (flows, communities, FTS index).
 
@@ -252,7 +365,25 @@ async def run_postprocess_tool(
     repo_root: Optional[str] = None,
     embedding_provider: Optional[str] = None,
     embedding_model: Optional[str] = None,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "run_postprocess_tool",
+        lambda -> any {
+            _resolve_attr("run_postprocess")(
+                flows=flows,
+                communities=communities,
+                fts=fts,
+                repo_root=`root,
+                embedding_provider=embedding_provider,
+                embedding_model=embedding_model,
+            )
+        },
+        `root,
+        bounded=False,
+    );
+}
 
 """Get ultra-compact context for any task (~100 tokens). Always call this first.
 
@@ -274,7 +405,19 @@ async def get_minimal_context_tool(
     changed_files: Optional[list[str]] = None,
     repo_root: Optional[str] = None,
     base: str = "HEAD~1",
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_minimal_context_tool",
+        lambda -> any {
+            _resolve_attr("get_minimal_context")(
+                task=task, changed_files=changed_files, repo_root=`root, base=base
+            )
+        },
+        `root,
+    );
+}
 
 glob max_results_default_: any = MAX_IMPACT_NODES;
 
@@ -314,7 +457,26 @@ async def get_impact_radius_tool(
     detail_level: str = "standard",
     resolution: str = "all",
     max_files: int = 25,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_impact_radius_tool",
+        lambda -> any {
+            _resolve_attr("get_impact_radius")(
+                changed_files=changed_files,
+                max_depth=max_depth,
+                max_results=max_results,
+                repo_root=`root,
+                base=base,
+                detail_level=detail_level,
+                resolution=resolution,
+                max_files=max_files,
+            )
+        },
+        `root,
+    );
+}
 
 """Run a predefined graph query to explore code relationships.
 
@@ -371,7 +533,25 @@ async def query_graph_tool(
     max_results: int = 100,
     resolution: str = "all",
     to: Optional[str] = None,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "query_graph_tool",
+        lambda -> any {
+            _resolve_attr("query_graph")(
+                pattern=pattern,
+                target=target,
+                repo_root=`root,
+                detail_level=detail_level,
+                max_results=max_results,
+                resolution=resolution,
+                to=to,
+            )
+        },
+        `root,
+    );
+}
 
 """Generate a focused, token-efficient review context for code changes.
 
@@ -403,7 +583,27 @@ async def get_review_context_tool(
     detail_level: str = "standard",
     max_results: int = 100,
     max_files: int = 25,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_review_context_tool",
+        lambda -> any {
+            _resolve_attr("get_review_context")(
+                changed_files=changed_files,
+                max_depth=max_depth,
+                include_source=include_source,
+                max_lines_per_file=max_lines_per_file,
+                repo_root=`root,
+                base=base,
+                detail_level=detail_level,
+                max_results=max_results,
+                max_files=max_files,
+            )
+        },
+        `root,
+    );
+}
 
 """Search for code entities by name, keyword, or semantic similarity.
 
@@ -450,7 +650,28 @@ async def semantic_search_nodes_tool(
     include_source: bool = False,
     expand_neighbors: bool = False,
     max_source_lines: int = 60,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "semantic_search_nodes_tool",
+        lambda -> any {
+            _resolve_attr("semantic_search_nodes")(
+                query=query,
+                kind=kind,
+                limit=limit,
+                repo_root=`root,
+                model=model,
+                provider=provider,
+                detail_level=detail_level,
+                include_source=include_source,
+                expand_neighbors=expand_neighbors,
+                max_source_lines=max_source_lines,
+            )
+        },
+        `root,
+    );
+}
 
 """Compute vector embeddings for all graph nodes to enable semantic search.
 
@@ -472,7 +693,18 @@ async def semantic_search_nodes_tool(
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True})
 async def embed_graph_tool(
     repo_root: Optional[str] = None, model: Optional[str] = None, provider: Optional[str] = None
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "embed_graph_tool",
+        lambda -> any {
+            _resolve_attr("embed_graph")(repo_root=`root, model=model, provider=provider)
+        },
+        `root,
+        bounded=False,
+    );
+}
 
 """Get aggregate statistics about the code knowledge graph.
 
@@ -483,7 +715,15 @@ async def embed_graph_tool(
         repo_root: Repository root path. Auto-detected if omitted.
     """
 @mcp.tool(annotations={"readOnlyHint": True})
-async def list_graph_stats_tool(repo_root: Optional[str] = None) -> dict;
+async def list_graph_stats_tool(repo_root: Optional[str] = None) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "list_graph_stats_tool",
+        lambda -> any { _resolve_attr("list_graph_stats")(repo_root=`root) },
+        `root,
+    );
+}
 
 """Get a specific section from the LLM-optimized documentation reference.
 
@@ -503,7 +743,11 @@ async def list_graph_stats_tool(repo_root: Optional[str] = None) -> dict;
         repo_root: Repository root path. Auto-detected if omitted.
     """
 @mcp.tool(annotations={"readOnlyHint": True})
-def get_docs_section_tool(section_name: str, repo_root: Optional[str] = None) -> dict;
+def get_docs_section_tool(section_name: str, repo_root: Optional[str] = None) -> dict {
+    return _resolve_attr("get_docs_section")(
+        section_name=section_name, repo_root=_resolve_repo_root(repo_root)
+    );
+}
 
 """Find functions, classes, or files exceeding a line-count threshold.
 
@@ -529,7 +773,24 @@ async def find_large_functions_tool(
     limit: int = 50,
     repo_root: Optional[str] = None,
     detail_level: str = "standard",
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "find_large_functions_tool",
+        lambda -> any {
+            _resolve_attr("find_large_functions")(
+                min_lines=min_lines,
+                kind=kind,
+                file_path_pattern=file_path_pattern,
+                limit=limit,
+                repo_root=`root,
+                detail_level=detail_level,
+            )
+        },
+        `root,
+    );
+}
 
 """List execution flows in the codebase, sorted by criticality.
 
@@ -552,7 +813,19 @@ async def list_flows_tool(
     kind: Optional[str] = None,
     detail_level: str = "standard",
     repo_root: Optional[str] = None,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "list_flows_tool",
+        lambda -> any {
+            _resolve_attr("list_flows")(
+                repo_root=`root, sort_by=sort_by, limit=limit, kind=kind, detail_level=detail_level
+            )
+        },
+        `root,
+    );
+}
 
 """Get detailed information about a single execution flow.
 
@@ -579,7 +852,24 @@ async def get_flow_tool(
     repo_root: Optional[str] = None,
     max_steps: int = 50,
     max_source_lines: int = 400,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_flow_tool",
+        lambda -> any {
+            _resolve_attr("get_flow")(
+                flow_id=flow_id,
+                flow_name=flow_name,
+                include_source=include_source,
+                repo_root=`root,
+                max_steps=max_steps,
+                max_source_lines=max_source_lines,
+            )
+        },
+        `root,
+    );
+}
 
 """Find execution flows affected by changed files.
 
@@ -605,7 +895,23 @@ async def get_affected_flows_tool(
     repo_root: Optional[str] = None,
     detail_level: str = "standard",
     max_flows: int = 50,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_affected_flows_tool",
+        lambda -> any {
+            _resolve_attr("get_affected_flows_func")(
+                changed_files=changed_files,
+                base=base,
+                repo_root=`root,
+                detail_level=detail_level,
+                max_flows=max_flows,
+            )
+        },
+        `root,
+    );
+}
 
 """List detected code communities in the codebase.
 
@@ -634,7 +940,24 @@ async def list_communities_tool(
     repo_root: Optional[str] = None,
     max_results: int = 50,
     max_members: int = 10,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "list_communities_tool",
+        lambda -> any {
+            _resolve_attr("list_communities_func")(
+                repo_root=`root,
+                sort_by=sort_by,
+                min_size=min_size,
+                detail_level=detail_level,
+                max_results=max_results,
+                max_members=max_members,
+            )
+        },
+        `root,
+    );
+}
 
 """Get detailed information about a single code community.
 
@@ -660,7 +983,23 @@ async def get_community_tool(
     include_members: bool = False,
     repo_root: Optional[str] = None,
     max_members: int = 25,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_community_tool",
+        lambda -> any {
+            _resolve_attr("get_community_func")(
+                community_name=community_name,
+                community_id=community_id,
+                include_members=include_members,
+                repo_root=`root,
+                max_members=max_members,
+            )
+        },
+        `root,
+    );
+}
 
 """Generate an architecture overview based on community structure.
 
@@ -685,7 +1024,22 @@ async def get_architecture_overview_tool(
     detail_level: str = "minimal",
     max_results: int = 100,
     max_members: int = 10,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_architecture_overview_tool",
+        lambda -> any {
+            _resolve_attr("get_architecture_overview_func")(
+                repo_root=`root,
+                detail_level=detail_level,
+                max_results=max_results,
+                max_members=max_members,
+            )
+        },
+        `root,
+    );
+}
 
 """Detect changes and produce risk-scored, priority-ordered review guidance.
 
@@ -720,7 +1074,27 @@ async def detect_changes_tool(
     detail_level: str = "standard",
     max_results: int = 25,
     max_flows: int = 20,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "detect_changes_tool",
+        lambda -> any {
+            _resolve_attr("detect_changes_func")(
+                base=base,
+                changed_files=changed_files,
+                include_source=include_source,
+                max_depth=max_depth,
+                repo_root=`root,
+                detail_level=detail_level,
+                max_results=max_results,
+                max_flows=max_flows,
+            )
+        },
+        `root,
+        timeout_hint=_DETECT_CHANGES_TIMEOUT_HINT,
+    );
+}
 
 """Graph-powered refactoring operations.
 
@@ -759,7 +1133,26 @@ async def refactor_tool(
     repo_root: Optional[str] = None,
     max_results: int = 50,
     detail_level: str = "standard",
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "refactor_tool",
+        lambda -> any {
+            _resolve_attr("refactor_func")(
+                mode=mode,
+                old_name=old_name,
+                new_name=new_name,
+                kind=kind,
+                file_pattern=file_pattern,
+                repo_root=`root,
+                max_results=max_results,
+                detail_level=detail_level,
+            )
+        },
+        `root,
+    );
+}
 
 """Apply a previously previewed refactoring to source files.
 
@@ -787,7 +1180,23 @@ async def apply_refactor_tool(
     repo_root: Optional[str] = None,
     dry_run: bool = False,
     max_diff_files: int = 25,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "apply_refactor_tool",
+        lambda -> any {
+            _resolve_attr("apply_refactor_func")(
+                refactor_id=refactor_id,
+                repo_root=`root,
+                dry_run=dry_run,
+                max_diff_files=max_diff_files,
+            )
+        },
+        `root,
+        bounded=False,
+    );
+}
 
 """Generate a markdown wiki from the code community structure.
 
@@ -800,7 +1209,16 @@ async def apply_refactor_tool(
         force: If True, regenerate all pages even if content unchanged. Default: False.
     """
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True})
-async def generate_wiki_tool(repo_root: Optional[str] = None, force: bool = False) -> dict;
+async def generate_wiki_tool(repo_root: Optional[str] = None, force: bool = False) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "generate_wiki_tool",
+        lambda -> any { _resolve_attr("generate_wiki_func")(repo_root=`root, force=force) },
+        `root,
+        bounded=False,
+    );
+}
 
 """Retrieve a specific wiki page by community name.
 
@@ -816,7 +1234,19 @@ async def generate_wiki_tool(repo_root: Optional[str] = None, force: bool = Fals
 @mcp.tool(annotations={"readOnlyHint": True})
 async def get_wiki_page_tool(
     community_name: str, repo_root: Optional[str] = None, max_chars: int = 20000
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_wiki_page_tool",
+        lambda -> any {
+            _resolve_attr("get_wiki_page_func")(
+                community_name=community_name, repo_root=`root, max_chars=max_chars
+            )
+        },
+        `root,
+    );
+}
 
 """Find the most connected nodes in the codebase (architectural hotspots).
 
@@ -832,7 +1262,19 @@ async def get_wiki_page_tool(
 @mcp.tool(annotations={"readOnlyHint": True})
 async def get_hub_nodes_tool(
     top_n: int = 10, repo_root: Optional[str] = None, detail_level: str = "standard"
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_hub_nodes_tool",
+        lambda -> any {
+            _resolve_attr("get_hub_nodes_func")(
+                repo_root=`root, top_n=top_n, detail_level=detail_level
+            )
+        },
+        `root,
+    );
+}
 
 """Find architectural chokepoints via betweenness centrality.
 
@@ -849,7 +1291,19 @@ async def get_hub_nodes_tool(
 @mcp.tool(annotations={"readOnlyHint": True})
 async def get_bridge_nodes_tool(
     top_n: int = 10, repo_root: Optional[str] = None, detail_level: str = "standard"
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_bridge_nodes_tool",
+        lambda -> any {
+            _resolve_attr("get_bridge_nodes_func")(
+                repo_root=`root, top_n=top_n, detail_level=detail_level
+            )
+        },
+        `root,
+    );
+}
 
 """Identify structural weaknesses in the codebase graph.
 
@@ -868,7 +1322,19 @@ async def get_bridge_nodes_tool(
 @mcp.tool(annotations={"readOnlyHint": True})
 async def get_knowledge_gaps_tool(
     repo_root: Optional[str] = None, max_per_category: int = 15, detail_level: str = "standard"
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_knowledge_gaps_tool",
+        lambda -> any {
+            _resolve_attr("get_knowledge_gaps_func")(
+                repo_root=`root, max_per_category=max_per_category, detail_level=detail_level
+            )
+        },
+        `root,
+    );
+}
 
 """Find unexpected architectural coupling via composite surprise scoring.
 
@@ -885,7 +1351,19 @@ async def get_knowledge_gaps_tool(
 @mcp.tool(annotations={"readOnlyHint": True})
 async def get_surprising_connections_tool(
     top_n: int = 15, repo_root: Optional[str] = None, detail_level: str = "standard"
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_surprising_connections_tool",
+        lambda -> any {
+            _resolve_attr("get_surprising_connections_func")(
+                repo_root=`root, top_n=top_n, detail_level=detail_level
+            )
+        },
+        `root,
+    );
+}
 
 """Auto-generate review questions from graph analysis.
 
@@ -897,7 +1375,15 @@ async def get_surprising_connections_tool(
         repo_root: Repository root path. Auto-detected if omitted.
     """
 @mcp.tool(annotations={"readOnlyHint": True})
-async def get_suggested_questions_tool(repo_root: Optional[str] = None) -> dict;
+async def get_suggested_questions_tool(repo_root: Optional[str] = None) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "get_suggested_questions_tool",
+        lambda -> any { _resolve_attr("get_suggested_questions_func")(repo_root=`root) },
+        `root,
+    );
+}
 
 """BFS/DFS traversal from best-matching node with token budget.
 
@@ -921,7 +1407,23 @@ async def traverse_graph_tool(
     depth: int = 3,
     token_budget: int = 2000,
     repo_root: Optional[str] = None,
-) -> dict;
+) -> dict {
+    `root: any;
+    `root = _resolve_repo_root(repo_root);
+    return await _offload(
+        "traverse_graph_tool",
+        lambda -> any {
+            _resolve_attr("traverse_graph_func")(
+                query=query,
+                mode=mode,
+                depth=depth,
+                token_budget=token_budget,
+                repo_root=`root or "",
+            )
+        },
+        `root,
+    );
+}
 
 """List all registered repositories in the multi-repo registry.
 
@@ -931,7 +1433,9 @@ async def traverse_graph_tool(
     Stays synchronous: one small JSON read, no graph database and no Git.
     """
 @mcp.tool(annotations={"readOnlyHint": True})
-def list_repos_tool -> dict;
+def list_repos_tool -> dict {
+    return _resolve_attr("list_repos_func")();
+}
 
 """Search for code entities across registered repositories.
 
@@ -961,7 +1465,18 @@ async def cross_repo_search_tool(
     limit: int = 20,
     max_results: int = 50,
     repos: Optional[list[str]] = None,
-) -> dict;
+) -> dict {
+    return await _offload(
+        "cross_repo_search_tool",
+        lambda -> any {
+            _resolve_attr("cross_repo_search_func")(
+                query=query, kind=kind, limit=limit, max_results=max_results, repos=repos
+            )
+        },
+        None,
+        provenance=False,
+    );
+}
 
 """Pre-commit review workflow using detect_changes, affected_flows, and test gaps.
 
@@ -971,14 +1486,18 @@ async def cross_repo_search_tool(
         base: Git ref to diff against. Default: HEAD~1.
     """
 @mcp.prompt()
-def review_changes(base: str = "HEAD~1") -> list[Message];
+def review_changes(base: str = "HEAD~1") -> list[Message] {
+    return _resolve_attr("review_changes_prompt")(base=base);
+}
 
 """Architecture documentation using communities, flows, and Mermaid diagrams.
 
     Generates a comprehensive architecture map with module summaries and coupling warnings.
     """
 @mcp.prompt()
-def architecture_map -> list[Message];
+def architecture_map -> list[Message] {
+    return _resolve_attr("architecture_map_prompt")();
+}
 
 """Guided debugging using search, flow tracing, and recent changes.
 
@@ -988,14 +1507,18 @@ def architecture_map -> list[Message];
         description: Description of the issue to debug.
     """
 @mcp.prompt()
-def debug_issue(description: str = "") -> list[Message];
+def debug_issue(description: str = "") -> list[Message] {
+    return _resolve_attr("debug_issue_prompt")(description=description);
+}
 
 """New developer orientation using stats, architecture, and critical flows.
 
     Creates an onboarding guide covering codebase structure, key modules, and patterns.
     """
 @mcp.prompt()
-def onboard_developer -> list[Message];
+def onboard_developer -> list[Message] {
+    return _resolve_attr("onboard_developer_prompt")();
+}
 
 """PR readiness check with risk scoring, test gaps, and dead code detection.
 
@@ -1005,7 +1528,9 @@ def onboard_developer -> list[Message];
         base: Git ref to diff against. Default: HEAD~1.
     """
 @mcp.prompt()
-def pre_merge_check(base: str = "HEAD~1") -> list[Message];
+def pre_merge_check(base: str = "HEAD~1") -> list[Message] {
+    return _resolve_attr("pre_merge_check_prompt")(base=base);
+}
 
 """Remove tools not listed in the allow-list.
 
@@ -1032,7 +1557,42 @@ def pre_merge_check(base: str = "HEAD~1") -> list[Message];
         # via env var
         CRG_TOOLS=query_graph_tool,semantic_search_nodes_tool
     """
-def _apply_tool_filter(tools: str | None = None) -> None;
+def _apply_tool_filter(tools: str | None = None) -> None {
+    import asyncio;
+
+    raw: any = tools or os.environ.get("CRG_TOOLS");
+    if not raw {
+        return;
+    }
+    allowed: any = {t.strip() for t in raw.split(",") if t.strip()};
+    if not allowed {
+        return;
+    }
+    def _list_tool_names -> list[str] {
+        coro_factory: any = mcp.list_tools;
+        try {
+            asyncio.get_running_loop();
+        } except RuntimeError {
+            return [t.name for t in asyncio.run(coro_factory())];
+        }
+        import concurrent.futures;
+
+        def _runner -> list[str] {
+            return [t.name for t in asyncio.run(coro_factory())];
+        }
+
+        pool: any;
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool {
+            return pool.submit(_runner).result();
+        }
+    }
+
+    for name in _list_tool_names() {
+        if name not in allowed {
+            mcp.local_provider.remove_tool(name);
+        }
+    }
+}
 
 """Run the MCP server (stdio or HTTP).
 
@@ -1066,7 +1626,106 @@ def main(
     host: str | None = None,
     port: int | None = None,
     multi_repo: bool = False,
-) -> None;
+) -> None {
+    `root: Path | None = None;
+    if multi_repo {
+        if transport != "streamable-http" {
+            raise ValueError("multi_repo needs the HTTP transport (serve --http)");
+        }
+        if repo_root {
+            raise ValueError(
+                "multi_repo serves the repositories in the registry and takes no repo_root"
+            );
+        }
+        if auto_watch {
+            raise ValueError(
+                "multi_repo cannot auto-watch; the daemon (code-review-graph daemon) watches several repositories",
+            );
+        }
+        if os.environ.get("CRG_DATA_DIR", "").strip() {
+            raise ValueError(
+                "multi_repo cannot be combined with CRG_DATA_DIR, which would put every repository's graph in one database; use per-repository Registry data_dir entries instead",
+            );
+        }
+        _default_repo_root = None;
+        if not Registry().list_repos() {
+            logger.warning(
+                "No repositories are registered, so every call will be refused until one is: code-review-graph register <path>",
+            );
+        }
+    } else {
+        `root = Path(repo_root) if repo_root else find_project_root();
+        _default_repo_root = `str(`root);
+    }
+    _apply_tool_filter(tools);
+
+    previous_stdio_state: any = _incremental._MCP_STDIO_ACTIVE;
+    _incremental._MCP_STDIO_ACTIVE = operator.eq(transport, "stdio");
+    previous_instructions: any = mcp.instructions;
+    _multi_repo = multi_repo;
+    if multi_repo {
+        mcp.instructions = SERVER_INSTRUCTIONS + MULTI_REPO_INSTRUCTIONS;
+    }
+    watch_store: GraphStore | None = None;
+    watch_thread: threading.Thread | None = None;
+    watch_stop: any = threading.Event();
+    try {
+        if auto_watch and `root is not None {
+            run_post_processing = lazy("postprocessing", "run_post_processing");
+
+            watch_store = GraphStore(get_db_path(`root));
+            watch_thread = start_watch_thread(
+                `root,
+                watch_store,
+                daemon=True,
+                on_files_updated=run_post_processing,
+                stop_event=watch_stop,
+            );
+            if watch_thread is None {
+                logger.warning("Auto-watch was requested but could not be started");
+            }
+        }
+
+        if operator.eq(sys.platform, "win32") {
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy());
+            prewarm_local_embeddings = lazy("embeddings", "prewarm_local_embeddings");
+
+            prewarm_local_embeddings();
+        }
+
+        if transport == "stdio" {
+            mcp.run(transport="stdio", show_banner=False);
+        } elif transport == "streamable-http" {
+            if host is None or port is None {
+                raise ValueError("streamable-http transport requires host and port");
+            }
+            build_http_middleware = lazy("http_origin_guard", "build_http_middleware");
+
+            mcp.run(
+                transport="streamable-http",
+                host=host,
+                port=port,
+                middleware=build_http_middleware(host, port),
+            );
+        } else {
+            raise ValueError(f"unsupported transport: {transport!r}");
+        }
+    } finally {
+        try {
+            if watch_thread is not None {
+                watch_stop.set();
+                watch_thread.join();
+            }
+            if watch_store is not None {
+                watch_store.close();
+            }
+        } finally {
+            _incremental._MCP_STDIO_ACTIVE = previous_stdio_state;
+            _multi_repo = False;
+            mcp.instructions = previous_instructions;
+        }
+    }
+}
 
 with entry:__main__ {
     main();

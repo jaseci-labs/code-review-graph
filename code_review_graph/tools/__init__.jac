@@ -56,4 +56,16 @@ glob __all__: any = ("_BUILTIN_CALL_NAMES _get_store _validate_repo_root with_pr
     "get_suggested_questions_func get_surprising_connections_func parse_diff_ranges "
     "parse_git_diff_ranges parse_svn_diff_ranges get_changed_files get_staged_and_unstaged").split();
 
-def __getattr__(name: str) -> Any;
+def __getattr__(name: str) -> Any {
+    target: any = _LAZY_EXPORTS.get(name);
+    if target is not None {
+        mod_path: any;
+        attr: any;
+        (mod_path, attr) = target as any;
+        mod: any = importlib.import_module(mod_path, __name__);
+        val: any = getattr(mod, attr);
+        globals()[name] = val;
+        return val;
+    }
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}");
+}

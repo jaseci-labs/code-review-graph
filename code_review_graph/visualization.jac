@@ -24,8 +24,45 @@ glob D3_SRI_HASH: any = "sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s4
 
 glob _SAFE_SIDECAR_STEM: any = re.compile("[A-Za-z0-9._-]{1,64}");
 
-def _d3_script_tags -> str;
-def _write_d3_asset(directory: Path) -> Path | None;
+def _d3_script_tags -> str {
+    local_tag: any = f"<script src=\"{D3_LOCAL_FILENAME}\" integrity=\"{D3_SRI_HASH}\"></script>";
+    cdn_tag: any = f"<script src=\"{D3_CDN_URL}\" integrity=\"{D3_SRI_HASH}\" crossorigin=\"anonymous\"><\\/script>";
+    fallback_tag: any = f"<script>window.d3 || document.write('{cdn_tag}');</script>";
+    return local_tag + "\n" + fallback_tag;
+}
+
+def _write_d3_asset(directory: Path) -> Path | None {
+    dest: any = directory / D3_LOCAL_FILENAME;
+    try {
+        asset: any = resources.files("code_review_graph") / "assets" / D3_LOCAL_FILENAME;
+        data: any = asset.read_bytes();
+    } except OSError as exc {
+        logger.warning("Bundled D3 asset unavailable (%s); page will use the CDN fallback.", exc);
+        return None;
+    }
+    digest: any = base64.b64encode(hashlib.sha384(data).digest()).decode();
+    if f"sha384-{digest}" != D3_SRI_HASH and b"\r\n" in data {
+        normalized: any = data.replace(b"\r\n", b"\n");
+        normalized_digest: any = base64.b64encode(hashlib.sha384(normalized).digest()).decode();
+        if f"sha384-{normalized_digest}" == D3_SRI_HASH {
+            (data, digest) = (normalized, normalized_digest);
+        }
+    }
+    if f"sha384-{digest}" != D3_SRI_HASH {
+        logger.error(
+            "Bundled D3 asset does not match the pinned SRI hash; refusing to write %s. The page will use the CDN fallback.",
+            dest,
+        );
+        return None;
+    }
+    try {
+        dest.write_bytes(data);
+    } except OSError as exc {
+        logger.warning("Could not write %s (%s); page will use the CDN fallback.", dest, exc);
+        return None;
+    }
+    return dest;
+}
 
 glob DEFAULT_MAX_FULL_NODES: any = 3000;
 
@@ -34,32 +71,319 @@ glob DEFAULT_MAX_FULL_EDGES: any = 3 * DEFAULT_MAX_FULL_NODES;
 glob _SEEDED_READ_FALLBACK_NODES: any = 5000;
 
 class _NameIndex(builtins.dict) {
-    def init;
-    def only_under_prefix(key: str, prefix: str) -> str | None;
+    def init {
+        super.init();
+        self._sorted = {};
+    }
+
+    def only_under_prefix(key: str, prefix: str) -> str | None {
+        ranked: any = self._sorted.get(key);
+        if ranked is None {
+            value_: any = sorted(super.__getitem__(key));
+            ranked = value_;
+            self._sorted[key] = value_;
+        }
+        start: any = bisect_left(ranked, prefix);
+        if start == len(ranked) or not ranked[start].startswith(prefix) {
+            return None;
+        }
+        if start + 1 < len(ranked) and ranked[start + 1].startswith(prefix) {
+            return None;
+        }
+        return ranked[start];
+    }
 }
 
-def _build_name_index(nodes: list[dict], seen_qn: set[str]) -> _NameIndex;
-def _name_index_keys(n: dict) -> Generator[any, any, any];
-def _resolve_target(target: str, source: str, seen_qn: set[str], name_index: _NameIndex) -> str
-    | None;
-def _node_payload(gnode: GraphNode, community_id: int | None) -> dict;
+def _build_name_index(nodes: list[dict], seen_qn: set[str]) -> _NameIndex {
+    index: any = _NameIndex();
+    for n in nodes {
+        qn: any = n["qualified_name"];
+        for key in _name_index_keys(n) {
+            index.setdefault(key, []).append(qn);
+        }
+    }
+    return index;
+}
 
-def _export_flows(store: GraphStore) -> list[dict];
+def _name_index_keys(n: dict) -> Generator[any, any, any] {
+    qn: any = n["qualified_name"];
+    yield n["name"];
+    if "::" in qn {
+        yield qn.rsplit("/", 1)[-1];
+    }
+    fp: any = n.get("file_path", "");
+    if fp {
+        mod: any = fp.replace("/", ".").replace(".py", "");
+        if n["kind"] == "File" {
+            yield mod;
+            parts: any = fp.replace("\\", "/").split("/");
+            for i in range(len(parts)) {
+                suffix: any = "/".join(parts[i:]);
+                if suffix {
+                    yield suffix;
+                }
+            }
+        } else {
+            yield mod + "." + n["name"];
+        }
+    }
+}
+
+def _resolve_target(target: str, source: str, seen_qn: set[str], name_index: _NameIndex) -> str
+    | None {
+    if target in seen_qn {
+        return target;
+    }
+
+    candidates: any = name_index.get(target);
+    if not candidates {
+        return None;
+    }
+
+    if len(candidates) == 1 {
+        return candidates[0];
+    }
+    src_file: any = source.split("::")[0] if "::" in source else source;
+    same_file: any = name_index.only_under_prefix(target, src_file);
+    if same_file is not None {
+        return same_file;
+    }
+    src_parts: any = src_file.rsplit("/", 1)[0] if "/" in src_file else "";
+    same_dir: any = name_index.only_under_prefix(target, src_parts);
+    if same_dir is not None {
+        return same_dir;
+    }
+    return candidates[0];
+}
+
+def _node_payload(gnode: GraphNode, community_id: int | None) -> dict {
+    d: any = node_to_dict(gnode);
+    d["params"] = gnode.params;
+    d["return_type"] = gnode.return_type;
+    d["community_id"] = community_id;
+    return d;
+}
+
+def _export_flows(store: GraphStore) -> list[dict] {
+    try {
+        get_flows = lazy("flows", "get_flows");
+        return get_flows(store, limit=100);
+    } except (ImportError, sqlite3.OperationalError) as exc {
+        logger.debug("flows unavailable for export: %s", exc);
+        return [];
+    }
+}
 
 def _export_communities(
     store: GraphStore, members_by_community: dict[int, list[str]] | None = None
-) -> list[dict];
-def _read_node_identities(store: GraphStore) -> list[dict] | None;
+) -> list[dict] {
+    try {
+        get_communities = lazy("communities", "get_communities");
+        return get_communities(store, members_by_community=members_by_community);
+    } except (ImportError, sqlite3.OperationalError) as exc {
+        logger.debug("communities unavailable for export: %s", exc);
+        return [];
+    }
+}
+
+def _read_node_identities(store: GraphStore) -> list[dict] | None {
+    if store.has_edge_with_backslash_path() {
+        return None;
+    }
+    identities: list[dict] = [];
+    listed_files: set[str] = set[any]();
+    for row in store.iter_node_identities() {
+        file_path: any = row["file_path"];
+        if normalize_file_path(file_path) != file_path {
+            return None;
+        }
+        if row["listed"] {
+            listed_files.add(file_path);
+        }
+        identities.append({
+            "id": row["id"],
+            "stored_name": row["qualified_name"],
+            "qualified_name": _sanitize_name(row["qualified_name"]),
+            "name": _sanitize_name(row["name"]),
+            "kind": row["kind"],
+            "file_path": file_path,
+            "community_id": row["community_id"],
+        });
+    }
+    unlisted: any = {n["file_path"] for n in identities} - listed_files;
+    hidden: any = unlisted - store.get_files_with_edges(unlisted);
+    if hidden {
+        identities = [n for n in identities if n["file_path"] not in hidden];
+    }
+    return identities;
+}
+
 def _count_exported_edges(store: GraphStore, seen_qn: set[str], name_index: _NameIndex) -> int
-    | None;
+    | None {
+    def resolves(name: str) -> bool {
+        return `bool(_resolve_target(name, name, seen_qn, name_index));
+    }
+
+    total: any = 0;
+    for (target, count) in store.iter_edge_end_counts("target_qualified") {
+        exported: any = _sanitize_name(target);
+        if resolves(exported) {
+            if exported != target {
+                return None;
+            }
+            total += count;
+        }
+    }
+    lost_sources: list[str] = [];
+    for (source, _count) in store.iter_edge_end_counts("source_qualified") {
+        exported = _sanitize_name(source);
+        if not resolves(exported) {
+            lost_sources.append(source);
+        } elif exported != source {
+            return None;
+        }
+    }
+    return total
+        - sum(
+            resolves(_sanitize_name(target))
+            for target in store.iter_edge_targets_from(lost_sources),
+        );
+}
+
 def _read_edges_touching_nodes(
     store: GraphStore,
     names: Iterable[str],
     by_name: dict[str, list[dict]],
     seen_qn: set[str],
     name_index: _NameIndex,
-) -> list[dict];
-def _export_seeded(store: GraphStore, spec: NeighbourhoodSpec) -> dict | None;
+) -> list[dict] {
+    wanted: any = `set(names);
+    stored_ends: any = `set(wanted);
+    for name in wanted {
+        for identity in by_name[name] {
+            stored_ends.update(_name_index_keys(identity));
+        }
+    }
+    found: any = [];
+    for `edge in store.get_edges_touching(stored_ends) {
+        e: any = edge_to_dict(`edge);
+        src: any = _resolve_target(e["source"], e["source"], seen_qn, name_index);
+        tgt: any = _resolve_target(e["target"], e["source"], seen_qn, name_index);
+        if src and tgt and (src in wanted or tgt in wanted) {
+            e["source"] = src;
+            e["target"] = tgt;
+            found.append(e);
+        }
+    }
+    return found;
+}
+
+def _export_seeded(store: GraphStore, spec: NeighbourhoodSpec) -> dict | None {
+    e: any;
+    if spec.path_from is not None {
+        return None;
+    }
+    try {
+        identities: any = _read_node_identities(store);
+    } except sqlite3.OperationalError as exc {
+        logger.debug("node identities unavailable for export: %s", exc);
+        return None;
+    }
+    if identities is None {
+        return None;
+    }
+
+    by_name: dict[str, list[dict]] = defaultdict(list[any]);
+    identity: any;
+    for identity in identities {
+        by_name[identity["qualified_name"]].append(identity);
+    }
+    seen_qn: any = {n["stored_name"] for n in identities};
+    name_index: any = _build_name_index(identities, seen_qn);
+    total_edges: any = _count_exported_edges(store, seen_qn, name_index);
+    if total_edges is None {
+        return None;
+    }
+
+    flows: any = _export_flows(store);
+    resolved: any = resolve_seeds(identities, [], flows, spec);
+
+    limit: any = max(_SEEDED_READ_FALLBACK_NODES, len(identities) // 4);
+    edges_by_id: dict[int, dict] = {};
+    frontier: any = `set(resolved.seeds);
+    reached: any = `set(frontier);
+    for level in range(spec.depth + 1) {
+        if len(reached) > limit {
+            return None;
+        }
+        found: any = _read_edges_touching_nodes(store, frontier, by_name, seen_qn, name_index);
+        edges_by_id.update((e["id"], e) for e in found);
+        if level == spec.depth {
+            break;
+        }
+        following: set[str] = set[any]();
+        for e in found {
+            if e["kind"] in STRUCTURAL_EDGE_KINDS {
+                continue;
+            }
+            if e["source"] in frontier and e["target"] not in reached {
+                following.add(e["target"]);
+            }
+            if e["target"] in frontier and e["source"] not in reached {
+                following.add(e["source"]);
+            }
+        }
+        if not following {
+            break;
+        }
+        reached |= following;
+        frontier = following;
+    }
+    edges: any = [edges_by_id[edge_id] for edge_id in sorted(edges_by_id)];
+    parents: any = `set(_parent_files(edges, reached).values());
+    edges_by_id.update(
+        (e["id"], e)
+        for e in _read_edges_touching_nodes(store, parents - reached, by_name, seen_qn, name_index),
+    );
+
+    wanted: any = reached | parents;
+    gnodes: any = {
+        g.qualified_name: g
+        for g in store.get_nodes_by_qualified_names({
+            n["stored_name"]
+            for name in wanted
+            for n in by_name[name]
+        })
+    };
+    nodes: any = [];
+    community_rows: dict[int, list[tuple[int, str]]] = defaultdict(list[any]);
+    for identity in identities {
+        gnode: any = gnodes.get(identity["stored_name"]);
+        if gnode is None or identity["qualified_name"] not in wanted {
+            continue;
+        }
+        nodes.append(_node_payload(gnode, identity["community_id"]));
+        if identity["community_id"] is not None {
+            community_rows[identity["community_id"]].append((
+                identity["id"],
+                identity["qualified_name"],
+            ));
+        }
+    }
+
+    data: any = {
+        "nodes": nodes,
+        "edges": [edges_by_id[edge_id] for edge_id in sorted(edges_by_id)],
+        "stats": asdict(store.get_stats()),
+        "flows": flows,
+        "communities": _export_communities(
+            store, {cid: [qn for (_, qn) in sorted(rows)] for (cid, rows) in community_rows.items()}
+        ),
+    };
+    return extract_neighbourhood(
+        data, spec, resolved=resolved, totals=(len(identities), total_edges)
+    );
+}
 
 glob depth_default_: any = DEFAULT_DEPTH;
 
@@ -76,21 +400,284 @@ def export_graph_data(
     depth: int = depth_default_,
     render_depth: int | None = None,
     max_nodes: int = max_nodes_default_,
-) -> dict;
-def _aggregate_community(data: dict) -> dict;
-def _aggregate_file(data: dict) -> dict;
-def _has_community_data(data: dict) -> bool;
+) -> dict {
+    e: any;
+    spec: any = NeighbourhoodSpec.from_args(
+        seed_symbols=seed_symbols,
+        seed_files=seed_files,
+        seed_flow=seed_flow,
+        path_from=path_from,
+        path_to=path_to,
+        depth=depth,
+        render_depth=render_depth,
+        max_nodes=max_nodes,
+    ).validate();
+    if spec.is_active {
+        seeded: any = _export_seeded(store, spec);
+        if seeded is not None {
+            return seeded;
+        }
+    }
+
+    nodes: any = [];
+    seen_qn: set[str] = set[any]();
+    community_map: any = store.get_all_community_ids();
+
+    for file_path in store.get_all_files() {
+        for gnode in store.get_nodes_by_file(file_path) {
+            if gnode.qualified_name in seen_qn {
+                continue;
+            }
+            seen_qn.add(gnode.qualified_name);
+            d: any = node_to_dict(gnode);
+            d["params"] = gnode.params;
+            d["return_type"] = gnode.return_type;
+            d["community_id"] = community_map.get(gnode.qualified_name);
+            nodes.append(d);
+        }
+    }
+
+    name_index: any = _build_name_index(nodes, seen_qn);
+
+    all_edges: any = [edge_to_dict(e) for e in store.get_all_edges()];
+    edges: any = [];
+    for e in all_edges {
+        src: any = _resolve_target(e["source"], e["source"], seen_qn, name_index);
+        tgt: any = _resolve_target(e["target"], e["source"], seen_qn, name_index);
+        if src and tgt {
+            e["source"] = src;
+            e["target"] = tgt;
+            edges.append(e);
+        }
+    }
+
+    stats: any = store.get_stats();
+
+    data: any = {
+        "nodes": nodes,
+        "edges": edges,
+        "stats": asdict(stats),
+        "flows": _export_flows(store),
+        "communities": _export_communities(store),
+    };
+    if spec.is_active {
+        return extract_neighbourhood(data, spec);
+    }
+    return data;
+}
+
+def _aggregate_community(data: dict) -> dict {
+    communities: any = data.get("communities") or [];
+    nodes: any = data["nodes"];
+    edges: any = data["edges"];
+    qn_to_cid: dict[str, int] = {};
+    c: any;
+    for c in communities {
+        qn: any;
+        for qn in c.get("members", []) {
+            qn_to_cid[qn] = c["id"];
+        }
+    }
+    n: any;
+    for n in nodes {
+        if n.get("community_id") is not None and n["qualified_name"] not in qn_to_cid {
+            qn_to_cid[n["qualified_name"]] = n["community_id"];
+        }
+    }
+    uncategorized_members: list[str] = [];
+    for n in nodes {
+        if n["qualified_name"] not in qn_to_cid {
+            qn_to_cid[n["qualified_name"]] = -1;
+            uncategorized_members.append(n["qualified_name"]);
+        }
+    }
+    cid_info: dict[int, dict] = {};
+    for c in communities {
+        cid_info[c["id"]] = c;
+    }
+    if uncategorized_members {
+        cid_info[-1] = {
+            "id": -1,
+            "name": "Uncategorized",
+            "size": len(uncategorized_members),
+            "members": uncategorized_members,
+            "dominant_language": "",
+            "description": "Nodes not assigned to any community",
+            "cohesion": 0,
+            "level": 0,
+        };
+    }
+    super_nodes: any = [];
+    cid: any;
+    for (cid, info) in cid_info.items() {
+        size: any = info.get("size", len(info.get("members", [])));
+        if size == 0 {
+            continue;
+        }
+        super_nodes.append({
+            "qualified_name": f"__community__{cid}",
+            "name": info.get("name", f"Community {cid}"),
+            "kind": "Community",
+            "file_path": "",
+            "line_start": None,
+            "line_end": None,
+            "language": info.get("dominant_language", ""),
+            "community_id": cid,
+            "member_count": size,
+            "description": info.get("description", ""),
+            "id": cid,
+        });
+    }
+    cross_edge_counts: Counter[tuple[int, int]] = Counter();
+    for e in edges {
+        src_cid: any = qn_to_cid.get(e["source"]);
+        tgt_cid: any = qn_to_cid.get(e["target"]);
+        if src_cid is not None and tgt_cid is not None and src_cid != tgt_cid {
+            pair: any = (min(src_cid, tgt_cid), max(src_cid, tgt_cid));
+            cross_edge_counts[pair] += 1;
+        }
+    }
+
+    super_edges: any = [];
+    for ((c1, c2), count) in cross_edge_counts.items() {
+        super_edges.append({
+            "source": f"__community__{c1}",
+            "target": f"__community__{c2}",
+            "kind": "CROSS_COMMUNITY",
+            "weight": count,
+        });
+    }
+    community_details: dict[int, dict] = {};
+    cid_members_set: dict[int, set[str]] = defaultdict(set[any]);
+    for (qn, cid) in qn_to_cid.items() {
+        cid_members_set[cid].add(qn);
+    }
+
+    for (cid, member_qns) in cid_members_set.items() {
+        detail_nodes: any = [n for n in nodes if n["qualified_name"] in member_qns];
+        detail_edges: any = [
+            e
+            for e in edges
+            if e["source"] in member_qns and e["target"] in member_qns
+        ];
+        community_details[cid] = {"nodes": detail_nodes, "edges": detail_edges};
+    }
+
+    return {
+        "nodes": super_nodes,
+        "edges": super_edges,
+        "stats": data["stats"],
+        "flows": data.get("flows", []),
+        "communities": communities,
+        "mode": "community",
+        "community_details": {`str(k): v for (k, v) in community_details.items()},
+    };
+}
+
+def _aggregate_file(data: dict) -> dict {
+    nodes: any = data["nodes"];
+    edges: any = data["edges"];
+    file_symbol_count: Counter[str] = Counter();
+    qn_to_file: dict[str, str] = {};
+    file_languages: dict[str, str] = {};
+    file_community: dict[str, Any] = {};
+
+    for n in nodes {
+        fp: any = n.get("file_path", "");
+        if not fp {
+            continue;
+        }
+        qn_to_file[n["qualified_name"]] = fp;
+        if n["kind"] != "File" {
+            file_symbol_count[fp] += 1;
+        } else {
+            file_symbol_count.setdefault(fp, 0);
+        }
+        if n.get("language") {
+            file_languages[fp] = n["language"];
+        }
+        if n.get("community_id") is not None {
+            file_community.setdefault(fp, n["community_id"]);
+        }
+    }
+    file_nodes: any = [];
+    count: any;
+    for (fp, count) in file_symbol_count.items() {
+        parts: any = fp.replace("\\", "/").split("/");
+        short: any = parts[-1] if parts else fp;
+        parent: any = parts[-2] if len(parts) >= 2 else "";
+        label: any = f"{parent}/{short}" if parent else short;
+        file_nodes.append({
+            "qualified_name": fp,
+            "name": label,
+            "kind": "File",
+            "file_path": fp,
+            "line_start": None,
+            "line_end": None,
+            "language": file_languages.get(fp, ""),
+            "community_id": file_community.get(fp),
+            "symbol_count": count,
+        });
+    }
+    cross_file_counts: Counter[tuple[str, str]] = Counter();
+    for e in edges {
+        src_fp: any = qn_to_file.get(e["source"]);
+        tgt_fp: any = qn_to_file.get(e["target"]);
+        if src_fp and tgt_fp and src_fp != tgt_fp {
+            pair: any = (src_fp, tgt_fp);
+            cross_file_counts[pair] += 1;
+        }
+    }
+
+    file_edges: any = [];
+    for ((f1, f2), count) in cross_file_counts.items() {
+        file_edges.append({"source": f1, "target": f2, "kind": "DEPENDS_ON", "weight": count});
+    }
+
+    return {
+        "nodes": file_nodes,
+        "edges": file_edges,
+        "stats": data["stats"],
+        "flows": data.get("flows", []),
+        "communities": data.get("communities", []),
+        "mode": "file",
+    };
+}
+
+def _has_community_data(data: dict) -> bool {
+    if data.get("communities") {
+        return True;
+    }
+    return `any(n.get("community_id") is not None for n in data["nodes"]);
+}
+
 def _resolve_auto_mode(
     node_count: int,
     edge_count: int,
     max_full_nodes: int,
     max_full_edges: int,
     has_communities: bool,
-) -> str;
+) -> str {
+    if node_count <= max_full_nodes and edge_count <= max_full_edges {
+        return "full";
+    }
+    return "community" if has_communities else "file";
+}
 
 glob _SIDECAR_GLOBAL: any = "window.__CRG_GRAPH_DATA__";
 
-def _write_sidecar(output_path: Path, data_json: str, sidecar: bool) -> tuple[str, str];
+def _write_sidecar(output_path: Path, data_json: str, sidecar: bool) -> tuple[str, str] {
+    if not sidecar {
+        return ("", data_json);
+    }
+    stem: any = output_path.stem;
+    if not _SAFE_SIDECAR_STEM.fullmatch(stem) {
+        stem = "graph";
+    }
+    name: any = f"{stem}.data.js";
+    (output_path.parent / name).write_text(f"{_SIDECAR_GLOBAL} = {data_json};\n", encoding="utf-8");
+    return (f"<script src=\"{name}\"></script>", _SIDECAR_GLOBAL);
+}
 
 glob max_full_nodes_default_: any = DEFAULT_MAX_FULL_NODES;
 
@@ -117,7 +704,97 @@ def generate_html(
     max_nodes: int = max_nodes_default__,
     `report: dict | None = None,
     sidecar: bool = False,
-) -> Path;
+) -> Path {
+    output_path = Path(output_path);
+    stats: any = store.get_stats();
+    spec: any = NeighbourhoodSpec.from_args(
+        seed_symbols=seed_symbols,
+        seed_files=seed_files,
+        seed_flow=seed_flow,
+        path_from=path_from,
+        path_to=path_to,
+        depth=depth,
+        render_depth=render_depth,
+        max_nodes=max_nodes,
+    ).validate();
+    if spec.is_active and mode not in ("auto", "full") {
+        raise ValueError(
+            f"mode={mode!r} aggregates the graph into bubbles, which is the opposite of a seeded neighbourhood; use mode='full' (or drop the seed to draw the whole repository that way)",
+        );
+    }
+    if stats.total_nodes > 50000 and not spec.is_active {
+        logger.warning(
+            "Graph has %d nodes — visualization may be slow. Consider seeding a neighbourhood with --seed-symbol / --seed-file / --seed-flow.",
+            stats.total_nodes,
+        );
+    }
+    data: any = export_graph_data(
+        store,
+        seed_symbols=seed_symbols,
+        seed_files=seed_files,
+        seed_flow=seed_flow,
+        path_from=path_from,
+        path_to=path_to,
+        depth=depth,
+        render_depth=render_depth,
+        max_nodes=max_nodes,
+    );
+    if `report is not None {
+        block: any = data.get("neighbourhood", {});
+        `report.update({
+            "seeds": len(block.get("seeds", [])),
+            "seeds_requested": block.get("seeds_requested", 0),
+            "seeds_dropped": block.get("seeds_dropped", 0),
+            "truncated": `bool(block.get("truncated", False)),
+            "max_nodes": block.get("max_nodes", max_nodes),
+            "node_count": len(data["nodes"]),
+        });
+    }
+    effective_mode: any = mode;
+    if spec.is_active {
+        effective_mode = "full";
+    } elif effective_mode == "auto" {
+        effective_mode = _resolve_auto_mode(
+            node_count=len(data["nodes"]),
+            edge_count=len(data["edges"]),
+            max_full_nodes=max_full_nodes,
+            max_full_edges=max_full_edges,
+            has_communities=_has_community_data(data),
+        );
+        if effective_mode != "full" {
+            logger.info(
+                "auto mode: %d nodes / %d edges exceeds full-render budget (%d nodes / %d edges) — using %s aggregation",
+                len(data["nodes"]),
+                len(data["edges"]),
+                max_full_nodes,
+                max_full_edges,
+                effective_mode,
+            );
+        }
+    }
+
+    if effective_mode == "community" {
+        agg: any = _aggregate_community(data);
+        data_json: any = json.dumps(agg, default=str).replace("</", "<\\/");
+        template: any = _AGGREGATED_HTML_TEMPLATE;
+    } elif effective_mode == "file" {
+        agg = _aggregate_file(data);
+        data_json = json.dumps(agg, default=str).replace("</", "<\\/");
+        template = _AGGREGATED_HTML_TEMPLATE;
+    } else {
+        data_json = json.dumps(data, default=str).replace("</", "<\\/");
+        template = _HTML_TEMPLATE;
+    }
+    html: any = template.replace("__D3_SCRIPTS__", _d3_script_tags());
+    sidecar_tag: any;
+    payload: any;
+    (sidecar_tag, payload) = _write_sidecar(output_path, data_json, sidecar) as any;
+    html = html.replace("__SIDECAR_SCRIPT__", sidecar_tag);
+    html = html.replace("__GRAPH_DATA__", payload);
+    output_path.write_text(html, encoding="utf-8");
+    _write_d3_asset(output_path.parent);
+    return output_path;
+}
 
 glob _HTML_TEMPLATE: any = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Code Review Graph</title>\n__D3_SCRIPTS__\n__SIDECAR_SCRIPT__\n<style>\n  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n  html, body { width: 100%; height: 100%; overflow: hidden; }\n  body {\n    background: #0d1117; color: #c9d1d9;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\n    font-size: 13px;\n  }\n  svg { display: block; width: 100%; height: 100%; }\n  #legend {\n    position: absolute; top: 16px; left: 16px;\n    background: rgba(22,27,34,0.95); border: 1px solid #30363d;\n    border-radius: 10px; padding: 16px 20px;\n    font-size: 12px; line-height: 1.8;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.5);\n    backdrop-filter: blur(12px); z-index: 10;\n  }\n  #legend h3 {\n    font-size: 11px; font-weight: 700; margin-bottom: 6px;\n    color: #9eaab6; text-transform: uppercase; letter-spacing: 1px;\n  }\n  .legend-section { margin-bottom: 10px; }\n  .legend-section:last-child { margin-bottom: 0; }\n  .legend-item { display: flex; align-items: center; gap: 10px; padding: 2px 0; cursor: default; }\n  .legend-item[data-edge-kind] { cursor: pointer; user-select: none; }\n  .legend-item[data-edge-kind].dimmed { opacity: 0.3; }\n  /* The page-wide svg rule would stretch these icons to the legend's width. */\n  .legend-item svg { flex-shrink: 0; width: 16px; height: 16px; }\n  .legend-line { width: 24px; height: 0; flex-shrink: 0; border-top-width: 2px; }\n  .l-calls    { border-top: 2px solid #3fb950; }\n  .l-imports  { border-top: 2px dashed #f0883e; }\n  .l-inherits { border-top: 2.5px dotted #d2a8ff; }\n  .l-contains { border-top: 1px solid rgba(139,148,158,0.3); }\n  #stats-bar {\n    position: absolute; bottom: 0; left: 0; right: 0;\n    background: rgba(13,17,23,0.95); border-top: 1px solid #21262d;\n    padding: 8px 24px; display: flex; gap: 32px; justify-content: center;\n    font-size: 12px; color: #9eaab6; backdrop-filter: blur(12px);\n  }\n  .stat-item { display: flex; gap: 6px; align-items: center; }\n  .stat-value { color: #e6edf3; font-weight: 600; }\n  #tooltip {\n    position: absolute; pointer-events: none;\n    background: rgba(22,27,34,0.97); color: #c9d1d9;\n    border: 1px solid #30363d; border-radius: 8px;\n    padding: 12px 16px; font-size: 12px;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.6);\n    max-width: 360px; line-height: 1.7;\n    opacity: 0; transition: opacity 0.15s ease;\n    z-index: 1000; backdrop-filter: blur(12px);\n  }\n  #tooltip.visible { opacity: 1; }\n  #nb-bar {\n    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);\n    background: rgba(22,27,34,0.95); border: 1px solid #30363d;\n    border-radius: 10px; padding: 8px 14px; font-size: 12px;\n    display: none; align-items: center; gap: 12px; z-index: 11;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(12px);\n    max-width: calc(100% - 32px); flex-wrap: wrap;\n  }\n  #nb-bar.visible { display: flex; }\n  #nb-bar .nb-seed {\n    color: #e6edf3; font-weight: 600;\n    max-width: 46vw; overflow: hidden; text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n  #nb-bar .nb-meta { color: #9eaab6; }\n  #nb-bar .nb-warn { color: #f0883e; }\n  /* The full seed list is an interaction, not the default: a --seed-changed\n     run has hundreds of paths and painting them all buries the graph. */\n  #nb-seed-list {\n    flex-basis: 100%; max-height: 180px; overflow-y: auto; list-style: none;\n    margin: 2px 0 0; padding: 6px 2px 0; border-top: 1px solid #30363d;\n    color: #c9d1d9; font-size: 11px; line-height: 1.7;\n    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n  }\n  #nb-seed-list li {\n    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\n  }\n  #nb-bar button {\n    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;\n    border-radius: 6px; padding: 3px 9px; cursor: pointer; font-size: 12px;\n  }\n  #nb-bar button:hover:not(:disabled) { background: #30363d; }\n  #nb-bar button:disabled { opacity: 0.4; cursor: default; }\n  .tt-name { font-weight: 700; font-size: 14px; color: #e6edf3; }\n  .tt-kind {\n    display: inline-block; font-size: 9px; font-weight: 700;\n    padding: 2px 8px; border-radius: 10px; margin-left: 8px;\n    text-transform: uppercase; letter-spacing: 0.5px;\n  }\n  .tt-row { margin-top: 4px; }\n  .tt-label { color: #9eaab6; }\n  .tt-file { color: #58a6ff; font-size: 11px; }\n  #controls {\n    position: absolute; top: 16px; right: 16px;\n    display: flex; gap: 8px; z-index: 10; flex-wrap: wrap;\n    max-width: 650px; justify-content: flex-end;\n  }\n  #controls button, #controls select {\n    background: rgba(22,27,34,0.95); color: #c9d1d9;\n    border: 1px solid #30363d; border-radius: 8px;\n    padding: 8px 14px; font-size: 12px; cursor: pointer;\n    backdrop-filter: blur(12px); transition: all 0.15s;\n  }\n  #controls button:hover, #controls select:hover { background: #30363d; border-color: #8b949e; }\n  #controls button.active { background: #1f6feb; border-color: #58a6ff; color: #fff; }\n  #controls select { outline: none; max-width: 200px; }\n  #controls select option { background: #161b22; color: #c9d1d9; }\n  #search {\n    background: rgba(22,27,34,0.95); color: #c9d1d9;\n    border: 1px solid #30363d; border-radius: 8px;\n    padding: 8px 14px; font-size: 12px; width: 220px;\n    outline: none; backdrop-filter: blur(12px);\n  }\n  #search:focus { border-color: #58a6ff; }\n  #search::placeholder { color: #6e7681; }\n  #search-results {\n    position: absolute; top: 52px; right: 16px;\n    background: rgba(22,27,34,0.97); border: 1px solid #30363d;\n    border-radius: 8px; max-height: 240px; overflow-y: auto;\n    z-index: 15; display: none; min-width: 220px;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.6);\n  }\n  .sr-item {\n    padding: 8px 14px; cursor: pointer; font-size: 12px;\n    border-bottom: 1px solid #21262d; display: flex; gap: 8px; align-items: center;\n  }\n  .sr-item:hover { background: #30363d; }\n  .sr-item:last-child { border-bottom: none; }\n  .sr-kind { font-size: 9px; padding: 2px 6px; border-radius: 8px; text-transform: uppercase; font-weight: 700; }\n  #detail-panel {\n    position: absolute; top: 16px; left: 16px;\n    width: 320px; max-height: calc(100vh - 80px);\n    background: rgba(22,27,34,0.97); border: 1px solid #30363d;\n    border-radius: 10px; padding: 20px;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.6);\n    backdrop-filter: blur(12px); z-index: 15;\n    overflow-y: auto; display: none; font-size: 12px;\n  }\n  #detail-panel.visible { display: block; }\n  #detail-panel h2 { font-size: 16px; color: #e6edf3; margin-bottom: 4px; word-break: break-all; }\n  #detail-panel .dp-close {\n    position: absolute; top: 12px; right: 14px;\n    cursor: pointer; color: #8b949e; font-size: 14px; line-height: 1;\n    border: 1px solid #30363d; background: rgba(22,27,34,0.95);\n    border-radius: 6px; width: 28px; height: 28px;\n    display: flex; align-items: center; justify-content: center;\n    transition: all 0.15s;\n  }\n  #detail-panel .dp-close:hover { color: #e6edf3; border-color: #8b949e; background: #30363d; }\n  .dp-section { margin-top: 14px; }\n  .dp-section h4 { color: #9eaab6; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }\n  .dp-list { list-style: none; }\n  .dp-list li { padding: 3px 0; color: #c9d1d9; cursor: pointer; }\n  .dp-list li:hover { color: #58a6ff; text-decoration: underline; }\n  .dp-meta { color: #9eaab6; }\n  .dp-meta span { color: #e6edf3; font-weight: 600; }\n  #filter-panel {\n    position: absolute; bottom: 50px; left: 16px;\n    background: rgba(22,27,34,0.95); border: 1px solid #30363d;\n    border-radius: 10px; padding: 14px 18px;\n    font-size: 12px; backdrop-filter: blur(12px); z-index: 10;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.5);\n  }\n  #filter-panel h3 {\n    font-size: 11px; font-weight: 700; margin-bottom: 8px;\n    color: #9eaab6; text-transform: uppercase; letter-spacing: 1px;\n  }\n  .filter-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; user-select: none; }\n  .filter-item input { accent-color: #58a6ff; cursor: pointer; }\n  :focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }\n  .filter-item input:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }\n  .dp-close:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }\n  .filter-item:focus-within { outline: 2px solid #58a6ff; outline-offset: 2px; border-radius: 4px; }\n  #help-overlay {\n    position: fixed; inset: 0; background: rgba(0,0,0,0.6);\n    display: flex; align-items: center; justify-content: center; z-index: 100;\n    backdrop-filter: blur(4px);\n  }\n  #help-overlay.hidden { display: none; }\n  .help-content {\n    position: relative; background: #161b22; border: 1px solid #30363d;\n    border-radius: 12px; padding: 28px 32px; max-width: 420px; width: 90%;\n    box-shadow: 0 16px 48px rgba(0,0,0,0.5);\n  }\n  .help-content h2 { font-size: 16px; color: #e6edf3; margin-bottom: 16px; }\n  .help-content .help-close { position: absolute; top: 12px; right: 14px; }\n  .help-content table { width: 100%; border-collapse: collapse; }\n  .help-content td { padding: 6px 8px; color: #c9d1d9; font-size: 13px; border-bottom: 1px solid #21262d; }\n  .help-content td:first-child { white-space: nowrap; width: 1%; }\n  kbd {\n    display: inline-block; background: #21262d; border: 1px solid #30363d;\n    border-radius: 5px; padding: 2px 7px; font-size: 11px; font-family: inherit;\n    color: #e6edf3; box-shadow: inset 0 -1px 0 #0d1117; line-height: 1.6;\n  }\n  .help-dismiss {\n    margin-top: 16px; display: block; text-align: center;\n    color: #8b949e; font-size: 12px; cursor: pointer;\n  }\n  .help-dismiss:hover { color: #e6edf3; }\n  #loading-overlay {\n    position: fixed; inset: 0; display: flex; align-items: center;\n    justify-content: center; z-index: 50; background: rgba(13,17,23,0.85);\n    backdrop-filter: blur(6px); transition: opacity 0.4s ease;\n  }\n  #loading-overlay.hidden { opacity: 0; pointer-events: none; }\n  .loading-spinner {\n    width: 36px; height: 36px; border: 3px solid #30363d;\n    border-top-color: #58a6ff; border-radius: 50%;\n    animation: spin 0.8s linear infinite;\n  }\n  @keyframes spin { to { transform: rotate(360deg); } }\n  .loading-text { color: #9eaab6; font-size: 13px; margin-top: 14px; text-align: center; }\n  #empty-state {\n    position: fixed; inset: 0; display: none; align-items: center;\n    justify-content: center; z-index: 50; flex-direction: column; gap: 12px;\n  }\n  #empty-state.visible { display: flex; }\n  .empty-icon { font-size: 48px; opacity: 0.4; }\n  .empty-title { color: #e6edf3; font-size: 18px; font-weight: 600; }\n  .empty-desc { color: #9eaab6; font-size: 13px; max-width: 320px; text-align: center; line-height: 1.6; }\n  #community-legend {\n    position: absolute; bottom: 50px; right: 16px;\n    background: rgba(22,27,34,0.95);\n    border: 1px solid #30363d;\n    border-radius: 10px;\n    padding: 14px 18px; font-size: 12px;\n    backdrop-filter: blur(12px); z-index: 10;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.5);\n    max-height: 300px; overflow-y: auto;\n    display: none;\n  }\n  #community-legend.visible { display: block; }\n  #community-legend h3 {\n    font-size: 11px; font-weight: 700;\n    margin-bottom: 8px; color: #8b949e;\n    text-transform: uppercase; letter-spacing: 1px;\n  }\n  .cl-item {\n    display: flex; align-items: center;\n    gap: 8px; padding: 3px 0;\n    cursor: pointer; user-select: none;\n  }\n  .cl-item input {\n    accent-color: #58a6ff; cursor: pointer;\n  }\n  .cl-swatch {\n    width: 10px; height: 10px;\n    border-radius: 50%; flex-shrink: 0;\n  }\n  marker { overflow: visible; }\n  g.node-g:focus { outline: none; }\n  g.node-g:focus-visible .node-shape { stroke: #58a6ff !important; stroke-width: 3 !important; }\n  g.node-g:focus-visible .glow-ring { stroke: #58a6ff !important; opacity: 0.6 !important; }\n  button.legend-edge { background: none; border: none; color: #c9d1d9; font-size: 12px; font-family: inherit; }\n  button.legend-edge:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; border-radius: 4px; }\n  .sr-item.sr-active { background: #30363d; }\n  .skip-link {\n    position: absolute; top: -40px; left: 16px; z-index: 100;\n    background: #1f6feb; color: #fff; padding: 8px 16px;\n    border-radius: 0 0 8px 8px; text-decoration: none; font-weight: 600;\n    transition: top 0.2s;\n  }\n  .skip-link:focus { top: 0; }\n</style>\n</head>\n<body>\n<a href=\"#graph-svg\" class=\"skip-link\">Skip to graph</a>\n<nav id=\"legend\" aria-label=\"Graph legend\">\n  <h3>Nodes</h3>\n  <div class=\"legend-section\">\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><circle r=\"6\" fill=\"#58a6ff\"/></svg> File</div>\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><rect x=\"-5\" y=\"-5\" width=\"10\" height=\"10\" fill=\"#f0883e\"/></svg> Class</div>\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><polygon points=\"0,-6 6,5 -6,5\" fill=\"#3fb950\"/></svg> Function</div>\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><polygon points=\"0,-6 6,0 0,6 -6,0\" fill=\"#d2a8ff\"/></svg> Test</div>\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><path d=\"M-2,-6v4h-4v4h4v4h4v-4h4v-4h-4v-4z\" fill=\"#8b949e\"/></svg> Type</div>\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><circle r=\"5\" fill=\"#39c5cf\"/></svg> YAML Path</div>\n    <div class=\"legend-item\"><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\" aria-hidden=\"true\"><circle r=\"5\" fill=\"#a371f7\"/></svg> JSON Path</div>\n  </div>\n  <h3>Edges</h3>\n  <div class=\"legend-section\">\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"CALLS\" aria-pressed=\"true\"><span class=\"legend-line l-calls\"></span> Calls</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"IMPORTS_FROM\" aria-pressed=\"true\"><span class=\"legend-line l-imports\"></span> Imports</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"INHERITS\" aria-pressed=\"true\"><span class=\"legend-line l-inherits\"></span> Inherits</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"CONTAINS\" aria-pressed=\"true\"><span class=\"legend-line l-contains\"></span> Contains</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"IMPLEMENTS\" aria-pressed=\"true\"><span class=\"legend-line\" style=\"border-top:2px dashed #f9e2af\"></span> Implements</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"TESTED_BY\" aria-pressed=\"true\"><span class=\"legend-line\" style=\"border-top:2px dotted #f38ba8\"></span> Tested By</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"DEPENDS_ON\" aria-pressed=\"true\"><span class=\"legend-line\" style=\"border-top:2px dashed #fab387\"></span> Depends On</button>\n    <button class=\"legend-item legend-edge\" data-edge-kind=\"REFERENCES\" aria-pressed=\"true\"><span class=\"legend-line\" style=\"border-top:2px dotted #39c5cf\"></span> References</button>\n  </div>\n</nav>\n<div id=\"filter-panel\">\n  <h3>Filter by Kind</h3>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"File\" checked> File</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"Class\" checked> Class</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"Function\" checked> Function</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"Test\" checked> Test</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"Type\" checked> Type</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"YamlPath\" checked> YAML Path</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"DocSection\" checked> Doc Section</label>\n  <label class=\"filter-item\"><input type=\"checkbox\" data-kind=\"JsonPath\" checked> JSON Path</label>\n</div>\n<div id=\"controls\">\n  <input id=\"search\" type=\"text\" placeholder=\"Search nodes&#8230;\" autocomplete=\"off\" spellcheck=\"false\" aria-label=\"Search graph nodes by name\" aria-controls=\"search-results\" aria-expanded=\"false\">\n  <select id=\"flow-select\" aria-label=\"Select execution flow to highlight\"><option value=\"\">Flows</option></select>\n  <button id=\"btn-community\" title=\"Toggle community coloring\" aria-label=\"Toggle community coloring\" aria-pressed=\"false\">Communities</button>\n  <button id=\"btn-fit\" title=\"Fit to screen\" aria-label=\"Fit graph to screen\">Fit</button>\n  <button id=\"btn-labels\" title=\"Toggle labels\" class=\"active\" aria-label=\"Toggle node labels\" aria-pressed=\"true\">Labels</button>\n  <button id=\"btn-help\" title=\"Keyboard shortcuts\" aria-label=\"Show keyboard shortcuts\">?</button>\n</div>\n<div id=\"search-results\" role=\"listbox\" aria-label=\"Search results\"></div>\n<div id=\"detail-panel\" role=\"dialog\" aria-label=\"Node detail\" aria-modal=\"false\"><button class=\"dp-close\" aria-label=\"Close detail panel\">&times;</button><div id=\"dp-content\" tabindex=\"-1\"></div></div>\n<div id=\"stats-bar\" role=\"status\" aria-label=\"Graph statistics\"></div>\n<div id=\"nb-bar\" role=\"status\" aria-label=\"Neighbourhood view\"></div>\n<div id=\"community-legend\" aria-label=\"Community legend\"></div>\n<div id=\"tooltip\" role=\"tooltip\" aria-live=\"polite\"></div>\n<div id=\"help-overlay\" class=\"hidden\" role=\"dialog\" aria-label=\"Help overlay\" aria-modal=\"true\">\n  <div class=\"help-content\">\n    <h2>Graph Interactions</h2>\n    <button class=\"dp-close help-close\" aria-label=\"Close help\">&times;</button>\n    <table>\n      <tr><td>Click a file</td><td>Expand/collapse contained symbols</td></tr>\n      <tr><td>Click symbol</td><td>Show detail panel with callers/callees</td></tr>\n      <tr><td>Shift+click file</td><td>Show detail panel without toggling collapse</td></tr>\n      <tr><td>Hover</td><td>Highlight connected nodes and edges</td></tr>\n      <tr><td>Drag</td><td>Pin a node in place</td></tr>\n      <tr><td>Scroll</td><td>Zoom in/out</td></tr>\n      <tr><td>Click+drag background</td><td>Pan the view</td></tr>\n      <tr><td>Search</td><td>Type to filter &mdash; matching nodes stay bright</td></tr>\n      <tr><td>Legend edges</td><td>Click edge types in the legend to toggle visibility</td></tr>\n      <tr><td>Click frontier node</td><td>Neighbourhood view: reveal that node&#39;s next ring</td></tr>\n      <tr><td>+1 hop</td><td>Neighbourhood view: reveal the whole next ring at once</td></tr>\n    </table>\n    <h2 style=\"margin-top:16px\">Keyboard Shortcuts</h2>\n    <table>\n      <tr><td><kbd>/</kbd></td><td>Focus search</td></tr>\n      <tr><td><kbd>?</kbd></td><td>Toggle this help</td></tr>\n      <tr><td><kbd>Esc</kbd></td><td>Close panel / search / help</td></tr>\n      <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>Activate focused node</td></tr>\n      <tr><td><kbd>Arrow keys</kbd></td><td>Navigate between nodes</td></tr>\n      <tr><td><kbd>e</kbd></td><td>Neighbourhood view: expand one more hop</td></tr>\n    </table>\n    <span class=\"help-dismiss\">Click anywhere outside to dismiss</span>\n  </div>\n</div>\n<div id=\"loading-overlay\" aria-live=\"polite\">\n  <div>\n    <div class=\"loading-spinner\"></div>\n    <div class=\"loading-text\">Laying out graph&hellip;</div>\n  </div>\n</div>\n<div id=\"empty-state\" role=\"status\">\n  <div class=\"empty-icon\">&#x1F50D;</div>\n  <div class=\"empty-title\">No nodes to display</div>\n  <div class=\"empty-desc\">The graph is empty. Run <strong>code-review-graph build</strong> to index your codebase, then regenerate the visualization.</div>\n</div>\n<svg id=\"graph-svg\" tabindex=\"-1\" role=\"img\" aria-label=\"Interactive code knowledge graph visualization. Use search to find nodes, click files to expand.\"></svg>\n<script>\n\"use strict\";\nvar graphData = __GRAPH_DATA__;\nvar KIND_COLOR  = { File:\"#58a6ff\", Class:\"#f0883e\", Function:\"#3fb950\", Test:\"#d2a8ff\", Type:\"#8b949e\", YamlPath:\"#39c5cf\", DocSection:\"#e3b341\", JsonPath:\"#a371f7\" };\nvar KIND_RADIUS = { File:18, Class:12, Function:6, Test:6, Type:5, YamlPath:5, DocSection:5, JsonPath:5 };\nvar KIND_AREA   = { File:1018, Class:452, Function:113, Test:113, Type:79, YamlPath:79, DocSection:79, JsonPath:79 };\nvar KIND_SHAPE  = { File:d3.symbolCircle, Class:d3.symbolSquare, Function:d3.symbolTriangle, Test:d3.symbolDiamond, Type:d3.symbolCross, YamlPath:d3.symbolWye, DocSection:d3.symbolStar, JsonPath:d3.symbolWye };\nvar EDGE_COLOR  = { CALLS:\"#3fb950\", IMPORTS_FROM:\"#f0883e\", INHERITS:\"#d2a8ff\", CONTAINS:\"rgba(139,148,158,0.15)\", IMPLEMENTS:\"#f9e2af\", TESTED_BY:\"#f38ba8\", DEPENDS_ON:\"#fab387\", REFERENCES:\"#39c5cf\" };\nvar communityColorScale = d3.scaleOrdinal(d3.schemeTableau10);\nvar communityColoringOn = false;\nfunction escH(s) { return !s ? \"\" : s.replace(/&/g,\"&amp;\").replace(/</g,\"&lt;\").replace(/>/g,\"&gt;\").replace(/\"/g,\"&quot;\").replace(/'/g,\"&#39;\").replace(/`/g,\"&#96;\"); }\nfunction displayName(d) {\n  if (d.kind === \"File\") {\n    var fp = d.file_path || d.qualified_name || d.name;\n    var parts = fp.replace(/\\\\/g, \"/\").split(\"/\");\n    var fname = parts.pop();\n    var parent = parts.pop() || \"\";\n    return parent ? parent + \"/\" + fname : fname;\n  }\n  return d.name;\n}\nvar nodes = graphData.nodes.map(function(d) { var o = Object.assign({}, d); o._id = d.qualified_name; o.label = displayName(d); return o; });\nvar edges = graphData.edges.map(function(d) { var o = Object.assign({}, d); o._source = d.source; o._target = d.target; return o; });\nvar stats = graphData.stats;\nvar flows = graphData.flows || [];\nvar communities = graphData.communities || [];\n// --- Neighbourhood view ---------------------------------------------------\n// Present only when the page was generated with a seed. The payload then\n// holds *only* the k-hop neighbourhood, so there is no \"rest of the graph\"\n// to dim: expansion reveals rings that are already here, nothing is fetched.\nvar neighbourhood = graphData.neighbourhood || null;\nvar nbHops = new Map();\nvar nbExpanded = new Set();\nvar nbVisibleDepth = neighbourhood ? neighbourhood.render_depth : 0;\nif (neighbourhood) {\n  Object.keys(neighbourhood.hops || {}).forEach(function(qn) {\n    nbHops.set(qn, neighbourhood.hops[qn]);\n  });\n}\nvar nbPathList = (neighbourhood && neighbourhood.path) || [];\nvar nbPathNodes = new Set(nbPathList);\nvar nbPathEdges = new Set();\nfor (var nbI = 0; nbI + 1 < nbPathList.length; nbI++) {\n  nbPathEdges.add(nbPathList[nbI] + \"\\u0000\" + nbPathList[nbI + 1]);\n  nbPathEdges.add(nbPathList[nbI + 1] + \"\\u0000\" + nbPathList[nbI]);\n}\nfunction nbShown(qn) {\n  if (!neighbourhood) return true;\n  var h = nbHops.get(qn);\n  if (h == null) return true;\n  return h <= nbVisibleDepth || nbExpanded.has(qn);\n}\nfunction nbIsPathEdge(e) {\n  if (!nbPathEdges.size) return false;\n  var a = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n  var b = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n  return nbPathEdges.has(a + \"\\u0000\" + b);\n}\nvar nodeById = new Map(nodes.map(function(n) { return [n.qualified_name, n]; }));\nvar hiddenEdgeKinds = new Set();\nvar hiddenNodeKinds = new Set();\nvar collapsedFiles = new Set();\nvar containsChildren = new Map();\nvar childToParent = new Map();\nedges.forEach(function(e) {\n  if (e.kind === \"CONTAINS\") {\n    if (!containsChildren.has(e._source)) containsChildren.set(e._source, new Set());\n    containsChildren.get(e._source).add(e._target);\n    childToParent.set(e._target, e._source);\n  }\n});\nfunction allDescendants(qn) {\n  var result = new Set();\n  var stack = [qn];\n  while (stack.length) {\n    var cur = stack.pop();\n    var children = containsChildren.get(cur);\n    if (!children) continue;\n    children.forEach(function(c) { if (!result.has(c)) { result.add(c); stack.push(c); } });\n  }\n  return result;\n}\nvar nodeToCommunity = new Map();\ncommunities.forEach(function(c) {\n  (c.members || []).forEach(function(qn) {\n    nodeToCommunity.set(qn, c.id);\n  });\n});\n// Communities unticked in the community legend. The filter only applies\n// while community colours are on, as the checkboxes are hidden otherwise.\nvar hiddenCommunities = new Set();\nfunction inHiddenCommunity(d) {\n  if (!communityColoringOn || !hiddenCommunities.size) return false;\n  var cid = d.community_id != null ? d.community_id : nodeToCommunity.get(d.qualified_name);\n  return cid != null && hiddenCommunities.has(cid);\n}\n// Compute node degree (connection count) for size scaling\nvar nodeDegree = new Map();\nedges.forEach(function(e) {\n  var s = e._source, t = e._target;\n  nodeDegree.set(s, (nodeDegree.get(s) || 0) + 1);\n  nodeDegree.set(t, (nodeDegree.get(t) || 0) + 1);\n});\nvar maxDegree = 1;\nnodeDegree.forEach(function(v) {\n  if (v > maxDegree) maxDegree = v;\n});\nfunction degreeRadius(d) {\n  var base = KIND_RADIUS[d.kind] || 6;\n  var deg = nodeDegree.get(d.qualified_name) || 0;\n  // Scale: base + up to 2x base proportional to degree\n  var scale = 1 + (deg / maxDegree);\n  return Math.round(base * scale);\n}\nvar nodeIdToQn = new Map();\nnodes.forEach(function(n) { nodeIdToQn.set(n.id, n.qualified_name); });\nvar flowSelect = document.getElementById(\"flow-select\");\nflows.forEach(function(f, i) {\n  var opt = document.createElement(\"option\");\n  opt.value = i;\n  opt.textContent = f.name + \" (\" + f.node_count + \" nodes)\";\n  flowSelect.appendChild(opt);\n});\nvar statsBar = document.getElementById(\"stats-bar\");\nvar langList = (stats.languages || []).join(\", \") || \"n/a\";\nfunction si(l, v) { return '<div class=\"stat-item\"><span class=\"tt-label\">' + escH(l) + '</span> <span class=\"stat-value\">' + escH(String(v)) + '</span></div>'; }\nstatsBar.textContent = \"\";\nstatsBar.insertAdjacentHTML(\"beforeend\", si(\"Nodes\", stats.total_nodes) + si(\"Edges\", stats.total_edges) + si(\"Files\", stats.files_count) + si(\"Languages\", langList));\nvar tooltip = document.getElementById(\"tooltip\");\nfunction showTooltip(ev, d) {\n  var bg = communityColoringOn && d.community_id != null ? communityColorScale(d.community_id) : (KIND_COLOR[d.kind] || \"#555\");\n  var relFile = d.file_path ? d.file_path.split(\"/\").slice(-3).join(\"/\") : \"\";\n  var h = '<span class=\"tt-name\">' + escH(d.label) + '</span>';\n  h += '<span class=\"tt-kind\" style=\"background:' + bg + ';color:#0d1117\">' + escH(d.kind) + '</span>';\n  if (relFile) h += '<div class=\"tt-row tt-file\">' + escH(relFile) + '</div>';\n  if (d.line_start != null) h += '<div class=\"tt-row\"><span class=\"tt-label\">Lines: </span>' + d.line_start + ' \\u2013 ' + (d.line_end || d.line_start) + '</div>';\n  if (d.params) h += '<div class=\"tt-row\"><span class=\"tt-label\">Params: </span>' + escH(d.params) + '</div>';\n  if (d.return_type) h += '<div class=\"tt-row\"><span class=\"tt-label\">Returns: </span>' + escH(d.return_type) + '</div>';\n  if (d.community_id != null) {\n    var comm = communities.find(function(c) { return c.id === d.community_id; });\n    if (comm) h += '<div class=\"tt-row\"><span class=\"tt-label\">Community: </span>' + escH(comm.name) + '</div>';\n  }\n  tooltip.textContent = \"\";\n  tooltip.insertAdjacentHTML(\"beforeend\", h);\n  tooltip.classList.add(\"visible\");\n  moveTooltip(ev);\n}\nfunction moveTooltip(ev) {\n  var p = 14;\n  var x = ev.pageX + p, y = ev.pageY + p;\n  var r = tooltip.getBoundingClientRect();\n  if (x + r.width > innerWidth - p) x = ev.pageX - r.width - p;\n  if (y + r.height > innerHeight - p) y = ev.pageY - r.height - p;\n  tooltip.style.left = x + \"px\"; tooltip.style.top = y + \"px\";\n}\nfunction hideTooltip() { tooltip.classList.remove(\"visible\"); }\n// A focus event has no pointer position, so place the tooltip by the node.\nfunction tooltipAnchor(el) {\n  var r = el.getBoundingClientRect();\n  return { pageX: r.right + window.scrollX, pageY: r.top + r.height / 2 + window.scrollY };\n}\nvar svgEl = document.getElementById(\"graph-svg\");\nfunction getW() { return svgEl.clientWidth || window.innerWidth || 800; }\nfunction getH() { return svgEl.clientHeight || window.innerHeight || 600; }\nvar W = getW(), H = getH();\nvar svg = d3.select(\"#graph-svg\").attr(\"viewBox\", [0, 0, W, H]);\nvar gRoot = svg.append(\"g\");\nvar currentTransform = d3.zoomIdentity;\nvar zoomBehavior = d3.zoom()\n  .scaleExtent([0.05, 8])\n  .on(\"zoom\", function(ev) { currentTransform = ev.transform; gRoot.attr(\"transform\", ev.transform); updateLabelVisibility(); });\nsvg.call(zoomBehavior);\nvar defs = svg.append(\"defs\");\nvar glow = defs.append(\"filter\").attr(\"id\",\"glow\").attr(\"x\",\"-50%\").attr(\"y\",\"-50%\").attr(\"width\",\"200%\").attr(\"height\",\"200%\");\nglow.append(\"feGaussianBlur\").attr(\"stdDeviation\",\"3\").attr(\"result\",\"blur\");\nglow.append(\"feComposite\").attr(\"in\",\"SourceGraphic\").attr(\"in2\",\"blur\").attr(\"operator\",\"over\");\n[{id:\"arrow-calls\",color:\"#3fb950\"},{id:\"arrow-imports\",color:\"#f0883e\"},{id:\"arrow-inherits\",color:\"#d2a8ff\"},{id:\"arrow-implements\",color:\"#f9e2af\"},{id:\"arrow-tested_by\",color:\"#f38ba8\"},{id:\"arrow-depends_on\",color:\"#fab387\"}].forEach(function(mk) {\n  defs.append(\"marker\").attr(\"id\", mk.id)\n    .attr(\"viewBox\",\"0 -5 10 10\").attr(\"refX\",28).attr(\"refY\",0)\n    .attr(\"markerWidth\",8).attr(\"markerHeight\",8).attr(\"orient\",\"auto\")\n    .append(\"path\").attr(\"d\",\"M0,-4L10,0L0,4Z\").attr(\"fill\",mk.color);\n});\nvar N = nodes.length;\nvar isLarge = N > 300;\nvar simulation = d3.forceSimulation(nodes)\n  .force(\"link\", d3.forceLink(edges).id(function(d) { return d.qualified_name; })\n    .distance(function(d) { return d.kind === \"CONTAINS\" ? 35 : (isLarge ? 80 : 120); })\n    .strength(function(d) { return d.kind === \"CONTAINS\" ? 1.5 : 0.15; }))\n  .force(\"charge\", d3.forceManyBody().strength(function(d) { return d.kind === \"File\" ? (isLarge ? -200 : -400) : (isLarge ? -60 : -120); }).theta(0.85).distanceMax(600))\n  .force(\"collide\", d3.forceCollide().radius(function(d) { return degreeRadius(d) + 4; }))\n  .force(\"center\", d3.forceCenter(W / 2, H / 2))\n  .force(\"x\", d3.forceX(W / 2).strength(0.03))\n  .force(\"y\", d3.forceY(H / 2).strength(0.03))\n  .alphaDecay(isLarge ? 0.04 : 0.025)\n  .velocityDecay(0.4);\nvar EDGE_CFG = {\n  CONTAINS:     { dash:null, width:1, opacity:0.14, marker:\"\" },\n  CALLS:        { dash:null, width:2, opacity:0.7, marker:\"url(#arrow-calls)\" },\n  IMPORTS_FROM: { dash:\"8,4\", width:2, opacity:0.65, marker:\"url(#arrow-imports)\" },\n  INHERITS:     { dash:\"2,6\", width:2.5, opacity:0.7, marker:\"url(#arrow-inherits)\" },\n  IMPLEMENTS:   { dash:\"4,3\", width:1.5, opacity:0.65, marker:\"url(#arrow-implements)\" },\n  TESTED_BY:    { dash:\"2,4\", width:1.5, opacity:0.6, marker:\"url(#arrow-tested_by)\" },\n  DEPENDS_ON:   { dash:\"8,4\", width:1, opacity:0.6, marker:\"url(#arrow-depends_on)\" },\n};\nfunction eStyle(d) { return EDGE_CFG[d.kind] || {dash:null,width:1,opacity:0.3,marker:\"\"}; }\nfunction eColor(d) { return EDGE_COLOR[d.kind] || \"#484f58\"; }\nfunction nodeColor(d) {\n  if (communityColoringOn && d.community_id != null) return communityColorScale(d.community_id);\n  return KIND_COLOR[d.kind] || \"#8b949e\";\n}\n// Path-query nodes keep a gold ring so the answer stays visible while the\n// reviewer pans, zooms and expands around it.\nfunction nodeStroke(d) {\n  if (nbPathNodes.has(d.qualified_name)) return \"#f2cc60\";\n  return d.kind === \"File\" ? \"rgba(88,166,255,0.3)\" : \"rgba(255,255,255,0.08)\";\n}\nfunction nodeStrokeWidth(d) {\n  if (nbPathNodes.has(d.qualified_name)) return 3;\n  return d.kind === \"File\" ? 2 : 1;\n}\nfunction nbEdgeWidth(d) { return nbIsPathEdge(d) ? eStyle(d).width + 2 : eStyle(d).width; }\nfunction nbEdgeOpacity(d) { return nbIsPathEdge(d) ? 0.95 : eStyle(d).opacity; }\nvar linkGroup  = gRoot.append(\"g\").attr(\"class\",\"links\");\nvar nodeGroup  = gRoot.append(\"g\").attr(\"class\",\"nodes\");\nvar labelGroup = gRoot.append(\"g\").attr(\"class\",\"labels\");\nvar linkSel, labelSel;\nvar showLabels = true;\nfunction updateLinks() {\n  var vis = new Set(nodes.filter(function(n) { return !n._hidden && !inHiddenCommunity(n); }).map(function(n) { return n.qualified_name; }));\n  var visEdges = edges.filter(function(e) {\n    if (hiddenEdgeKinds.has(e.kind)) return false;\n    var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n    var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n    return vis.has(s) && vis.has(t);\n  });\n  linkSel = linkGroup.selectAll(\"line\").data(visEdges, function(d) { return d._source+\"->\"+d._target+\":\"+d.kind; });\n  linkSel.exit().remove();\n  var enter = linkSel.enter().append(\"line\");\n  linkSel = enter.merge(linkSel);\n  linkSel\n    .attr(\"stroke\", function(d) { return nbIsPathEdge(d) ? \"#f2cc60\" : eColor(d); })\n    .attr(\"stroke-width\", nbEdgeWidth)\n    .attr(\"stroke-dasharray\", function(d) { return eStyle(d).dash; })\n    .attr(\"opacity\", nbEdgeOpacity)\n    .attr(\"marker-end\", function(d) { return eStyle(d).marker; });\n}\nfunction updateNodes() {\n  var hiddenSet = new Set();\n  collapsedFiles.forEach(function(fqn) { allDescendants(fqn).forEach(function(c) { hiddenSet.add(c); }); });\n  nodes.forEach(function(n) { n._hidden = hiddenSet.has(n.qualified_name) || hiddenNodeKinds.has(n.kind) || !nbShown(n.qualified_name); });\n  var vis = nodes.filter(function(n) { return !n._hidden; });\n  var nodeSel = nodeGroup.selectAll(\"g.node-g\").data(vis, function(d) { return d.qualified_name; });\n  nodeSel.exit().remove();\n  var enter = nodeSel.enter().append(\"g\").attr(\"class\",\"node-g\");\n  enter.filter(function(d) { return d.kind === \"File\"; }).append(\"circle\")\n    .attr(\"class\",\"glow-ring\")\n    .attr(\"r\", function(d) { return degreeRadius(d) + 5; })\n    .attr(\"fill\",\"none\")\n    .attr(\"stroke\", function(d) { return nodeColor(d); })\n    .attr(\"stroke-width\", 1.5).attr(\"opacity\", 0.3).attr(\"filter\",\"url(#glow)\");\n  enter.append(\"path\").attr(\"class\",\"node-shape\")\n    .attr(\"d\", function(d) { return d3.symbol().type(KIND_SHAPE[d.kind] || d3.symbolCircle).size(KIND_AREA[d.kind] || 113)(); })\n    .attr(\"fill\", function(d) { return nodeColor(d); })\n    .attr(\"stroke\", function(d) { return nodeStroke(d); })\n    .attr(\"stroke-width\", function(d) { return nodeStrokeWidth(d); })\n    .attr(\"cursor\", \"pointer\");\n  enter\n    .on(\"mouseover\", function(ev, d) { highlightConnected(d, true); showTooltip(ev, d); })\n    .on(\"mousemove\", function(ev) { moveTooltip(ev); })\n    .on(\"mouseout\",  function(ev, d) { highlightConnected(d, false); hideTooltip(); })\n    .on(\"click\", function(ev, d) {\n      ev.stopPropagation();\n      var grew = ev.shiftKey ? false : nbExpand(d.qualified_name);\n      if (d.kind === \"File\" && !ev.shiftKey) toggleCollapse(d.qualified_name);\n      else if (grew) nbRedraw();\n      showDetailPanel(d);\n    })\n    .call(d3.drag().on(\"start\", dragS).on(\"drag\", dragD).on(\"end\", dragE));\n  enter.attr(\"tabindex\", 0).attr(\"role\", \"button\")\n    .attr(\"aria-label\", function(d) { return d.kind + \": \" + d.label; })\n    .on(\"keydown\", function(ev, d) {\n      if (ev.key === \"Enter\" || ev.key === \" \") {\n        ev.preventDefault();\n        var grewK = ev.shiftKey ? false : nbExpand(d.qualified_name);\n        if (d.kind === \"File\" && !ev.shiftKey) toggleCollapse(d.qualified_name);\n        else if (grewK) nbRedraw();\n        showDetailPanel(d);\n      } else if (ev.key === \"Escape\") {\n        ev.preventDefault();\n        closeDetailPanel(false);\n        hideTooltip();\n      } else if ([\"ArrowUp\",\"ArrowDown\",\"ArrowLeft\",\"ArrowRight\"].indexOf(ev.key) !== -1) {\n        ev.preventDefault();\n        var vis = nodes.filter(function(n) { return !n._hidden; });\n        var best = null, bestDist = Infinity;\n        vis.forEach(function(n) {\n          if (n.qualified_name === d.qualified_name) return;\n          var dx = n.x - d.x, dy = n.y - d.y;\n          var dist = Math.sqrt(dx*dx + dy*dy);\n          var ok = false;\n          if (ev.key === \"ArrowRight\" && dx > 0 && Math.abs(dy) < Math.abs(dx)) ok = true;\n          if (ev.key === \"ArrowLeft\"  && dx < 0 && Math.abs(dy) < Math.abs(dx)) ok = true;\n          if (ev.key === \"ArrowDown\"  && dy > 0 && Math.abs(dx) < Math.abs(dy)) ok = true;\n          if (ev.key === \"ArrowUp\"    && dy < 0 && Math.abs(dx) < Math.abs(dy)) ok = true;\n          if (ok && dist < bestDist) { best = n; bestDist = dist; }\n        });\n        if (best) {\n          var target = nodeGroup.selectAll(\"g.node-g\").filter(function(n) { return n.qualified_name === best.qualified_name; }).node();\n          if (target) target.focus();\n        }\n      }\n    })\n    .on(\"focus\", function(ev, d) { highlightConnected(d, true); showTooltip(tooltipAnchor(this), d); })\n    .on(\"blur\",  function(ev, d) { highlightConnected(d, false); hideTooltip(); });\n  nodeSel = enter.merge(nodeSel);\n  nodeSel.attr(\"display\", function(d) { return inHiddenCommunity(d) ? \"none\" : null; });\n  labelSel = labelGroup.selectAll(\"text.node-label\").data(vis, function(d) { return d.qualified_name; });\n  labelSel.exit().remove();\n  var lEnter = labelSel.enter().append(\"text\").attr(\"class\",\"node-label\")\n    .attr(\"text-anchor\",\"start\").attr(\"dy\",\"0.35em\")\n    .text(function(d) { return d.label; })\n    .attr(\"fill\", function(d) { return d.kind === \"File\" ? \"#e6edf3\" : d.kind === \"Class\" ? \"#f0883e\" : \"#9eaab6\"; })\n    .attr(\"font-size\", function(d) { return d.kind === \"File\" ? \"12px\" : d.kind === \"Class\" ? \"11px\" : \"10px\"; })\n    .attr(\"font-weight\", function(d) { return d.kind === \"File\" ? 700 : d.kind === \"Class\" ? 600 : 400; });\n  labelSel = lEnter.merge(labelSel);\n  updateLinks();\n  updateLabelVisibility();\n}\nfunction updateLabelVisibility() {\n  if (!labelSel) return;\n  var s = currentTransform.k;\n  labelSel.attr(\"display\", function(d) {\n    if (!showLabels || inHiddenCommunity(d)) return \"none\";\n    if (d.kind === \"File\") return null;\n    if (d.kind === \"Class\") return s > 0.5 ? null : \"none\";\n    return s > 1.0 ? null : \"none\";\n  });\n}\nfunction highlightConnected(d, on) {\n  if (on) {\n    var connected = new Set([d.qualified_name]);\n    edges.forEach(function(e) {\n      var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n      var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n      if (s === d.qualified_name) connected.add(t);\n      if (t === d.qualified_name) connected.add(s);\n    });\n    nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\")\n      .transition().duration(150).attr(\"opacity\", function(n) { return connected.has(n.qualified_name) ? 1 : 0.15; });\n    linkSel.transition().duration(150)\n      .attr(\"opacity\", function(e) {\n        var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n        var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n        return (s === d.qualified_name || t === d.qualified_name) ? 0.9 : 0.03;\n      })\n      .attr(\"stroke-width\", function(e) {\n        var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n        var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n        return (s === d.qualified_name || t === d.qualified_name) ? 2.5 : nbEdgeWidth(e);\n      });\n    labelSel.transition().duration(150).attr(\"opacity\", function(n) { return connected.has(n.qualified_name) ? 1 : 0.1; });\n  } else {\n    nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\").transition().duration(300).attr(\"opacity\", 1);\n    linkSel.transition().duration(300)\n      .attr(\"opacity\", nbEdgeOpacity)\n      .attr(\"stroke-width\", nbEdgeWidth);\n    labelSel.transition().duration(300).attr(\"opacity\", 1);\n    updateLabelVisibility();\n  }\n}\nfunction toggleCollapse(qn) {\n  if (collapsedFiles.has(qn)) collapsedFiles.delete(qn); else collapsedFiles.add(qn);\n  nodeGroup.selectAll(\"g.node-g\").select(\".glow-ring\")\n    .attr(\"stroke-dasharray\", function(d) { return collapsedFiles.has(d.qualified_name) ? \"4,3\" : null; })\n    .attr(\"opacity\", function(d) { return collapsedFiles.has(d.qualified_name) ? 0.6 : 0.3; });\n  updateNodes();\n  simulation.alpha(0.3).restart();\n}\n// Reveal the ring around one node. Everything revealed is already in the\n// payload: a neighbourhood page never goes back to the graph for more.\nfunction nbExpand(qn) {\n  if (!neighbourhood) return false;\n  var grew = false;\n  edges.forEach(function(e) {\n    var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n    var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n    var other = s === qn ? t : (t === qn ? s : null);\n    if (other === null || nbShown(other)) return;\n    nbExpanded.add(other);\n    // Reveal the revealed node's File too, or it floats outside its cluster\n    // and the collapse toggle has nothing to act on.\n    var parent = childToParent.get(other);\n    if (parent && !nbShown(parent)) nbExpanded.add(parent);\n    grew = true;\n  });\n  if (grew) nbRenderBar();\n  return grew;\n}\nfunction nbExpandRing() {\n  if (!neighbourhood || nbVisibleDepth >= neighbourhood.depth) return false;\n  nbVisibleDepth += 1;\n  nbRenderBar();\n  nbRedraw();\n  return true;\n}\nfunction nbRedraw() {\n  updateNodes();\n  applyPathHighlight();\n  simulation.alpha(0.3).restart();\n}\nfunction applyPathHighlight() {\n  if (!nbPathNodes.size) return;\n  nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\")\n    .attr(\"stroke\", nodeStroke).attr(\"stroke-width\", nodeStrokeWidth);\n}\n// The seed list can be one symbol or, on --seed-changed, every path in the\n// diff. Show the same three the console shows, count the rest, and keep the\n// full list one click away instead of painting it across the graph.\nvar NB_SEEDS_SHOWN = 3;\nvar nbSeedListOpen = false;\nfunction nbSeedEntries() {\n  if (!neighbourhood) return [];\n  var q = neighbourhood.seed_query || [];\n  return q.length ? q : (neighbourhood.seeds || []);\n}\nfunction nbRenderBar() {\n  var bar = document.getElementById(\"nb-bar\");\n  if (!neighbourhood) return;\n  var shownCount = nodes.filter(function(n) { return nbShown(n.qualified_name); }).length;\n  var entries = nbSeedEntries();\n  var overflow = Math.max(0, entries.length - NB_SEEDS_SHOWN);\n  var seedLabel = entries.slice(0, NB_SEEDS_SHOWN).join(\", \") || \"neighbourhood\";\n  var h = '<span class=\"nb-seed\" title=\"' + escH(seedLabel) + '\">' + escH(seedLabel) + \"</span>\";\n  if (overflow > 0) {\n    h += '<button id=\"nb-seed-toggle\" type=\"button\" aria-controls=\"nb-seed-list\"'\n      + ' aria-expanded=\"' + (nbSeedListOpen ? \"true\" : \"false\") + '\">'\n      + \"+\" + overflow + \" more</button>\";\n  }\n  h += '<span class=\"nb-meta\">hop ' + nbVisibleDepth + \" of \" + neighbourhood.depth\n    + \" \\u00b7 \" + shownCount + \" of \" + nodes.length + \" loaded\"\n    + \" \\u00b7 \" + neighbourhood.total_nodes + \" in repo</span>\";\n  if (neighbourhood.path_error) h += '<span class=\"nb-warn\">' + escH(neighbourhood.path_error) + \"</span>\";\n  else if (nbPathList.length) {\n    h += '<span class=\"nb-meta\">path: ' + nbPathList.length + \" nodes\"\n      + (neighbourhood.path_directed ? \"\" : \" (undirected)\") + \"</span>\";\n  }\n  if (neighbourhood.seeds_dropped) {\n    h += '<span class=\"nb-warn\">' + neighbourhood.seeds_dropped + \" of \"\n      + neighbourhood.seeds_requested + \" seeds dropped for --max-nodes \"\n      + neighbourhood.max_nodes + \"</span>\";\n  } else if (neighbourhood.truncated) {\n    h += '<span class=\"nb-warn\">trimmed to ' + neighbourhood.max_nodes + \" nodes</span>\";\n  }\n  h += '<button id=\"nb-expand\" type=\"button\">+1 hop</button>';\n  h += '<button id=\"nb-reset\" type=\"button\">Reset</button>';\n  if (overflow > 0) {\n    h += '<ul id=\"nb-seed-list\" aria-label=\"All neighbourhood seeds\"'\n      + (nbSeedListOpen ? \"\" : \" hidden\") + \">\";\n    for (var si = 0; si < entries.length; si++) {\n      h += \"<li>\" + escH(entries[si]) + \"</li>\";\n    }\n    h += \"</ul>\";\n  }\n  bar.textContent = \"\";\n  bar.insertAdjacentHTML(\"beforeend\", h);\n  bar.classList.add(\"visible\");\n  var expandBtn = document.getElementById(\"nb-expand\");\n  expandBtn.disabled = nbVisibleDepth >= neighbourhood.depth;\n  expandBtn.addEventListener(\"click\", nbExpandRing);\n  document.getElementById(\"nb-reset\").addEventListener(\"click\", function() {\n    nbVisibleDepth = neighbourhood.render_depth;\n    nbExpanded.clear();\n    nbRenderBar();\n    nbRedraw();\n  });\n  var seedToggle = document.getElementById(\"nb-seed-toggle\");\n  if (seedToggle) {\n    seedToggle.addEventListener(\"click\", function() {\n      nbSeedListOpen = !nbSeedListOpen;\n      var list = document.getElementById(\"nb-seed-list\");\n      if (list) list.hidden = !nbSeedListOpen;\n      seedToggle.setAttribute(\"aria-expanded\", nbSeedListOpen ? \"true\" : \"false\");\n    });\n  }\n}\nfunction dragS(ev, d) { if (!ev.active) simulation.alphaTarget(0.1).restart(); d.fx = d.x; d.fy = d.y; }\nfunction dragD(ev, d) { d.fx = ev.x; d.fy = ev.y; }\nfunction dragE(ev, d) { if (!ev.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }\nsimulation.on(\"tick\", function() {\n  if (linkSel) linkSel\n    .attr(\"x1\", function(d) { return d.source.x; }).attr(\"y1\", function(d) { return d.source.y; })\n    .attr(\"x2\", function(d) { return d.target.x; }).attr(\"y2\", function(d) { return d.target.y; });\n  nodeGroup.selectAll(\"g.node-g\").attr(\"transform\", function(d) { return \"translate(\" + d.x + \",\" + d.y + \")\"; });\n  if (labelSel) labelSel\n    .attr(\"x\", function(d) { return d.x + degreeRadius(d) + 5; })\n    .attr(\"y\", function(d) { return d.y; });\n});\n// Only auto-collapse File nodes on very large graphs, otherwise all edges\n// become invisible because they connect to Functions/Classes that are now\n// hidden beneath collapsed Files. See: #132\n// A seeded neighbourhood is small on purpose: never auto-collapse it, or the\n// symbols the reviewer asked to see disappear behind their files.\nif (N > 2000 && !neighbourhood) {\n  nodes.forEach(function(n) { if (n.kind === \"File\") collapsedFiles.add(n.qualified_name); });\n}\nif (neighbourhood) nbRenderBar();\nupdateNodes();\napplyPathHighlight();\nfunction syncViewport() {\n  W = getW(); H = getH();\n  svg.attr(\"viewBox\", [0, 0, W, H]);\n  simulation.force(\"center\", d3.forceCenter(W / 2, H / 2));\n  simulation.force(\"x\", d3.forceX(W / 2).strength(0.03));\n  simulation.force(\"y\", d3.forceY(H / 2).strength(0.03));\n}\nfunction fitGraph(retries) {\n  if (retries === undefined) retries = 10;\n  var b = gRoot.node().getBBox();\n  if (b.width === 0 || b.height === 0) {\n    if (retries > 0) requestAnimationFrame(function() { fitGraph(retries - 1); });\n    return;\n  }\n  var pad = 0.1;\n  var fw = b.width * (1 + 2*pad), fh = b.height * (1 + 2*pad);\n  var cw = getW(), ch = getH();\n  W = cw; H = ch;\n  svg.attr(\"viewBox\", [0, 0, W, H]);\n  var s = Math.min(cw / fw, ch / fh, 2.5);\n  var tx = cw/2 - (b.x + b.width/2)*s, ty = ch/2 - (b.y + b.height/2)*s;\n  svg.transition().duration(600).call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(s));\n}\nvar loadingOverlay = document.getElementById(\"loading-overlay\");\nvar emptyState = document.getElementById(\"empty-state\");\nif (nodes.length === 0) {\n  loadingOverlay.classList.add(\"hidden\");\n  emptyState.classList.add(\"visible\");\n}\nsimulation.on(\"end\", function() {\n  loadingOverlay.classList.add(\"hidden\");\n  syncViewport();\n  requestAnimationFrame(function() { fitGraph(); });\n});\nwindow.addEventListener(\"resize\", function() {\n  syncViewport();\n  requestAnimationFrame(function() { fitGraph(); });\n});\nfunction zoomToNode(qn) {\n  var nd = nodeById.get(qn);\n  if (!nd || nd.x == null) return;\n  var s = 2.0;\n  var tx = W/2 - nd.x*s, ty = H/2 - nd.y*s;\n  svg.transition().duration(600).call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(s));\n}\ndocument.getElementById(\"btn-fit\").addEventListener(\"click\", function() { fitGraph(); });\ndocument.getElementById(\"btn-labels\").addEventListener(\"click\", function() {\n  showLabels = !showLabels;\n  this.classList.toggle(\"active\");\n  this.setAttribute(\"aria-pressed\", showLabels);\n  updateLabelVisibility();\n});\ndocument.querySelectorAll(\".legend-item[data-edge-kind]\").forEach(function(el) {\n  el.addEventListener(\"click\", function() {\n    var kind = this.dataset.edgeKind;\n    if (hiddenEdgeKinds.has(kind)) { hiddenEdgeKinds.delete(kind); this.classList.remove(\"dimmed\"); }\n    else { hiddenEdgeKinds.add(kind); this.classList.add(\"dimmed\"); }\n    this.setAttribute(\"aria-pressed\", !hiddenEdgeKinds.has(kind));\n    updateLinks();\n  });\n});\ndocument.querySelectorAll(\"#filter-panel input[data-kind]\").forEach(function(el) {\n  el.addEventListener(\"change\", function() {\n    var kind = this.dataset.kind;\n    if (this.checked) hiddenNodeKinds.delete(kind); else hiddenNodeKinds.add(kind);\n    updateNodes();\n    simulation.alpha(0.15).restart();\n  });\n});\ndocument.getElementById(\"btn-community\").addEventListener(\"click\", function() {\n  communityColoringOn = !communityColoringOn;\n  this.classList.toggle(\"active\");\n  this.setAttribute(\"aria-pressed\", communityColoringOn);\n  nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\").transition().duration(300)\n    .attr(\"fill\", function(d) { return nodeColor(d); });\n  nodeGroup.selectAll(\"g.node-g\").select(\".glow-ring\")\n    .transition().duration(300)\n    .attr(\"stroke\", function(d) { return nodeColor(d); });\n  // Toggle community legend visibility with coloring\n  var cl = document.getElementById(\"community-legend\");\n  if (communityColoringOn) cl.classList.add(\"visible\");\n  else cl.classList.remove(\"visible\");\n  // The filter lives in that legend, so it goes and comes back with it.\n  applyCommunityFilter();\n});\n// Build community legend with toggle checkboxes\n(function buildCommunityLegend() {\n  var cl = document.getElementById(\"community-legend\");\n  if (!communities.length) return;\n  var h = '<h3>Communities</h3>';\n  communities.slice(0, 30).forEach(function(c) {\n    var col = communityColorScale(c.id);\n    var nm = escH(c.name || (\"Community \" + c.id));\n    h += '<label class=\"cl-item\">'\n      + '<input type=\"checkbox\" data-cid=\"'\n      + c.id + '\" checked>'\n      + '<span class=\"cl-swatch\" style=\"background:'\n      + col + '\"></span> ' + nm + '</label>';\n  });\n  cl.textContent = \"\";\n  cl.insertAdjacentHTML(\"beforeend\", h);\n  cl.querySelectorAll(\"input[data-cid]\").forEach(\n    function(el) {\n      el.addEventListener(\"change\", function() {\n        var cid = parseInt(this.dataset.cid);\n        if (this.checked) hiddenCommunities.delete(cid);\n        else hiddenCommunities.add(cid);\n        applyCommunityFilter();\n      });\n    }\n  );\n})();\n// Labels go through updateLabelVisibility so the zoom rule still holds and\n// clearing the filter brings them back.\nfunction applyCommunityFilter() {\n  nodeGroup.selectAll(\"g.node-g\")\n    .attr(\"display\", function(d) { return d._hidden || inHiddenCommunity(d) ? \"none\" : null; });\n  updateLinks();\n  updateLabelVisibility();\n}\nvar activeFlowQns = null;\nflowSelect.addEventListener(\"change\", function() {\n  var idx = this.value;\n  if (idx === \"\") { activeFlowQns = null; clearFlowHighlight(); return; }\n  var flow = flows[parseInt(idx)];\n  if (!flow) return;\n  var pathQns = new Set();\n  (flow.path || []).forEach(function(nid) { var qn = nodeIdToQn.get(nid); if (qn) pathQns.add(qn); });\n  activeFlowQns = pathQns;\n  applyFlowHighlight();\n});\nfunction applyFlowHighlight() {\n  if (!activeFlowQns || activeFlowQns.size === 0) { clearFlowHighlight(); return; }\n  nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\").transition().duration(200)\n    .attr(\"opacity\", function(d) { return activeFlowQns.has(d.qualified_name) ? 1 : 0.2; });\n  if (labelSel) labelSel.transition().duration(200)\n    .attr(\"opacity\", function(d) { return activeFlowQns.has(d.qualified_name) ? 1 : 0.1; });\n  if (linkSel) linkSel.transition().duration(200)\n    .attr(\"opacity\", function(e) {\n      var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n      var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n      return (activeFlowQns.has(s) && activeFlowQns.has(t)) ? 0.9 : 0.03;\n    });\n}\nfunction clearFlowHighlight() {\n  nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\").transition().duration(300).attr(\"opacity\", 1);\n  if (linkSel) linkSel.transition().duration(300).attr(\"opacity\", nbEdgeOpacity);\n  if (labelSel) labelSel.transition().duration(300).attr(\"opacity\", 1);\n  updateLabelVisibility();\n}\nvar detailPanel = document.getElementById(\"detail-panel\");\nvar dpContent = document.getElementById(\"dp-content\");\nvar detailTrigger = null;\n// The one way to close the panel: opening it hides the legend, so closing\n// it must bring the legend back, whatever closed it.\nfunction closeDetailPanel(returnFocus) {\n  detailPanel.classList.remove(\"visible\");\n  document.getElementById(\"legend\").style.display = \"\";\n  if (returnFocus && detailTrigger) detailTrigger.focus();\n}\ndocument.querySelector(\"#detail-panel .dp-close\").addEventListener(\"click\", function() {\n  closeDetailPanel(true);\n});\nsvg.on(\"click\", function() { closeDetailPanel(true); });\nfunction showDetailPanel(d) {\n  detailTrigger = document.activeElement;\n  var callers = [], callees = [];\n  edges.forEach(function(e) {\n    var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n    var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n    if (t === d.qualified_name && e.kind === \"CALLS\") { var sN = nodeById.get(s); if (sN) callers.push(sN); }\n    if (s === d.qualified_name && e.kind === \"CALLS\") { var tN = nodeById.get(t); if (tN) callees.push(tN); }\n  });\n  var relFile = d.file_path ? d.file_path.split(\"/\").slice(-3).join(\"/\") : \"\";\n  var bg = communityColoringOn && d.community_id != null ? communityColorScale(d.community_id) : (KIND_COLOR[d.kind] || \"#555\");\n  var h = '<h2>' + escH(d.label) + '</h2>';\n  h += '<span class=\"tt-kind\" style=\"background:' + bg + ';color:#0d1117\">' + escH(d.kind) + '</span>';\n  if (relFile) h += '<div class=\"dp-meta\" style=\"margin-top:8px\">' + escH(relFile) + (d.line_start != null ? ':' + d.line_start : '') + '</div>';\n  if (d.params) h += '<div class=\"dp-meta\"><span class=\"tt-label\">Params:</span> ' + escH(d.params) + '</div>';\n  if (d.return_type) h += '<div class=\"dp-meta\"><span class=\"tt-label\">Returns:</span> ' + escH(d.return_type) + '</div>';\n  if (d.community_id != null) {\n    var comm = communities.find(function(c) { return c.id === d.community_id; });\n    if (comm) h += '<div class=\"dp-meta\"><span class=\"tt-label\">Community:</span> ' + escH(comm.name) + '</div>';\n  }\n  if (callers.length) {\n    h += '<div class=\"dp-section\"><h4>Callers (' + callers.length + ')</h4><ul class=\"dp-list\">';\n    callers.slice(0, 20).forEach(function(c) { h += '<li data-qn=\"' + escH(c.qualified_name) + '\">' + escH(c.label) + '</li>'; });\n    h += '</ul></div>';\n  }\n  if (callees.length) {\n    h += '<div class=\"dp-section\"><h4>Callees (' + callees.length + ')</h4><ul class=\"dp-list\">';\n    callees.slice(0, 20).forEach(function(c) { h += '<li data-qn=\"' + escH(c.qualified_name) + '\">' + escH(c.label) + '</li>'; });\n    h += '</ul></div>';\n  }\n  dpContent.textContent = \"\";\n  dpContent.insertAdjacentHTML(\"beforeend\", h);\n  detailPanel.classList.add(\"visible\");\n  document.getElementById(\"legend\").style.display = \"none\";\n  detailPanel.querySelector(\".dp-close\").focus();\n  dpContent.querySelectorAll(\"li[data-qn]\").forEach(function(li) {\n    li.addEventListener(\"click\", function() {\n      var qn = li.dataset.qn;\n      zoomToNode(qn);\n      var nd = nodeById.get(qn);\n      if (nd) showDetailPanel(nd);\n    });\n  });\n}\nvar searchInput = document.getElementById(\"search\");\nvar searchResults = document.getElementById(\"search-results\");\nvar searchTerm = \"\";\nsearchInput.addEventListener(\"input\", function() {\n  searchTerm = this.value.trim().toLowerCase();\n  applySearchFilter();\n  showSearchResults();\n});\nsearchInput.addEventListener(\"focus\", showSearchResults);\nsearchInput.addEventListener(\"keydown\", function(ev) {\n  var items = searchResults.querySelectorAll(\".sr-item\");\n  if (!items.length) return;\n  var active = searchResults.querySelector(\".sr-item.sr-active\");\n  var idx = active ? Array.from(items).indexOf(active) : -1;\n  if (ev.key === \"ArrowDown\") {\n    ev.preventDefault();\n    if (active) active.classList.remove(\"sr-active\");\n    idx = (idx + 1) % items.length;\n    items[idx].classList.add(\"sr-active\");\n    items[idx].scrollIntoView({ block: \"nearest\" });\n    searchInput.setAttribute(\"aria-activedescendant\", items[idx].id);\n  } else if (ev.key === \"ArrowUp\") {\n    ev.preventDefault();\n    if (active) active.classList.remove(\"sr-active\");\n    idx = idx <= 0 ? items.length - 1 : idx - 1;\n    items[idx].classList.add(\"sr-active\");\n    items[idx].scrollIntoView({ block: \"nearest\" });\n    searchInput.setAttribute(\"aria-activedescendant\", items[idx].id);\n  } else if (ev.key === \"Enter\" && active) {\n    ev.preventDefault();\n    active.click();\n  }\n});\ndocument.addEventListener(\"click\", function(ev) {\n  if (!searchResults.contains(ev.target) && ev.target !== searchInput) searchResults.style.display = \"none\";\n});\nfunction showSearchResults() {\n  if (!searchTerm) { searchResults.style.display = \"none\"; searchInput.setAttribute(\"aria-expanded\", \"false\"); return; }\n  var matched = [];\n  nodes.forEach(function(n) {\n    if (n._hidden) return;\n    var hay = (n.label + \" \" + n.qualified_name).toLowerCase();\n    if (hay.indexOf(searchTerm) !== -1) matched.push(n);\n  });\n  if (!matched.length) { searchResults.style.display = \"none\"; searchInput.setAttribute(\"aria-expanded\", \"false\"); return; }\n  searchResults.textContent = \"\";\n  matched.slice(0, 15).forEach(function(n, i) {\n    var bg = KIND_COLOR[n.kind] || \"#555\";\n    var div = document.createElement(\"div\");\n    div.className = \"sr-item\";\n    div.setAttribute(\"role\", \"option\");\n    div.setAttribute(\"tabindex\", \"-1\");\n    div.id = \"sr-\" + i;\n    var kindSpan = document.createElement(\"span\");\n    kindSpan.className = \"sr-kind\";\n    kindSpan.style.background = bg;\n    kindSpan.style.color = \"#0d1117\";\n    kindSpan.textContent = n.kind;\n    div.appendChild(kindSpan);\n    div.appendChild(document.createTextNode(\" \" + n.label));\n    div.addEventListener(\"click\", function() {\n      zoomToNode(n.qualified_name);\n      showDetailPanel(n);\n      searchResults.style.display = \"none\";\n    });\n    searchResults.appendChild(div);\n  });\n  searchResults.style.display = \"block\";\n  searchInput.setAttribute(\"aria-expanded\", \"true\");\n}\nfunction applySearchFilter() {\n  if (!searchTerm) {\n    nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\").attr(\"opacity\", 1);\n    if (labelSel) labelSel.attr(\"opacity\", 1);\n    if (linkSel) linkSel.attr(\"opacity\", nbEdgeOpacity);\n    updateLabelVisibility();\n    return;\n  }\n  var matched = new Set();\n  nodes.forEach(function(n) {\n    if (n._hidden) return;\n    var hay = (n.label + \" \" + n.qualified_name).toLowerCase();\n    if (hay.indexOf(searchTerm) !== -1) matched.add(n.qualified_name);\n  });\n  nodeGroup.selectAll(\"g.node-g\").select(\".node-shape\")\n    .attr(\"opacity\", function(d) { return matched.has(d.qualified_name) ? 1 : 0.08; });\n  if (labelSel) labelSel\n    .attr(\"opacity\", function(d) { return matched.has(d.qualified_name) ? 1 : 0.05; })\n    .attr(\"display\", function(d) { return matched.has(d.qualified_name) ? null : \"none\"; });\n  if (linkSel) linkSel.attr(\"opacity\", function(e) {\n    var s = typeof e.source === \"object\" ? e.source.qualified_name : e._source;\n    var t = typeof e.target === \"object\" ? e.target.qualified_name : e._target;\n    return (matched.has(s) || matched.has(t)) ? nbEdgeOpacity(e) : 0.02;\n  });\n}\nvar helpOverlay = document.getElementById(\"help-overlay\");\nfunction toggleHelp() {\n  helpOverlay.classList.toggle(\"hidden\");\n  if (!helpOverlay.classList.contains(\"hidden\")) {\n    helpOverlay.querySelector(\".help-close\").focus();\n  }\n}\ndocument.getElementById(\"btn-help\").addEventListener(\"click\", toggleHelp);\nhelpOverlay.querySelector(\".help-close\").addEventListener(\"click\", toggleHelp);\nhelpOverlay.addEventListener(\"click\", function(ev) {\n  if (ev.target === helpOverlay) toggleHelp();\n});\ndocument.addEventListener(\"keydown\", function(ev) {\n  var tag = (ev.target.tagName || \"\").toLowerCase();\n  var inInput = tag === \"input\" || tag === \"textarea\" || tag === \"select\" || ev.target.isContentEditable;\n  if (ev.key === \"Escape\") {\n    if (detailPanel.classList.contains(\"visible\")) {\n      closeDetailPanel(true);\n    } else if (searchResults.style.display === \"block\") {\n      searchResults.style.display = \"none\";\n      searchInput.focus();\n    } else if (!helpOverlay.classList.contains(\"hidden\")) {\n      toggleHelp();\n    }\n    return;\n  }\n  if (inInput) return;\n  if (ev.key === \"/\") {\n    ev.preventDefault();\n    searchInput.focus();\n  } else if (ev.key === \"?\") {\n    ev.preventDefault();\n    toggleHelp();\n  } else if (ev.key === \"e\" && neighbourhood) {\n    ev.preventDefault();\n    nbExpandRing();\n  }\n});\n</script>\n</body>\n</html>\n";
 
