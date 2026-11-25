@@ -151,8 +151,11 @@ adds because every annotation in a module with `from __future__ import annotatio
 (blocker 3).
 
 `dead-code` is the other command still measurably slower (1.16x in the final round, 1.5x in
-noisier earlier ones): its one function makes 0.9 million `held()` calls on rows and node objects,
-which only a runtime change would remove. The short commands are within 0-17% of the original:
+noisier earlier ones): `find_dead_code` makes 0.88 million `held()` calls, about eight per edge row
+of its scan, from `index.setdefault(key, set()).add(value)` chains on dictionaries the checker
+reads as `any`; `_row_to_node` adds 0.24 million (15 per SQLite row). `detect-changes` (1.17x)
+has the same cause: of its 0.25 million `held()` calls, 0.12 million are in `_row_to_node`. Only a
+cheaper `held` (blocker 1) or annotations the checker can use (blocker 3) would remove them. The short commands are within 0-17% of the original:
 the package's start-up, now importing what the original imports, plus the emitted modules' own
 set-up (the runtime module `_jac_code_review_graph` and each module's `__jac_init__`): about
 10 ms, the difference in `--version`.
