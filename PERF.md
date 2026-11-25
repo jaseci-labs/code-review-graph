@@ -83,6 +83,7 @@ without `code_review_graph/`, as `neojac test` runs it), one run per build:
 | Jac after commit 1 only | 20-38 | 4452 s | 923 s | 8202 | 35 | 930 |
 | Jac after commit 2 (`0e99681`) | 17-30 | 4537 s | 1048 s | 8208 | 29 | 930 |
 | Jac after (final) | 15-28 | 5242 s | 1074 s | 8207 | 30 | 930 |
+| Jac after commit 7 (`b3d3b89`) | 9-24 | 4731 s | 1035 s | 8209 | 29 | 930 |
 
 The suite takes the same time within the machine's noise: it is bound by its slowest tests (real
 Git repositories, subprocesses, watchers), not by the package's code. The Jac runs collect 82 fewer
