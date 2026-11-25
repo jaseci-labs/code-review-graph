@@ -3,7 +3,10 @@ graph layers {
 }
 
 graph spaces {
-    space code_review_graph: node { "code-review-graph-vscode"; }
+    space code_review_graph_vscode: node { "code-review-graph-vscode"; }
+    space code_review_graph: cpython { "."; }
+    package code_review_graph { ship code_review_graph; }
+    space code_review_graph_dev: cpython { diagrams.* | scripts.* | tests | tests.*; }
 }
 
 graph import {
