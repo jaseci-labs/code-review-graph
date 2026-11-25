@@ -1,5 +1,7 @@
 """Tools 21, 22: list_repos_func, cross_repo_search_func."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

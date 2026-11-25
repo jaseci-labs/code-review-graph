@@ -1,5 +1,5 @@
 impl _sanitize_name(value: str) -> str {
-    import from .graph { _sanitize_name as _impl }
+    _impl = importlib.import_module("code_review_graph.graph")._sanitize_name;
 
     return _impl(value);
 }

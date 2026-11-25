@@ -24,6 +24,8 @@ of the ratio is zero get ``status="no_graph_results"`` /
 ``status="no_baseline_match"`` and are likewise excluded.
 """
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

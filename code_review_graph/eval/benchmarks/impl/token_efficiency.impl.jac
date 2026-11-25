@@ -70,7 +70,7 @@ impl run(repo_path: Path, store, config: dict) -> list[dict] {
             "error": "",
         };
         try {
-            import from code_review_graph.tools.review { get_review_context }
+            get_review_context = importlib.import_module("code_review_graph.tools.review").get_review_context;
             ctx: any = get_review_context(changed_files=changed, repo_root=`str(repo_path));
             graph_tokens: any = _count_tokens(json.dumps(ctx));
         } except Exception as exc {

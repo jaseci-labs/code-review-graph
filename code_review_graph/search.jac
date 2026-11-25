@@ -5,6 +5,8 @@ and semantic similarity, with query-aware kind boosting and context-file
 boosting for relevance tuning.
 """
 
+import importlib;
+
 import operator;
 
 import from __future__ { annotations }

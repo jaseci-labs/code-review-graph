@@ -1,7 +1,8 @@
 impl run(repo_path: Path, store, config: dict) -> list[dict] {
     stats: any = store.get_stats();
     try {
-        import from code_review_graph.flows { store_flows, trace_flows }
+        store_flows = importlib.import_module("code_review_graph.flows").store_flows;
+        trace_flows = importlib.import_module("code_review_graph.flows").trace_flows;
         t0: any = time.perf_counter();
         flows: any = trace_flows(store);
         store_flows(store, flows);
@@ -11,7 +12,8 @@ impl run(repo_path: Path, store, config: dict) -> list[dict] {
         flow_time = 0.0;
     }
     try {
-        import from code_review_graph.communities { detect_communities, store_communities }
+        detect_communities = importlib.import_module("code_review_graph.communities").detect_communities;
+        store_communities = importlib.import_module("code_review_graph.communities").store_communities;
         t0 = time.perf_counter();
         comms: any = detect_communities(store);
         store_communities(store, comms);

@@ -378,7 +378,7 @@ impl daemon_lock_held(path: Path | None = None) -> bool {
 }
 
 impl _process_command(pid: int) -> str | None {
-    comptime if target_().os == "windows" {
+    if operator.eq(sys.platform, "win32") {
         return None;
     }
     try {
@@ -463,7 +463,7 @@ impl _pid_alive_windows(
 }
 
 impl pid_alive(pid: int) -> bool {
-    comptime if target_().os == "windows" {
+    if operator.eq(sys.platform, "win32") {
         import ctypes;
         import from ctypes { wintypes }
 
@@ -809,7 +809,7 @@ impl WatchDaemon.init(config: DaemonConfig | None = None, config_path: Path | No
 
 impl WatchDaemon.start -> None {
     logger.info("Starting daemon '%s'", self._config.session_name);
-    import from .registry { Registry }
+    Registry = importlib.import_module("code_review_graph.registry").Registry;
 
     registry: any = Registry();
     repo: any;
@@ -876,7 +876,7 @@ impl WatchDaemon.reconcile(new_config: DaemonConfig | None = None) -> None {
         if desired[alias].path != self._current_repos[alias].path
     };
     if to_add or to_update {
-        import from .registry { Registry }
+        Registry = importlib.import_module("code_review_graph.registry").Registry;
 
         registry: any = Registry();
 
@@ -1086,7 +1086,7 @@ impl WatchDaemon._check_health -> None {
 }
 
 impl WatchDaemon.daemonize -> None {
-    comptime if target_().os == "windows" {
+    if operator.eq(sys.platform, "win32") {
         logger.warning("Forking is not supported on Windows — running in foreground");
         write_pid();
         self._setup_signal_handlers();
@@ -1129,7 +1129,7 @@ impl WatchDaemon._setup_signal_handlers -> None {
     }
 
     signal.signal(signal.SIGTERM, _handle_sigterm);
-    comptime if target_().os != "windows" {
+    if operator.ne(sys.platform, "win32") {
         signal.signal(signal.SIGHUP, _handle_sigterm);
     }
 }

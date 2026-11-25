@@ -436,7 +436,7 @@ impl _set_matches(version: _Version, comparators: list[_Comparator]) -> bool {
     }
     if version[3] {
         return `any(
-            bound[3] and operator.eq(bound[:3], version[:3]) for (_operator, bound) in comparators
+            bound[3] and bound[:3] == version[:3] for (_operator, bound) in comparators
         );
     }
     return True;

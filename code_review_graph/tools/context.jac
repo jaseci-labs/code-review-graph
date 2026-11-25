@@ -1,5 +1,7 @@
 """Tool: get_minimal_context — ultra-compact context for token-efficient workflows."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

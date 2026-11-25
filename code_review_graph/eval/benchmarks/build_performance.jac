@@ -1,5 +1,7 @@
 """Build performance benchmark: measures timing of graph operations."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

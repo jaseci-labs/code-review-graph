@@ -9,6 +9,8 @@ dropped calls, uses ``jedi.Script.goto()`` to resolve them, and adds the
 resulting CALLS edges to the graph database.
 """
 
+import importlib;
+
 import builtins;
 
 import operator;

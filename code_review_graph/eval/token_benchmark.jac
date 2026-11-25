@@ -1,5 +1,7 @@
 """Measures total tokens consumed by agent workflows against benchmark repos."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import json;

@@ -18,6 +18,8 @@ folder config are shared by every repository and left to the tool itself.
 Exit 0 when nothing failed, 1 when something did.
 """
 
+import importlib;
+
 import builtins;
 
 import operator;

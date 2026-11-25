@@ -1,5 +1,7 @@
 """Tool 1: build_or_update_graph + run_postprocess."""
 
+import importlib;
+
 import operator;
 
 import from __future__ { annotations }

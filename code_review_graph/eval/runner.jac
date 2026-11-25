@@ -1,5 +1,7 @@
 """Evaluation runner: orchestrates benchmark execution across repositories."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import csv;

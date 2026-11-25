@@ -4,6 +4,8 @@ Detects changed files via git diff, re-parses only changed + impacted files,
 and updates the graph accordingly. Also supports CLI invocation for hooks.
 """
 
+import importlib;
+
 import operator;
 
 import from jaclang.comptime { target as target_ }

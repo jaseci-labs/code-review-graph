@@ -132,7 +132,7 @@ impl _node_payload(gnode: GraphNode, community_id: int | None) -> dict {
 
 impl _export_flows(store: GraphStore) -> list[dict] {
     try {
-        import from code_review_graph.flows { get_flows }
+        get_flows = importlib.import_module("code_review_graph.flows").get_flows;
         return get_flows(store, limit=100);
     } except (ImportError, sqlite3.OperationalError) as exc {
         logger.debug("flows unavailable for export: %s", exc);
@@ -144,7 +144,7 @@ impl _export_communities(
     store: GraphStore, members_by_community: dict[int, list[str]] | None = None
 ) -> list[dict] {
     try {
-        import from code_review_graph.communities { get_communities }
+        get_communities = importlib.import_module("code_review_graph.communities").get_communities;
         return get_communities(store, members_by_community=members_by_community);
     } except (ImportError, sqlite3.OperationalError) as exc {
         logger.debug("communities unavailable for export: %s", exc);

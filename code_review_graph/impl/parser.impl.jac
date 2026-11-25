@@ -849,6 +849,11 @@ impl _read_php_composer_psr4(
     );
 }
 
+impl _with_post_init(cls: any) -> any {
+    setattr(cls, "__post_init__", cls.postinit);
+    return cls;
+}
+
 impl NodeInfo.postinit -> None {
     self.file_path = normalize_file_path(self.file_path);
     if self.kind == "File" {
@@ -18483,7 +18488,7 @@ impl CodeParser._compute_path_is_indexed(path: Path, boundary: Path) -> bool {
     if patterns is None {
         return True;
     }
-    import from .incremental { _should_ignore }
+    _should_ignore = importlib.import_module("code_review_graph.incremental")._should_ignore;
 
     return not _should_ignore(relative, patterns);
 }
@@ -18494,7 +18499,7 @@ impl CodeParser._ignore_patterns(boundary: Path) -> Optional[list[str]] {
         return self._ignore_patterns_cache[key];
     }
     try {
-        import from .incremental { _load_ignore_patterns }
+        _load_ignore_patterns = importlib.import_module("code_review_graph.incremental")._load_ignore_patterns;
 
         patterns: Optional[list[str]] = _load_ignore_patterns(boundary);
     } except Exception {

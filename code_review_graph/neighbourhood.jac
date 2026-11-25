@@ -31,6 +31,8 @@ gives the same answer given the seeds, every edge touching a node it could keep,
 and the graph-wide totals.
 """
 
+import importlib;
+
 import builtins;
 
 import from __future__ { annotations }

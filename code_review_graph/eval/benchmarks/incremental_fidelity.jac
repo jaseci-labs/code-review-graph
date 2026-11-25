@@ -31,6 +31,8 @@ drifted, an edge whose confidence drifted, or any row in ``flows``,
 what the snapshot cannot.
 """
 
+import importlib;
+
 import from __future__ { annotations }
 
 import typing;

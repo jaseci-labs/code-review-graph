@@ -1,5 +1,7 @@
 """Tools 7, 8, 19, 20: embed_graph, get_docs_section, wiki tools."""
 
+import importlib;
+
 import operator;
 
 import from __future__ { annotations }

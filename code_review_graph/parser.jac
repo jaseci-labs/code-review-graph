@@ -786,7 +786,10 @@ def _read_php_composer_psr4(
     composer_path: str, repo_root: str, _mtime_ns: int, _size: int
 ) -> _PhpPsr4Mappings;
 
+def _with_post_init(cls: any) -> any;
+
 @dataclass
+@_with_post_init
 class NodeInfo {
     has kind: str;
 
@@ -818,6 +821,7 @@ class NodeInfo {
 }
 
 @dataclass
+@_with_post_init
 class EdgeInfo {
     has kind: str;
 

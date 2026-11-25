@@ -63,7 +63,7 @@ impl record_call(call: CallInfo, *, baseline: int, returned: int, saved: int) ->
 }
 
 impl _locked(lock_path: Path) -> Generator[any, any, any] {
-    comptime if target().os == "windows" {
+    if operator.eq(sys.platform, "win32") {
         yield;
         return;
     }

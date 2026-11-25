@@ -6,6 +6,8 @@ Also supports multi-platform MCP server installation and
 Cursor hooks / OpenCode plugin generation.
 """
 
+import importlib;
+
 import builtins;
 
 import operator;

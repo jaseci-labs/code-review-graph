@@ -1,5 +1,7 @@
 """Flow completeness benchmark: evaluates entry point detection and flow tracing."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

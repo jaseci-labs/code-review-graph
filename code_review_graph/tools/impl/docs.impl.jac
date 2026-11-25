@@ -131,8 +131,8 @@ impl get_docs_section(section_name: str, repo_root: str | None = None) -> dict[s
 }
 
 impl generate_wiki_func(repo_root: str | None = None, force: bool = False) -> dict[str, Any] {
-    import from ..incremental { get_data_dir }
-    import from ..wiki { generate_wiki }
+    get_data_dir = importlib.import_module("code_review_graph.incremental").get_data_dir;
+    generate_wiki = importlib.import_module("code_review_graph.wiki").generate_wiki;
 
     store: any;
     `root: any;
@@ -167,8 +167,8 @@ impl generate_wiki_func(repo_root: str | None = None, force: bool = False) -> di
 impl get_wiki_page_func(
     community_name: str, repo_root: str | None = None, max_chars: int = 20000
 ) -> dict[str, Any] {
-    import from ..incremental { get_data_dir }
-    import from ..wiki { get_wiki_page }
+    get_data_dir = importlib.import_module("code_review_graph.incremental").get_data_dir;
+    get_wiki_page = importlib.import_module("code_review_graph.wiki").get_wiki_page;
 
     _validate_positive_int(max_chars, "max_chars");
 

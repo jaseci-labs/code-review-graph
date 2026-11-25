@@ -1,6 +1,7 @@
 impl run(repo_path: Path, store, config: dict) -> list[dict] {
     detected_entries: any;
-    import from code_review_graph.flows { store_flows, trace_flows }
+    store_flows = importlib.import_module("code_review_graph.flows").store_flows;
+    trace_flows = importlib.import_module("code_review_graph.flows").trace_flows;
 
     flows: any = trace_flows(store);
     count: any = store_flows(store, flows);

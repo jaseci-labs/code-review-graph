@@ -5,6 +5,8 @@ structural context from the code knowledge graph: callers, callees,
 execution flows, community membership, and test coverage.
 """
 
+import importlib;
+
 import from __future__ { annotations }
 
 import json;

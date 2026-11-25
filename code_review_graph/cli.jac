@@ -26,6 +26,8 @@ Usage:
     code-review-graph daemon remove <path_or_alias>
 """
 
+import importlib;
+
 import operator;
 
 import from __future__ { annotations }

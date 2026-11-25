@@ -1,6 +1,9 @@
 [project]
 exclude = ["tests/fixtures"]
 
+[check.lint]
+exclude = ["code_review_graph/main.jac", "code_review_graph/impl/main.impl.jac"]
+
 [pypi."."]
 [pypi.".".build-system]
 requires = ["hatchling"]

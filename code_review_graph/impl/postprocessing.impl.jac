@@ -76,7 +76,7 @@ impl _sync_fts_index(
     changed_files: Sequence[str] | None = None,
 ) -> None {
     try {
-        import from .search { update_fts_index }
+        update_fts_index = importlib.import_module("code_review_graph.search").update_fts_index;
 
         mode: list[str] = [];
         result["fts_indexed"] = update_fts_index(store, changed_files, _out_mode=mode);
@@ -91,7 +91,8 @@ impl _sync_fts_index(
 
 impl _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str]) -> None {
     try {
-        import from .flows { store_flows, trace_flows }
+        store_flows = importlib.import_module("code_review_graph.flows").store_flows;
+        trace_flows = importlib.import_module("code_review_graph.flows").trace_flows;
 
         flows: any = trace_flows(store);
         count: any = store_flows(store, flows);
@@ -104,7 +105,8 @@ impl _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str]
 
 impl _detect_communities(store: GraphStore, result: dict[str, Any], warnings: list[str]) -> None {
     try {
-        import from .communities { detect_communities, store_communities }
+        detect_communities = importlib.import_module("code_review_graph.communities").detect_communities;
+        store_communities = importlib.import_module("code_review_graph.communities").store_communities;
 
         comms: any = detect_communities(store);
         count: any = store_communities(store, comms);
@@ -134,7 +136,8 @@ impl _refresh_embeddings(
     }
 
     try {
-        import from .embeddings { REFRESH_SKIPPED_WARNING, refresh_embeddings }
+        REFRESH_SKIPPED_WARNING = importlib.import_module("code_review_graph.embeddings").REFRESH_SKIPPED_WARNING;
+        refresh_embeddings = importlib.import_module("code_review_graph.embeddings").refresh_embeddings;
 
         refreshed: any = refresh_embeddings(store, provider=provider, model=model);
         if refreshed is None {

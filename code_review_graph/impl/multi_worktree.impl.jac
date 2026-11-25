@@ -354,7 +354,7 @@ impl _Child.stop -> None {
         return;
     } except subprocess.TimeoutExpired {}
     try {
-        comptime if target_().os != "windows" {
+        if operator.ne(os.name, "nt") {
             os.killpg(process.pid, signal.SIGTERM);
         } else {
             process.terminate();
@@ -363,7 +363,7 @@ impl _Child.stop -> None {
     } except (ProcessLookupError, OSError, subprocess.TimeoutExpired) {
         if process.poll() is None {
             try {
-                comptime if target_().os != "windows" {
+                if operator.ne(os.name, "nt") {
                     os.killpg(process.pid, signal.SIGKILL);
                 } else {
                     process.kill();

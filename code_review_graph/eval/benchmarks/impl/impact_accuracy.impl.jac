@@ -99,7 +99,7 @@ impl _error_row(repo: str, sha: str, mode: str, seed: str, exc: Exception) -> di
 }
 
 impl run(repo_path: Path, store, config: dict) -> list[dict] {
-    import from code_review_graph.changes { analyze_changes }
+    analyze_changes = importlib.import_module("code_review_graph.changes").analyze_changes;
 
     results: any = [];
     repo: any = config["name"];

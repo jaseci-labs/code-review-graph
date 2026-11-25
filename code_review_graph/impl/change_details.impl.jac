@@ -380,7 +380,7 @@ impl _gaps(store: GraphStore, `report: dict[str, Any], changed: list[GraphNode])
 }
 
 impl _graph(store: GraphStore) -> dict[str, Any] {
-    import from . { __version__ }
+    __version__ = importlib.import_module("code_review_graph").__version__;
 
     stats: any = store.get_stats();
     schema: any = store.get_metadata("schema_version");

@@ -1,5 +1,7 @@
 """Search quality benchmark: measures search result ranking via MRR."""
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

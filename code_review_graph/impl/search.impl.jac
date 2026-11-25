@@ -442,7 +442,7 @@ impl _embedding_search(
         return [];
     }
     try {
-        import from .embeddings { EmbeddingStore }
+        EmbeddingStore = importlib.import_module("code_review_graph.embeddings").EmbeddingStore;
     } except ImportError {
         return [];
     }

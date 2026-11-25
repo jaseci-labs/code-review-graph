@@ -8,6 +8,8 @@ and health-checks child processes, restarting any that die.
 No external dependencies beyond Python stdlib — no tmux required.
 """
 
+import importlib;
+
 import builtins;
 
 import operator;

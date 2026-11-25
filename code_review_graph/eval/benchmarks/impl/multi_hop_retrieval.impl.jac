@@ -11,8 +11,8 @@ impl _name_set(rows: list[dict[str, Any]]) -> set[str] {
 
 impl run(repo_path: Path, store, config: dict) -> list[dict] {
     names: any;
-    import from code_review_graph.search { hybrid_search }
-    import from code_review_graph.tools.query { query_graph }
+    hybrid_search = importlib.import_module("code_review_graph.search").hybrid_search;
+    query_graph = importlib.import_module("code_review_graph.tools.query").query_graph;
 
     repo_root: any = `str(repo_path);
     results: list[dict] = [];

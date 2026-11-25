@@ -225,7 +225,7 @@ impl _mimo_config_path(repo_root: Path) -> Path {
 }
 
 impl _codex_home -> Path {
-    import from .codex_skill { codex_home }
+    codex_home = importlib.import_module("code_review_graph.codex_skill").codex_home;
 
     return codex_home();
 }
@@ -398,8 +398,6 @@ impl _warn_legacy_opencode_config(repo_root: Path) -> None {
 }
 
 impl _load_tomllib -> Any {
-    import importlib;
-
     return importlib.import_module("tomllib" if sys.version_info >= (3, 11) else "tomli");
 }
 
@@ -735,8 +733,6 @@ impl _merge_yaml_mcp_server(
 }
 
 impl _merge_dsh_patch_server(config_path: Path, server_entry: dict[str, Any]) -> bool | None {
-    import importlib;
-
     dsh: any = importlib.import_module("code_review_graph.dsh");
 
     raw: any = "";
@@ -2205,7 +2201,7 @@ impl install_codex_hooks(repo_root: Path) -> Path | None {
 }
 
 impl install_codex_skill -> Path | None {
-    import from .codex_skill { install_codex_skill as _install }
+    _install = importlib.import_module("code_review_graph.codex_skill").install_codex_skill;
 
     return _install();
 }
@@ -2433,7 +2429,7 @@ impl instruction_file_wanted(
     if target != "all" {
         return target in owners;
     }
-    return platforms is None or not `set(owners).isdisjoint(platforms);
+    return platforms is None or not `set(owners).isdisjoint(`set(platforms));
 }
 
 impl inject_instruction_files(

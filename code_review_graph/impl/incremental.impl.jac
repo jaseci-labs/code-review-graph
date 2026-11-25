@@ -1,7 +1,7 @@
 impl _get_code_parser_cls -> any {
     cls: any = globals().get("CodeParser");
     if cls is None {
-        import from .parser { CodeParser }
+        CodeParser = importlib.import_module("code_review_graph.parser").CodeParser;
 
         globals()["CodeParser"] = CodeParser;
         return CodeParser;
@@ -11,7 +11,7 @@ impl _get_code_parser_cls -> any {
 
 impl __getattr__(name: str) -> any {
     if name == "CodeParser" {
-        import from .parser { CodeParser }
+        CodeParser = importlib.import_module("code_review_graph.parser").CodeParser;
         globals()["CodeParser"] = CodeParser;
         return CodeParser;
     }
@@ -19,7 +19,7 @@ impl __getattr__(name: str) -> any {
 }
 
 impl _windows_console_handle(fileno: int) -> bool {
-    comptime if target_().os != "windows" {
+    if operator.ne(sys.platform, "win32") {
         return False;
     }
     try {
@@ -46,7 +46,7 @@ impl _stdin_is_interactive -> bool {
         if not sys.stdin.isatty() {
             return False;
         }
-        comptime if target_().os == "windows" {
+        if operator.eq(sys.platform, "win32") {
             return _windows_console_handle(sys.stdin.fileno());
         }
     } except (AttributeError, OSError, ValueError) {
@@ -60,10 +60,10 @@ impl _select_executor_kind -> str {
     if explicit in ("process", "thread") {
         return explicit;
     }
-    comptime if False {
+    if _MCP_STDIO_ACTIVE {
         return "thread";
     }
-    comptime if target_().os == "windows" {
+    if operator.eq(sys.platform, "win32") {
         if not _stdin_is_interactive() {
             return "thread";
         }
@@ -165,7 +165,7 @@ impl _store_cpp_identity_pending(store: GraphStore, files: set[str]) -> None {
 
 impl _run_python_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .python_resolver { resolve_python_imports }
+        resolve_python_imports = importlib.import_module("code_review_graph.python_resolver").resolve_python_imports;
         return resolve_python_imports(store);
     } except Exception as exc {
         logger.warning("Python import resolver failed: %s", exc);
@@ -175,7 +175,7 @@ impl _run_python_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_rescript_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .rescript_resolver { resolve_rescript_cross_module }
+        resolve_rescript_cross_module = importlib.import_module("code_review_graph.rescript_resolver").resolve_rescript_cross_module;
         return resolve_rescript_cross_module(store);
     } except Exception as exc {
         logger.warning("ReScript cross-module resolver failed: %s", exc);
@@ -185,7 +185,7 @@ impl _run_rescript_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_spring_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .spring_resolver { resolve_spring_di_calls }
+        resolve_spring_di_calls = importlib.import_module("code_review_graph.spring_resolver").resolve_spring_di_calls;
         return resolve_spring_di_calls(store);
     } except Exception as exc {
         logger.warning("Spring DI resolver failed: %s", exc);
@@ -195,7 +195,7 @@ impl _run_spring_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_aop_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .aop_resolver { resolve_aop_advice }
+        resolve_aop_advice = importlib.import_module("code_review_graph.aop_resolver").resolve_aop_advice;
         return resolve_aop_advice(store);
     } except Exception as exc {
         logger.warning("AOP resolver failed: %s", exc);
@@ -205,7 +205,7 @@ impl _run_aop_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_spring_event_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .event_resolver { resolve_spring_events }
+        resolve_spring_events = importlib.import_module("code_review_graph.event_resolver").resolve_spring_events;
         return resolve_spring_events(store);
     } except Exception as exc {
         logger.warning("Spring event resolver failed: %s", exc);
@@ -215,7 +215,7 @@ impl _run_spring_event_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_temporal_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .temporal_resolver { resolve_temporal_calls }
+        resolve_temporal_calls = importlib.import_module("code_review_graph.temporal_resolver").resolve_temporal_calls;
         return resolve_temporal_calls(store);
     } except Exception as exc {
         logger.warning("Temporal resolver failed: %s", exc);
@@ -225,7 +225,7 @@ impl _run_temporal_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_hcl_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        import from .hcl_resolver { resolve_hcl_module_references }
+        resolve_hcl_module_references = importlib.import_module("code_review_graph.hcl_resolver").resolve_hcl_module_references;
         return resolve_hcl_module_references(store);
     } except Exception as exc {
         logger.warning("Terraform/HCL resolver failed: %s", exc);
@@ -235,7 +235,7 @@ impl _run_hcl_resolver(store: GraphStore) -> Optional[dict] {
 
 impl _run_scoped_resolver(store: GraphStore, repo_root: Path) -> Optional[dict] {
     try {
-        import from .scoped_resolver { resolve_scoped_calls }
+        resolve_scoped_calls = importlib.import_module("code_review_graph.scoped_resolver").resolve_scoped_calls;
         return resolve_scoped_calls(store, repo_root);
     } except Exception as exc {
         logger.warning("Scoped call resolver failed: %s", exc);
@@ -264,7 +264,7 @@ impl _run_jedi_enrichment(
         return {"skipped": True, "reason": reason};
     }
     try {
-        import from .jedi_resolver { enrich_jedi_calls }
+        enrich_jedi_calls = importlib.import_module("code_review_graph.jedi_resolver").enrich_jedi_calls;
         return enrich_jedi_calls(store, repo_root, files=files);
     } except Exception as exc {
         logger.warning("Jedi enrichment failed: %s", exc);
@@ -386,7 +386,8 @@ impl _create_data_dir(data_dir: Path) -> None {
 
 impl get_data_dir(repo_root: Path, *, create: bool = True) -> Path {
     try {
-        import from .registry { Registry, default_registry_path }
+        Registry = importlib.import_module("code_review_graph.registry").Registry;
+        default_registry_path = importlib.import_module("code_review_graph.registry").default_registry_path;
         if create or default_registry_path().is_file() {
             registry_data_dir: any = Registry().get_data_dir_for_repo(`str(repo_root));
             if registry_data_dir {
@@ -1558,7 +1559,7 @@ impl _max_followed_files -> int {
 }
 
 impl _is_junction(`entry: os.DirEntry) -> bool {
-    comptime if target_().os != "windows" {
+    if operator.ne(os.name, "nt") {
         return False;
     }
     is_junction: any = getattr(`entry, "is_junction", None);
@@ -2113,8 +2114,6 @@ impl _single_hop_dependents(store: GraphStore, file_path: str) -> set[str] {
 
 impl _prewarm_parser_probes(parser: Any, rel_paths: list[str]) -> None {
     try {
-        import importlib;
-
         parser_mod: any = importlib.import_module("code_review_graph.parser");
     } except Exception {
         return;
@@ -2636,19 +2635,15 @@ impl incremental_update(
         } except (OSError, PermissionError) {}
         to_parse.append(rel_path);
     }
-    import from .communities {
-        capture_community_assignments,
-        purge_empty_communities,
-        remap_community_assignments,
-    }
-    import from .flows {
-        capture_affected_flow_entry_points,
-        capture_flow_node_ids,
-        clear_flows_for_files,
-        expand_changed_file_paths,
-        purge_orphan_flow_data,
-        remap_flow_node_ids,
-    }
+    capture_community_assignments = importlib.import_module("code_review_graph.communities").capture_community_assignments;
+    purge_empty_communities = importlib.import_module("code_review_graph.communities").purge_empty_communities;
+    remap_community_assignments = importlib.import_module("code_review_graph.communities").remap_community_assignments;
+    capture_affected_flow_entry_points = importlib.import_module("code_review_graph.flows").capture_affected_flow_entry_points;
+    capture_flow_node_ids = importlib.import_module("code_review_graph.flows").capture_flow_node_ids;
+    clear_flows_for_files = importlib.import_module("code_review_graph.flows").clear_flows_for_files;
+    expand_changed_file_paths = importlib.import_module("code_review_graph.flows").expand_changed_file_paths;
+    purge_orphan_flow_data = importlib.import_module("code_review_graph.flows").purge_orphan_flow_data;
+    remap_flow_node_ids = importlib.import_module("code_review_graph.flows").remap_flow_node_ids;
     lifecycle_inputs: any = [
         *[rel_path.replace("\\", "/") for rel_path in to_parse],
         *missing_paths,
@@ -2918,7 +2913,7 @@ impl _raise_watch_postprocess_warnings(result: object) -> None {
     if not isinstance(result, `dict) {
         return;
     }
-    import from .embeddings { REFRESH_SKIPPED_WARNING }
+    REFRESH_SKIPPED_WARNING = importlib.import_module("code_review_graph.embeddings").REFRESH_SKIPPED_WARNING;
 
     warnings: any = [
         warning
@@ -3076,7 +3071,7 @@ impl _run_time_boxed(
 
 impl _watch_health_path(repo_root: Path) -> Path | None {
     try {
-        import from .daemon { watch_health_path }
+        watch_health_path = importlib.import_module("code_review_graph.daemon").watch_health_path;
 
         return watch_health_path(repo_root);
     } except Exception as exc {
@@ -3724,7 +3719,7 @@ impl _create_watch_handler(
     on_directory_changed: Optional[Callable[[], None]] = None,
     follow_symlinks: bool | None = None,
 ) -> any {
-    ignore_patterns: any;
+    watch_state: any;
     parser: any;
     lexical_root: any;
     resolved_root: any;
@@ -3735,7 +3730,7 @@ impl _create_watch_handler(
     write_lock_file: any;
     import from watchdog.events { FileSystemEvent, FileSystemEventHandler }
 
-    ignore_patterns = _load_ignore_patterns(repo_root);
+    watch_state = types.SimpleNamespace(ignore_patterns=_load_ignore_patterns(repo_root));
     parser = _get_code_parser_cls()(repo_root);
     lexical_root = Path(os.path.abspath(repo_root));
     resolved_root = lexical_root.resolve();
@@ -3785,7 +3780,7 @@ impl _create_watch_handler(
                 logger.debug("Skipping unstattable watch path %s: %s", path[:120], exc);
                 return None;
             }
-            if apply_ignores and _should_ignore(`str(relative), ignore_patterns) {
+            if apply_ignores and _should_ignore(`str(relative), watch_state.ignore_patterns) {
                 return None;
             }
             return `str(relative);
@@ -3805,11 +3800,11 @@ impl _create_watch_handler(
                     output_became_file: any = not event.is_directory
                         and event.event_type in {"created", "moved"}
                         and Path(relative).name in NESTED_OUTPUT_DIR_MARKERS
-                        and f"/{Path(relative).as_posix()}/**" in ignore_patterns
+                        and f"/{Path(relative).as_posix()}/**" in watch_state.ignore_patterns
                         and (repo_root / relative).is_file();
                     if output_became_file
                         or relative == ".code-review-graphignore"
-                        or not _should_ignore(relative, ignore_patterns)
+                        or not _should_ignore(relative, watch_state.ignore_patterns)
                             and (
                                 event.is_directory
                                     and event.event_type in {"created", "deleted", "moved"}
@@ -3825,11 +3820,11 @@ impl _create_watch_handler(
                 clear_nested_ignore_cache(repo_root);
             }
             refreshed: any = _load_ignore_patterns(repo_root);
-            if `set(refreshed) == `set(ignore_patterns) {
+            if `set(refreshed) == `set(watch_state.ignore_patterns) {
                 return (0, set[any]());
             }
-            previous: any = ignore_patterns;
-            ignore_patterns = refreshed;
+            previous: any = watch_state.ignore_patterns;
+            watch_state.ignore_patterns = refreshed;
             _assert_graph_matches_root(repo_root, store);
             newly_included: any = set[any]();
             if `set(previous) - `set(refreshed) {
@@ -3849,7 +3844,7 @@ impl _create_watch_handler(
                 } except ValueError {
                     continue;
                 }
-                if _should_ignore(stored_relative.as_posix(), ignore_patterns) {
+                if _should_ignore(stored_relative.as_posix(), watch_state.ignore_patterns) {
                     ignored_files.append(stored_path);
                 }
             }
@@ -3891,7 +3886,7 @@ impl _create_watch_handler(
                 `str(path.relative_to(repo_root))
                 for path in directory.rglob("*")
                 if self._parseable_file(`str(path.relative_to(repo_root)))
-                    and not _should_ignore(`str(path.relative_to(repo_root)), ignore_patterns)
+                    and not _should_ignore(`str(path.relative_to(repo_root)), watch_state.ignore_patterns)
             };
         }
 
@@ -3929,7 +3924,7 @@ impl _create_watch_handler(
         }
 
         def _remember_followed -> None {
-            tree: any = _followed_tree(repo_root, ignore_patterns);
+            tree: any = _followed_tree(repo_root, watch_state.ignore_patterns);
             self.followed_links = `set(tree.links);
             self.outside_roots = _outermost(tree.outside);
             self.inside_roots = _outermost(tree.inside);
@@ -3966,7 +3961,7 @@ impl _create_watch_handler(
                         }
                         continue;
                     }
-                    if relative == "." or _should_ignore(relative, ignore_patterns) {
+                    if relative == "." or _should_ignore(relative, watch_state.ignore_patterns) {
                         continue;
                     }
                     if os.path.islink(candidate) {
@@ -3987,7 +3982,7 @@ impl _create_watch_handler(
                         for link in self.followed_links,
                     )
                         or event.is_directory
-                            and _holds_symlink(candidate, relative, ignore_patterns)
+                            and _holds_symlink(candidate, relative, watch_state.ignore_patterns)
                     {
                         links_changed = True;
                     }
@@ -4024,7 +4019,7 @@ impl _create_watch_handler(
                 self.last_event_at = time.time();
                 self.events_seen += len(events);
                 try {
-                    patterns_before: any = ignore_patterns;
+                    patterns_before: any = watch_state.ignore_patterns;
                     files_updated: any;
                     newly_included: any;
                     (files_updated, newly_included) = self._refresh_ignore_patterns(events) as any;
@@ -4050,7 +4045,7 @@ impl _create_watch_handler(
                         links_changed: any;
                         contents_changed: any;
                         (links_changed, contents_changed) = self._touches_followed(events) as any;
-                        links_changed = links_changed or ignore_patterns is not patterns_before;
+                        links_changed = links_changed or watch_state.ignore_patterns is not patterns_before;
                         if links_changed or contents_changed {
                             files_updated += self._reconcile_followed();
                         }
@@ -4125,7 +4120,7 @@ impl _create_watch_handler(
     }
 
     def _handler_ignore_patterns(_self) -> list[str] {
-        return ignore_patterns;
+        return watch_state.ignore_patterns;
     }
 
     def _handler_last_event_at(_self) -> float | None {

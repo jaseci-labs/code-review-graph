@@ -5,7 +5,7 @@ impl run(repo_path: Path, store, config: dict) -> list[dict] {
         expected: any = sq["expected"];
 
         try {
-            import from code_review_graph.search { hybrid_search }
+            hybrid_search = importlib.import_module("code_review_graph.search").hybrid_search;
             search_results: any = hybrid_search(
                 store,
                 query,

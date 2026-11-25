@@ -8,16 +8,12 @@ impl _resolve_attr(name: str) -> any {
 
 impl __getattr__(name: str) -> any {
     if name in _LAZY_TOOL_NAMES {
-        import importlib;
-
         _tools_mod: any = importlib.import_module("code_review_graph.tools");
         val: any = getattr(_tools_mod, name);
         globals()[name] = val;
         return val;
     }
     if name in _LAZY_PROMPT_NAMES {
-        import importlib;
-
         _prompts_mod: any = importlib.import_module("code_review_graph.prompts");
         val = getattr(_prompts_mod, name);
         globals()[name] = val;
@@ -859,7 +855,7 @@ impl main(
     watch_stop: any = threading.Event();
     try {
         if auto_watch and `root is not None {
-            import from .postprocessing { run_post_processing }
+            run_post_processing = importlib.import_module("code_review_graph.postprocessing").run_post_processing;
 
             watch_store = GraphStore(get_db_path(`root));
             watch_thread = start_watch_thread(
@@ -874,9 +870,9 @@ impl main(
             }
         }
 
-        comptime if target_().os == "windows" {
+        if operator.eq(sys.platform, "win32") {
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy());
-            import from .embeddings { prewarm_local_embeddings }
+            prewarm_local_embeddings = importlib.import_module("code_review_graph.embeddings").prewarm_local_embeddings;
 
             prewarm_local_embeddings();
         }
@@ -887,7 +883,7 @@ impl main(
             if host is None or port is None {
                 raise ValueError("streamable-http transport requires host and port");
             }
-            import from .http_origin_guard { build_http_middleware }
+            build_http_middleware = importlib.import_module("code_review_graph.http_origin_guard").build_http_middleware;
 
             mcp.run(
                 transport="streamable-http",

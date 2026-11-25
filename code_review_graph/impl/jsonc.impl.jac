@@ -329,8 +329,8 @@ impl remove_paths(raw: str, paths: Iterable[Sequence[str | int]]) -> str {
         token
         for token in tokens
         if not `any(
-            operator.le(start, compared_ := token.start) and operator.lt(compared_, end)
-            for (start, end) in merged,
+            operator.le(lo, compared_ := token.start) and operator.lt(compared_, hi)
+            for (lo, hi) in merged,
         )
     ];
     exposed: any = [

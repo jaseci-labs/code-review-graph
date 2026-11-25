@@ -6,6 +6,8 @@ benchmark runners, and report generators for benchmarking graph-based code revie
 
 import from __future__ { annotations }
 
+import importlib;
+
 """Lazy-import runner functions (require pyyaml)."""
 def __getattr__(name: str) -> any;
 

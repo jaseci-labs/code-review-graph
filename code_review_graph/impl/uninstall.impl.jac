@@ -276,8 +276,6 @@ impl _remove_toml_entry(
 impl _remove_dsh_patch_entry(
     path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool
 ) -> None {
-    import importlib;
-
     dsh: any = importlib.import_module("code_review_graph.dsh");
 
     if not path.exists() or not _safe_path(path, boundary, `report) {
@@ -1141,7 +1139,7 @@ impl _process_platform_configs(
     seen: set[tuple[Path, str, str]] = set[any]();
     active_codex_home: Path | None = None;
     if platforms is None or "codex" in platforms {
-        import from .codex_skill { codex_home }
+        codex_home = importlib.import_module("code_review_graph.codex_skill").codex_home;
 
         active_codex_home = codex_home();
     } else {
@@ -1423,7 +1421,9 @@ impl _process_user(
         _remove_tree(user_data, home, `report, dry_run=dry_run);
     }
 
-    import from .codex_skill { codex_home, codex_skill_dir, owned_skill_files }
+    codex_home = importlib.import_module("code_review_graph.codex_skill").codex_home;
+    codex_skill_dir = importlib.import_module("code_review_graph.codex_skill").codex_skill_dir;
+    owned_skill_files = importlib.import_module("code_review_graph.codex_skill").owned_skill_files;
 
     active_codex_home: any = codex_home();
     _remove_hooks(
@@ -1524,7 +1524,7 @@ impl _normalise_repo(path: Path, home: Path, `report: UninstallReport) -> Path |
         return None;
     }
 
-    import from .incremental { find_repo_root }
+    find_repo_root = importlib.import_module("code_review_graph.incremental").find_repo_root;
 
     repository_root: any = find_repo_root(resolved);
     if repository_root is None {

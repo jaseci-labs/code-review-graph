@@ -17,6 +17,8 @@ This module extracts that pipeline so every entry point — MCP tool, CLI
 commands, and watch mode — produces identical results.
 """
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

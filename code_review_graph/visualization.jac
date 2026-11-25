@@ -13,6 +13,8 @@ Supports multiple rendering modes for large graphs:
   file otherwise)
 """
 
+import importlib;
+
 import builtins;
 
 import from __future__ { annotations }

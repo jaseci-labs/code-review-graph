@@ -6,6 +6,8 @@ edges (CALLS, IMPORTS_FROM, INHERITS, IMPLEMENTS, CONTAINS, TESTED_BY, DEPENDS_O
 Supports impact-radius queries and subgraph extraction.
 """
 
+import importlib;
+
 import builtins;
 
 import operator;

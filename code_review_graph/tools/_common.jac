@@ -1,5 +1,7 @@
 """Shared utilities for tool sub-modules."""
 
+import importlib;
+
 import operator;
 
 import from __future__ { annotations }

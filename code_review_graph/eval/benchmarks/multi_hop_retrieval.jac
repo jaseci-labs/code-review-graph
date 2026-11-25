@@ -23,6 +23,8 @@ Tasks are defined per-config under ``multi_hop_tasks:`` in
 ``docs/REPRODUCING.md`` for the schema and the curated canonical task set.
 """
 
+import importlib;
+
 import from __future__ { annotations }
 
 import logging;

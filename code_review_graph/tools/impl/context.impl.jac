@@ -63,7 +63,7 @@ impl get_minimal_context(
         }
         if files {
             try {
-                import from ..changes { analyze_changes }
+                analyze_changes = importlib.import_module("code_review_graph.changes").analyze_changes;
 
                 abs_files: any = [normalize_file_path(`root / f) for f in files];
                 analysis: any = analyze_changes(

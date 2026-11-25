@@ -32,6 +32,8 @@ Sections:
 All of it is read from the local graph; nothing leaves the machine.
 """
 
+import importlib;
+
 import operator;
 
 import from __future__ { annotations }

@@ -4,15 +4,13 @@ impl _process_already_gone(error: OSError) -> bool {
 }
 
 impl _handle_start(args: argparse.Namespace) -> None {
-    import from .daemon {
-        DaemonAlreadyRunningError,
-        WatchDaemon,
-        claim_daemon_lock,
-        is_daemon_running,
-        load_config,
-        reap_orphaned_watchers,
-        write_pid,
-    }
+    import from code_review_graph.daemon { DaemonAlreadyRunningError }
+    WatchDaemon = importlib.import_module("code_review_graph.daemon").WatchDaemon;
+    claim_daemon_lock = importlib.import_module("code_review_graph.daemon").claim_daemon_lock;
+    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
+    load_config = importlib.import_module("code_review_graph.daemon").load_config;
+    reap_orphaned_watchers = importlib.import_module("code_review_graph.daemon").reap_orphaned_watchers;
+    write_pid = importlib.import_module("code_review_graph.daemon").write_pid;
 
     if is_daemon_running() {
         print("Error: Daemon is already running.");
@@ -56,13 +54,11 @@ impl _handle_start(args: argparse.Namespace) -> None {
 }
 
 impl _handle_stop(_args: argparse.Namespace) -> None {
-    import from .daemon {
-        clear_pid,
-        is_daemon_running,
-        pid_alive,
-        read_pid,
-        reap_orphaned_watchers,
-    }
+    clear_pid = importlib.import_module("code_review_graph.daemon").clear_pid;
+    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
+    pid_alive = importlib.import_module("code_review_graph.daemon").pid_alive;
+    read_pid = importlib.import_module("code_review_graph.daemon").read_pid;
+    reap_orphaned_watchers = importlib.import_module("code_review_graph.daemon").reap_orphaned_watchers;
 
     if not is_daemon_running() {
         reaped: any = reap_orphaned_watchers();
@@ -151,7 +147,7 @@ impl _handle_stop(_args: argparse.Namespace) -> None {
 }
 
 impl _reap_watchers_left_behind -> None {
-    import from .daemon { reap_orphaned_watchers }
+    reap_orphaned_watchers = importlib.import_module("code_review_graph.daemon").reap_orphaned_watchers;
 
     for orphan in reap_orphaned_watchers() {
         print(
@@ -165,7 +161,7 @@ impl _reap_watchers_left_behind -> None {
 }
 
 impl _handle_restart(args: argparse.Namespace) -> None {
-    import from .daemon { is_daemon_running }
+    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
 
     if is_daemon_running() {
         _handle_stop(args);
@@ -195,16 +191,14 @@ impl _format_age(seconds: float | None) -> str {
 
 impl _handle_status(_args: argparse.Namespace) -> None {
     orphan: any;
-    import from .daemon {
-        find_orphaned_watchers,
-        is_daemon_running,
-        load_config,
-        load_state,
-        pid_alive,
-        read_pid,
-        read_watch_health,
-        watcher_status,
-    }
+    find_orphaned_watchers = importlib.import_module("code_review_graph.daemon").find_orphaned_watchers;
+    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
+    load_config = importlib.import_module("code_review_graph.daemon").load_config;
+    load_state = importlib.import_module("code_review_graph.daemon").load_state;
+    pid_alive = importlib.import_module("code_review_graph.daemon").pid_alive;
+    read_pid = importlib.import_module("code_review_graph.daemon").read_pid;
+    read_watch_health = importlib.import_module("code_review_graph.daemon").read_watch_health;
+    watcher_status = importlib.import_module("code_review_graph.daemon").watcher_status;
 
     config: any = load_config();
     running: any = is_daemon_running();
@@ -353,7 +347,7 @@ impl _handle_status(_args: argparse.Namespace) -> None {
 }
 
 impl _handle_logs(args: argparse.Namespace) -> None {
-    import from .daemon { load_config }
+    load_config = importlib.import_module("code_review_graph.daemon").load_config;
 
     config: any = load_config();
 
@@ -390,7 +384,8 @@ impl _handle_logs(args: argparse.Namespace) -> None {
 }
 
 impl _handle_add(args: argparse.Namespace) -> None {
-    import from .daemon { add_repo_to_config, is_daemon_running }
+    add_repo_to_config = importlib.import_module("code_review_graph.daemon").add_repo_to_config;
+    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
 
     try {
         add_repo_to_config(args.path, alias=args.alias);
@@ -407,7 +402,9 @@ impl _handle_add(args: argparse.Namespace) -> None {
 }
 
 impl _handle_remove(args: argparse.Namespace) -> None {
-    import from .daemon { is_daemon_running, load_config, remove_repo_from_config }
+    is_daemon_running = importlib.import_module("code_review_graph.daemon").is_daemon_running;
+    load_config = importlib.import_module("code_review_graph.daemon").load_config;
+    remove_repo_from_config = importlib.import_module("code_review_graph.daemon").remove_repo_from_config;
 
     config_before: any = load_config();
     count_before: any = len(config_before.repos);

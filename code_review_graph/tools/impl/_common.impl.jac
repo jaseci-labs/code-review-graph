@@ -117,7 +117,9 @@ impl _resolve_root(repo_root: str | None = None) -> Path {
 }
 
 impl _open_graph_store(db_path: Path, command: str) -> any {
-    import from ..graph { CorruptGraphDatabaseError, GraphStore, discard_corrupt_database }
+    import from code_review_graph.graph { CorruptGraphDatabaseError }
+    GraphStore = importlib.import_module("code_review_graph.graph").GraphStore;
+    discard_corrupt_database = importlib.import_module("code_review_graph.graph").discard_corrupt_database;
 
     try {
         return GraphStore(db_path);
@@ -138,7 +140,7 @@ impl _open_graph_store(db_path: Path, command: str) -> any {
 impl _get_store(
     repo_root: str | None = None, *, db_path: Path | None = None, recover_corrupt: bool = False
 ) -> tuple[GraphStore, Path] {
-    import from ..incremental { assert_graph_serves_root }
+    assert_graph_serves_root = importlib.import_module("code_review_graph.incremental").assert_graph_serves_root;
 
     `root: any = _resolve_root(repo_root);
     if db_path is None {

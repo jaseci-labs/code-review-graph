@@ -804,7 +804,7 @@ impl incremental_detect_communities(
         return 0;
     }
 
-    import from .flows { expand_changed_file_paths }
+    expand_changed_file_paths = importlib.import_module("code_review_graph.flows").expand_changed_file_paths;
 
     expanded: any = expand_changed_file_paths(store, changed_files, repo_root=repo_root);
     conn: any = store._conn;

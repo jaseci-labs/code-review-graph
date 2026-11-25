@@ -7,6 +7,8 @@ measurement. (Previously a failure silently produced ``graph_tokens=0`` and
 ``ratio = naive / 1``, inflating the results.)
 """
 
+import importlib;
+
 import from __future__ { annotations }
 
 import json;
