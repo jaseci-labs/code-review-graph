@@ -3384,6 +3384,7 @@ class CodeParser(builtins.object) {
         self._function_types = _FUNCTION_TYPES;
         self._import_types = _IMPORT_TYPES;
         self._call_types = _CALL_TYPES;
+        self._node_type_sets = {};
         self._custom_languages = {};
         if repo_root is not None {
             self._custom_languages = load_custom_languages(
@@ -11386,6 +11387,21 @@ class CodeParser(builtins.object) {
         return None;
     }
 
+    """The class, function, import and call node types of `language`, made once per parser."""
+    def _type_sets(language: str) -> any {
+        sets: any = self._node_type_sets.get(language);
+        if sets is None {
+            sets = (
+                frozenset(self._class_types.get(language, [])),
+                frozenset(self._function_types.get(language, [])),
+                frozenset(self._import_types.get(language, [])),
+                frozenset(self._call_types.get(language, [])),
+            );
+            self._node_type_sets[language] = sets;
+        }
+        return sets;
+    }
+
     def _extract_from_tree(
         `root,
         source: bytes,
@@ -11403,10 +11419,7 @@ class CodeParser(builtins.object) {
         if _depth > self._MAX_AST_DEPTH {
             return;
         }
-        class_types: any = `set(self._class_types.get(language, []));
-        func_types: any = `set(self._function_types.get(language, []));
-        import_types: any = `set(self._import_types.get(language, []));
-        call_types: any = `set(self._call_types.get(language, []));
+        (class_types, func_types, import_types, call_types) = self._type_sets(language);
 
         for child in `root.children {
             node_type: any = child.type;
