@@ -1,4 +1,4 @@
-impl _progress(msg: str, *args_: object) -> None {
+impl _progress(msg: str, *args_: object) {
     args: any = tuple(args_);
     logger.log(_progress_level.get(), msg, *args);
 }
@@ -51,7 +51,7 @@ impl get_schema_version(conn: sqlite3.Connection) -> int {
     }
 }
 
-impl _set_schema_version(conn: sqlite3.Connection, version: int) -> None {
+impl _set_schema_version(conn: sqlite3.Connection, version: int) {
     conn.execute(
         "INSERT OR REPLACE INTO metadata (key, value) VALUES ('schema_version', ?)",
         (`str(version),),
@@ -77,7 +77,7 @@ impl _table_exists(conn: sqlite3.Connection, table: str) -> bool {
     return operator.gt(row[0], 0);
 }
 
-impl ensure_nodes_fts_state(conn: sqlite3.Connection) -> None {
+impl ensure_nodes_fts_state(conn: sqlite3.Connection) {
     name: any;
     columns: any = ", ".join(f"{name} TEXT" for name in NODES_FTS_COLUMNS);
     conn.execute(
@@ -97,7 +97,7 @@ impl ensure_nodes_fts_state(conn: sqlite3.Connection) -> None {
     );
 }
 
-impl _migrate_v2(conn: sqlite3.Connection) -> None {
+impl _migrate_v2(conn: sqlite3.Connection) {
     if not _has_column(conn, "nodes", "signature") {
         if _apply(conn, "ALTER TABLE nodes ADD COLUMN signature TEXT", what="nodes.signature") {
             _progress("Migration v2: added 'signature' column to nodes");
@@ -105,7 +105,7 @@ impl _migrate_v2(conn: sqlite3.Connection) -> None {
     }
 }
 
-impl _migrate_v3(conn: sqlite3.Connection) -> None {
+impl _migrate_v3(conn: sqlite3.Connection) {
     conn.execute(
         "\n        CREATE TABLE IF NOT EXISTS flows (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            name TEXT NOT NULL,\n            entry_point_id INTEGER NOT NULL,\n            depth INTEGER NOT NULL,\n            node_count INTEGER NOT NULL,\n            file_count INTEGER NOT NULL,\n            criticality REAL NOT NULL DEFAULT 0.0,\n            path_json TEXT NOT NULL,\n            created_at TEXT NOT NULL DEFAULT (datetime('now')),\n            updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n        )\n    ",
     );
@@ -120,7 +120,7 @@ impl _migrate_v3(conn: sqlite3.Connection) -> None {
     _progress("Migration v3: created flows and flow_memberships tables");
 }
 
-impl _migrate_v4(conn: sqlite3.Connection) -> None {
+impl _migrate_v4(conn: sqlite3.Connection) {
     conn.execute(
         "\n        CREATE TABLE IF NOT EXISTS communities (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            name TEXT NOT NULL,\n            level INTEGER NOT NULL DEFAULT 0,\n            parent_id INTEGER,\n            cohesion REAL NOT NULL DEFAULT 0.0,\n            size INTEGER NOT NULL DEFAULT 0,\n            dominant_language TEXT,\n            description TEXT,\n            created_at TEXT NOT NULL DEFAULT (datetime('now'))\n        )\n    ",
     );
@@ -139,7 +139,7 @@ impl _migrate_v4(conn: sqlite3.Connection) -> None {
     _progress("Migration v4: created communities table");
 }
 
-impl _migrate_v5(conn: sqlite3.Connection) -> None {
+impl _migrate_v5(conn: sqlite3.Connection) {
     if not _table_exists(conn, "nodes_fts") {
         if _apply(
             conn,
@@ -151,7 +151,7 @@ impl _migrate_v5(conn: sqlite3.Connection) -> None {
     }
 }
 
-impl _migrate_v6(conn: sqlite3.Connection) -> None {
+impl _migrate_v6(conn: sqlite3.Connection) {
     conn.execute(
         "\n        CREATE TABLE IF NOT EXISTS community_summaries (\n            community_id INTEGER PRIMARY KEY,\n            name TEXT NOT NULL,\n            purpose TEXT DEFAULT '',\n            key_symbols TEXT DEFAULT '[]',\n            risk TEXT DEFAULT 'unknown',\n            size INTEGER DEFAULT 0,\n            dominant_language TEXT DEFAULT '',\n            FOREIGN KEY (community_id) REFERENCES communities(id)\n        )\n    ",
     );
@@ -167,7 +167,7 @@ impl _migrate_v6(conn: sqlite3.Connection) -> None {
     );
 }
 
-impl _migrate_v7(conn: sqlite3.Connection) -> None {
+impl _migrate_v7(conn: sqlite3.Connection) {
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_edges_target_kind ON edges(target_qualified, kind)"
     );
@@ -177,7 +177,7 @@ impl _migrate_v7(conn: sqlite3.Connection) -> None {
     _progress("Migration v7: added compound edge indexes");
 }
 
-impl _migrate_v8(conn: sqlite3.Connection) -> None {
+impl _migrate_v8(conn: sqlite3.Connection) {
     if not _has_column(conn, "edges", "line") {
         _progress("Migration v8: skipped, edges.line is not present");
         return;
@@ -188,7 +188,7 @@ impl _migrate_v8(conn: sqlite3.Connection) -> None {
     _progress("Migration v8: created composite edge index");
 }
 
-impl _migrate_v9(conn: sqlite3.Connection) -> None {
+impl _migrate_v9(conn: sqlite3.Connection) {
     if not _has_column(conn, "edges", "confidence") {
         _apply(
             conn,
@@ -206,7 +206,7 @@ impl _migrate_v9(conn: sqlite3.Connection) -> None {
     _progress("Migration v9: added edge confidence columns");
 }
 
-impl _migrate_v10(conn: sqlite3.Connection) -> None {
+impl _migrate_v10(conn: sqlite3.Connection) {
     if not _has_column(conn, "nodes", "symbol") {
         _apply(conn, "ALTER TABLE nodes ADD COLUMN symbol TEXT", what="nodes.symbol");
     }
@@ -224,7 +224,7 @@ impl target_resolution_expr(alias: str = "edges") -> str {
     return _TARGET_RESOLUTION_TEMPLATE.format(alias=alias);
 }
 
-impl _migrate_v11(conn: sqlite3.Connection) -> None {
+impl _migrate_v11(conn: sqlite3.Connection) {
     if not _has_column(conn, "edges", "target_resolution") {
         _apply(
             conn,
@@ -243,7 +243,7 @@ impl _migrate_v11(conn: sqlite3.Connection) -> None {
     _progress("Migration v11: added indexed edges.target_resolution column");
 }
 
-impl _migrate_v12(conn: sqlite3.Connection) -> None {
+impl _migrate_v12(conn: sqlite3.Connection) {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS nodes_fts_state (  node_id INTEGER PRIMARY KEY,  name TEXT,  qualified_name TEXT,  file_path TEXT,  signature TEXT)",
     );
@@ -253,7 +253,7 @@ impl _migrate_v12(conn: sqlite3.Connection) -> None {
     _progress("Migration v12: added nodes_fts_state index mirror");
 }
 
-impl _migrate_v13(conn: sqlite3.Connection) -> None {
+impl _migrate_v13(conn: sqlite3.Connection) {
     node_index_tokens = lazy("graph", "node_index_tokens");
 
     if not _has_column(conn, "nodes", "docstring") {
@@ -301,14 +301,14 @@ impl _migrate_v13(conn: sqlite3.Connection) -> None {
     _progress("Migration v13: indexed nodes.docstring and nodes.name_tokens");
 }
 
-impl _migrate_v14(conn: sqlite3.Connection) -> None {
+impl _migrate_v14(conn: sqlite3.Connection) {
     updated: any = conn.execute(
         "UPDATE nodes SET file_hash = '' WHERE kind = 'File' AND language = 'ruby' AND file_hash IS NOT NULL AND file_hash != ''",
     ).rowcount;
     _progress("Migration v14: invalidated %d Ruby file(s) for re-keying on next update", updated);
 }
 
-impl _migrate_v15(conn: sqlite3.Connection) -> None {
+impl _migrate_v15(conn: sqlite3.Connection) {
     for statement in (
         "DROP TABLE IF EXISTS community_summaries",
         "DROP TABLE IF EXISTS flow_snapshots",
@@ -322,7 +322,7 @@ impl _migrate_v15(conn: sqlite3.Connection) -> None {
     _progress("Migration v15: dropped unread tables and covered indexes");
 }
 
-impl _run_one(conn: sqlite3.Connection, version: int) -> None {
+impl _run_one(conn: sqlite3.Connection, version: int) {
     last: sqlite3.Error | None = None;
     for attempt in range(_MAX_ATTEMPTS) {
         try {
@@ -356,7 +356,7 @@ impl _is_new_database(conn: sqlite3.Connection, current: int) -> bool {
     return conn.execute("SELECT 1 FROM nodes LIMIT 1").fetchone() is None;
 }
 
-impl run_migrations(conn: sqlite3.Connection) -> None {
+impl run_migrations(conn: sqlite3.Connection) {
     current: any;
     current = get_schema_version(conn);
     if current >= LATEST_VERSION {

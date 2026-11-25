@@ -87,7 +87,7 @@ impl _safe_target(`root: Path, target: Path) -> bool {
     return True;
 }
 
-impl _write_manifest(skill_dir: Path, hashes: dict[str, str]) -> None {
+impl _write_manifest(skill_dir: Path, hashes: dict[str, str]) {
     payload: any = {"version": 1, "files": `dict(sorted(hashes.items()))};
     install_plan.write_text(
         skill_dir / MANIFEST_NAME, json.dumps(payload, indent=2, ensure_ascii=False) + "\n"

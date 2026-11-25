@@ -6,14 +6,14 @@ impl EmbeddingProvider.dimension -> int {}
 
 impl EmbeddingProvider.name -> str {}
 
-impl clear_model_cache -> None {
+impl clear_model_cache {
     with _MODEL_INIT_LOCK {
         _MODEL_CACHE.clear();
     }
     release_os_memory();
 }
 
-impl prewarm_local_embeddings(model_name: str | None = None) -> None {
+impl prewarm_local_embeddings(model_name: str | None = None) {
     resolved: any = model_name or os.environ.get("CRG_EMBEDDING_MODEL", LOCAL_DEFAULT_MODEL);
     try {
         LocalEmbeddingProvider(resolved)._get_model();
@@ -442,7 +442,7 @@ impl VoyageEmbeddingProvider.init(
     self._host_key = OpenAIEmbeddingProvider._make_host_key(self._base_url);
 }
 
-impl VoyageEmbeddingProvider._wait_for_rate_limit_slot -> None {
+impl VoyageEmbeddingProvider._wait_for_rate_limit_slot {
     if self._min_interval_sec <= 0 {
         return;
     }
@@ -617,7 +617,7 @@ impl _is_localhost_url(url: str) -> bool {
     return host in {"127.0.0.1", "localhost", "0.0.0.0", "::1"};
 }
 
-impl _warn_cloud_egress(provider_name: str) -> None {
+impl _warn_cloud_egress(provider_name: str) {
     if os.environ.get("CRG_ACCEPT_CLOUD_EMBEDDINGS", "").strip() == "1" {
         return;
     }
@@ -886,11 +886,11 @@ impl EmbeddingStore.__enter__ -> "EmbeddingStore" {
     return self;
 }
 
-impl EmbeddingStore.__exit__(exc_type, exc_val, exc_tb) -> None {
+impl EmbeddingStore.__exit__(exc_type, exc_val, exc_tb) {
     self.close();
 }
 
-impl EmbeddingStore.close -> None {
+impl EmbeddingStore.close {
     try {
         self._conn.execute("PRAGMA shrink_memory");
     } except sqlite3.Error {}
@@ -1135,14 +1135,14 @@ impl EmbeddingStore._vector_cache_token(db: str) -> tuple[tuple[int, int], int] 
     return (file_id, watcher[1].execute("PRAGMA data_version").fetchall()[0][0]);
 }
 
-impl EmbeddingStore._close_vector_cache_watcher(db: str) -> None {
+impl EmbeddingStore._close_vector_cache_watcher(db: str) {
     watcher: any = cls._vector_cache_watchers.pop(db, None);
     if watcher is not None {
         watcher[1].close();
     }
 }
 
-impl EmbeddingStore.clear_vector_cache -> None {
+impl EmbeddingStore.clear_vector_cache {
     with cls._vector_cache_lock {
         cls._vector_cache.clear();
         for db in `list(cls._vector_cache_watchers) {
@@ -1162,7 +1162,7 @@ impl EmbeddingStore._search_pure_python(
     );
 }
 
-impl EmbeddingStore.remove_node(qualified_name: str) -> None {
+impl EmbeddingStore.remove_node(qualified_name: str) {
     self._conn.execute("DELETE FROM embeddings WHERE qualified_name = ?", (qualified_name,));
     self._conn.commit();
 }

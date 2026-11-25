@@ -22,7 +22,7 @@ impl __getattr__(name: str) -> Path {
 }
 
 impl __dir__ -> list[str] {
-    return sorted(`set(globals()).union(_LAZY_PATHS));
+    return sorted(`list(globals()) + [name for name in _LAZY_PATHS if name not in globals()]);
 }
 
 impl _WindowsJob.init {
@@ -94,7 +94,7 @@ impl _WindowsJob.init {
     }
 }
 
-impl _WindowsJob.assign(proc: subprocess.Popen[bytes]) -> None {
+impl _WindowsJob.assign(proc: subprocess.Popen[bytes]) {
     process_handle: any = getattr(proc, "_handle", None);
     if process_handle is None {
         raise RuntimeError("Windows subprocess has no process handle");
@@ -104,7 +104,7 @@ impl _WindowsJob.assign(proc: subprocess.Popen[bytes]) -> None {
     }
 }
 
-impl _WindowsJob.close -> None {
+impl _WindowsJob.close {
     if self._handle {
         self._kernel32.CloseHandle(self._handle);
         self._handle = None;
@@ -220,7 +220,7 @@ impl _serialize_toml(config: DaemonConfig) -> str {
     return "\n".join(lines);
 }
 
-impl save_config(config: DaemonConfig, path: Path | None = None) -> None {
+impl save_config(config: DaemonConfig, path: Path | None = None) {
     config_path: any = path or default_config_path();
     config_path.parent.mkdir(parents=True, exist_ok=True);
     config_path.write_text(_serialize_toml(config), encoding="utf-8");
@@ -335,13 +335,13 @@ impl acquire_daemon_lock(path: Path | None = None) -> bool {
     return True;
 }
 
-impl claim_daemon_lock(path: Path | None = None) -> None {
+impl claim_daemon_lock(path: Path | None = None) {
     if not acquire_daemon_lock(path) {
         raise DaemonAlreadyRunningError(read_pid(path), daemon_lock_path(path));
     }
 }
 
-impl release_daemon_lock(path: Path | None = None) -> None {
+impl release_daemon_lock(path: Path | None = None) {
     handle: any = _lock_handles.pop(`str(daemon_lock_path(path)), None);
     if handle is not None {
         try {
@@ -407,7 +407,7 @@ impl _looks_like_our_daemon(pid: int) -> bool {
     return "crg-daemon" in command or "code_review_graph.daemon" in command;
 }
 
-impl write_pid(pid: int | None = None, path: Path | None = None) -> None {
+impl write_pid(pid: int | None = None, path: Path | None = None) {
     pid_path: any = path or default_pid_path();
     pid_path.parent.mkdir(parents=True, exist_ok=True);
     claim_daemon_lock(path);
@@ -426,7 +426,7 @@ impl read_pid(path: Path | None = None) -> int | None {
     }
 }
 
-impl clear_pid(path: Path | None = None) -> None {
+impl clear_pid(path: Path | None = None) {
     pid_path: any = path or default_pid_path();
     release_daemon_lock(path);
     try {
@@ -526,7 +526,7 @@ impl _is_pid_alive(pid: int) -> bool {
     return pid_alive(pid);
 }
 
-impl clear_state(path: Path | None = None) -> None {
+impl clear_state(path: Path | None = None) {
     state_path: any = path or default_state_path();
     try {
         state_path.unlink(missing_ok=True);
@@ -592,7 +592,7 @@ impl reap_orphaned_watchers(
     return orphans;
 }
 
-impl _clear_health_left_by(repo_path: str, pid: Any) -> None {
+impl _clear_health_left_by(repo_path: str, pid: Any) {
     health: any = read_watch_health(repo_path);
     publisher: any = health.get("pid") if isinstance(health, `dict) else None;
     if isinstance(publisher, `int)
@@ -662,7 +662,7 @@ impl read_watch_health(
     return data;
 }
 
-impl clear_watch_health(repo_root: str | Path) -> None {
+impl clear_watch_health(repo_root: str | Path) {
     try {
         watch_health_path(repo_root).unlink(missing_ok=True);
     } except OSError {}
@@ -703,7 +703,7 @@ impl ConfigWatcher.init(config_path: Path, callback: Callable[[], None], poll_in
     self._stop_event = threading.Event();
 }
 
-impl ConfigWatcher.start -> None {
+impl ConfigWatcher.start {
     watcher: any;
     try {
         import from watchdog.events { FileSystemEventHandler }
@@ -711,7 +711,7 @@ impl ConfigWatcher.start -> None {
 
         watcher = self;
 
-        def on_modified(_handler: Any, event: Any) -> None {
+        def on_modified(_handler: Any, event: Any) {
             if Path(event.src_path).resolve() == watcher._config_path.resolve() {
                 watcher._on_config_changed();
             }
@@ -731,7 +731,7 @@ impl ConfigWatcher.start -> None {
     }
 }
 
-impl ConfigWatcher.stop -> None {
+impl ConfigWatcher.stop {
     self._stop_event.set();
     if self._observer is not None {
         self._observer.stop();
@@ -744,12 +744,12 @@ impl ConfigWatcher.stop -> None {
     }
 }
 
-impl ConfigWatcher._start_polling -> None {
+impl ConfigWatcher._start_polling {
     if self._config_path.exists() {
         self._last_mtime = self._config_path.stat().st_mtime;
     }
 
-    def _poll -> None {
+    def _poll {
         while not self._stop_event.is_set() {
             self._stop_event.wait(self._poll_interval);
             if self._stop_event.is_set() {
@@ -772,7 +772,7 @@ impl ConfigWatcher._start_polling -> None {
     self._poll_thread.start();
 }
 
-impl ConfigWatcher._on_config_changed -> None {
+impl ConfigWatcher._on_config_changed {
     logger.info("Config file changed, triggering reconciliation");
     try {
         self._callback();
@@ -807,7 +807,7 @@ impl WatchDaemon.init(config: DaemonConfig | None = None, config_path: Path | No
     self._windows_job = _WindowsJob() if sys.platform == "win32" else None;
 }
 
-impl WatchDaemon.start -> None {
+impl WatchDaemon.start {
     logger.info("Starting daemon '%s'", self._config.session_name);
     Registry = lazy("registry", "Registry");
 
@@ -835,7 +835,7 @@ impl WatchDaemon.start -> None {
     print(msg);
 }
 
-impl WatchDaemon.stop -> None {
+impl WatchDaemon.stop {
     try {
         self.stop_config_watcher();
         self.stop_health_checker();
@@ -859,7 +859,7 @@ impl WatchDaemon.stop -> None {
     }
 }
 
-impl WatchDaemon.reconcile(new_config: DaemonConfig | None = None) -> None {
+impl WatchDaemon.reconcile(new_config: DaemonConfig | None = None) {
     alias: any;
     if new_config is not None {
         self._config = new_config;
@@ -966,7 +966,7 @@ impl WatchDaemon.status -> dict[str, Any] {
     return {"session_name": self._config.session_name, "running": True, "repos": repos};
 }
 
-impl WatchDaemon.start_config_watcher -> None {
+impl WatchDaemon.start_config_watcher {
     self._config_watcher = ConfigWatcher(
         config_path=self._config_path,
         callback=self._on_config_change,
@@ -975,7 +975,7 @@ impl WatchDaemon.start_config_watcher -> None {
     self._config_watcher.start();
 }
 
-impl WatchDaemon._on_config_change -> None {
+impl WatchDaemon._on_config_change {
     try {
         new_config: any = load_config(self._config_path);
     } except Exception {
@@ -985,14 +985,14 @@ impl WatchDaemon._on_config_change -> None {
     self.reconcile(new_config);
 }
 
-impl WatchDaemon.stop_config_watcher -> None {
+impl WatchDaemon.stop_config_watcher {
     if self._config_watcher is not None {
         self._config_watcher.stop();
         self._config_watcher = None;
     }
 }
 
-impl WatchDaemon.start_health_checker -> None {
+impl WatchDaemon.start_health_checker {
     self._health_stop = threading.Event();
     self._health_thread = threading.Thread(
         target=self._health_loop, daemon=True, name="health-checker"
@@ -1001,7 +1001,7 @@ impl WatchDaemon.start_health_checker -> None {
     logger.info("Health checker started (interval=%ds)", _HEALTH_CHECK_INTERVAL);
 }
 
-impl WatchDaemon.stop_health_checker -> None {
+impl WatchDaemon.stop_health_checker {
     if hasattr(self, "_health_stop") {
         self._health_stop.set();
     }
@@ -1011,7 +1011,7 @@ impl WatchDaemon.stop_health_checker -> None {
     }
 }
 
-impl WatchDaemon._health_loop -> None {
+impl WatchDaemon._health_loop {
     while not self._health_stop.is_set() {
         self._health_stop.wait(_HEALTH_CHECK_INTERVAL);
         if self._health_stop.is_set() {
@@ -1038,7 +1038,7 @@ impl WatchDaemon.restart_count(alias: str) -> int {
     return `int(self._restarts.get(alias, {}).get("count", 0));
 }
 
-impl WatchDaemon._check_health -> None {
+impl WatchDaemon._check_health {
     restarted: any = False;
     with self._lock {
         for (alias, repo) in `list(self._current_repos.items()) {
@@ -1085,7 +1085,7 @@ impl WatchDaemon._check_health -> None {
     }
 }
 
-impl WatchDaemon.daemonize -> None {
+impl WatchDaemon.daemonize {
     if operator.eq(sys.platform, "win32") {
         logger.warning("Forking is not supported on Windows — running in foreground");
         write_pid();
@@ -1121,8 +1121,8 @@ impl WatchDaemon.daemonize -> None {
     logger.info("Daemonized (PID %d)", os.getpid());
 }
 
-impl WatchDaemon._setup_signal_handlers -> None {
-    def _handle_sigterm(signum: int, frame: Any) -> None {
+impl WatchDaemon._setup_signal_handlers {
+    def _handle_sigterm(signum: int, frame: Any) {
         logger.info("Received signal %d — shutting down", signum);
         self.stop();
         sys.exit(0);
@@ -1134,7 +1134,7 @@ impl WatchDaemon._setup_signal_handlers -> None {
     }
 }
 
-impl WatchDaemon.run_forever -> None {
+impl WatchDaemon.run_forever {
     try {
         while True {
             time.sleep(1);
@@ -1145,7 +1145,7 @@ impl WatchDaemon.run_forever -> None {
     }
 }
 
-impl WatchDaemon._save_state -> None {
+impl WatchDaemon._save_state {
     state: dict[str, dict[str, Any]] = {};
     for (alias, proc) in self._children.items() {
         repo: any = self._current_repos.get(alias);
@@ -1159,7 +1159,7 @@ impl WatchDaemon._save_state -> None {
     }
 }
 
-impl WatchDaemon._clear_state -> None {
+impl WatchDaemon._clear_state {
     try {
         self._state_path.unlink(missing_ok=True);
     } except OSError {}
@@ -1181,7 +1181,7 @@ impl WatchDaemon._existing_watcher(repo: WatchRepo) -> int | None {
     return pid if is_our_watcher(pid, repo.path) else None;
 }
 
-impl WatchDaemon._start_watcher(repo: WatchRepo) -> None {
+impl WatchDaemon._start_watcher(repo: WatchRepo) {
     existing: any = self._existing_watcher(repo);
     if existing is not None {
         logger.warning(
@@ -1267,7 +1267,7 @@ impl WatchDaemon._start_watcher(repo: WatchRepo) -> None {
 
 impl WatchDaemon._terminate_child(
     alias: str, proc: subprocess.Popen[bytes], repo_path: str | None = None
-) -> None {
+) {
     if repo_path {
         clear_watch_health(repo_path);
     }
@@ -1286,7 +1286,7 @@ impl WatchDaemon._terminate_child(
     }
 }
 
-impl WatchDaemon._initial_build(repo: WatchRepo) -> None {
+impl WatchDaemon._initial_build(repo: WatchRepo) {
     logger.info("Building initial graph for %s...", repo.alias);
 
     crg_bin: any = shutil.which("code-review-graph");

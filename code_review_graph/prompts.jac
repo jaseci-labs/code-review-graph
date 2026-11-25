@@ -1,3 +1,5 @@
+import from __future__ { annotations }
+
 """MCP prompt templates for Code Review Graph.
 
 Provides 5 pre-built prompt workflows, all enforcing token-efficient
@@ -9,8 +11,6 @@ detail_level="minimal" first patterns with get_minimal_context_tool entry point.
 4. onboard_developer - new dev orientation using stats, architecture, flows
 5. pre_merge_check  - PR readiness with risk scoring, test gaps, dead code
 """
-
-import from __future__ { annotations }
 
 import from fastmcp.prompts { Message }
 

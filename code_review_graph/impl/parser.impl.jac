@@ -43,35 +43,35 @@ impl _PythonScopeBindingVisitor.init {
     self.names = set[any]();
 }
 
-impl _PythonScopeBindingVisitor.visit_Name(`node: ast.Name) -> None {
+impl _PythonScopeBindingVisitor.visit_Name(`node: ast.Name) {
     if isinstance(`node.ctx, (ast.Store, ast.Del)) {
         self.names.add(`node.id);
     }
 }
 
-impl _PythonScopeBindingVisitor.visit_FunctionDef(`node: ast.FunctionDef) -> None {
+impl _PythonScopeBindingVisitor.visit_FunctionDef(`node: ast.FunctionDef) {
     self.names.add(`node.name);
 }
 
-impl _PythonScopeBindingVisitor.visit_AsyncFunctionDef(`node: ast.AsyncFunctionDef) -> None {
+impl _PythonScopeBindingVisitor.visit_AsyncFunctionDef(`node: ast.AsyncFunctionDef) {
     self.names.add(`node.name);
 }
 
-impl _PythonScopeBindingVisitor.visit_ClassDef(`node: ast.ClassDef) -> None {
+impl _PythonScopeBindingVisitor.visit_ClassDef(`node: ast.ClassDef) {
     self.names.add(`node.name);
 }
 
-impl _PythonScopeBindingVisitor.visit_Lambda(`node: ast.Lambda) -> None {
+impl _PythonScopeBindingVisitor.visit_Lambda(`node: ast.Lambda) {
     return;
 }
 
-impl _PythonScopeBindingVisitor.visit_Import(`node: ast.Import) -> None {
+impl _PythonScopeBindingVisitor.visit_Import(`node: ast.Import) {
     for alias in `node.names {
         self.names.add(alias.asname or alias.name.split(".", 1)[0]);
     }
 }
 
-impl _PythonScopeBindingVisitor.visit_ImportFrom(`node: ast.ImportFrom) -> None {
+impl _PythonScopeBindingVisitor.visit_ImportFrom(`node: ast.ImportFrom) {
     for alias in `node.names {
         if alias.name != "*" {
             self.names.add(alias.asname or alias.name);
@@ -79,7 +79,7 @@ impl _PythonScopeBindingVisitor.visit_ImportFrom(`node: ast.ImportFrom) -> None 
     }
 }
 
-impl _PythonScopeBindingVisitor.visit_Global(`node: ast.Global) -> None {
+impl _PythonScopeBindingVisitor.visit_Global(`node: ast.Global) {
     self.names.update(`node.names);
 }
 
@@ -222,25 +222,25 @@ impl _PythonUnreachableCallVisitor.init(
     self._typing_modules = typing_modules;
 }
 
-impl _PythonUnreachableCallVisitor.visit_Module(`node: ast.Module) -> None {
+impl _PythonUnreachableCallVisitor.visit_Module(`node: ast.Module) {
     self._visit_statements(`node.body, dead=False);
 }
 
-impl _PythonUnreachableCallVisitor.visit_Call(`node: ast.Call) -> None {
+impl _PythonUnreachableCallVisitor.visit_Call(`node: ast.Call) {
     if self._dead {
         self.positions.add((`node.lineno, `node.col_offset));
     }
     self.generic_visit(`node);
 }
 
-impl _PythonUnreachableCallVisitor.visit_Attribute(`node: ast.Attribute) -> None {
+impl _PythonUnreachableCallVisitor.visit_Attribute(`node: ast.Attribute) {
     if self._dead {
         self.positions.add((`node.lineno, `node.col_offset));
     }
     self.generic_visit(`node);
 }
 
-impl _PythonUnreachableCallVisitor.visit_If(`node: ast.If) -> None {
+impl _PythonUnreachableCallVisitor.visit_If(`node: ast.If) {
     if self._dead {
         self.visit(`node.test);
     }
@@ -249,15 +249,15 @@ impl _PythonUnreachableCallVisitor.visit_If(`node: ast.If) -> None {
     self._visit_statements(`node.orelse, dead=truth is True);
 }
 
-impl _PythonUnreachableCallVisitor.visit_FunctionDef(`node: ast.FunctionDef) -> None {
+impl _PythonUnreachableCallVisitor.visit_FunctionDef(`node: ast.FunctionDef) {
     self._visit_function(`node);
 }
 
-impl _PythonUnreachableCallVisitor.visit_AsyncFunctionDef(`node: ast.AsyncFunctionDef) -> None {
+impl _PythonUnreachableCallVisitor.visit_AsyncFunctionDef(`node: ast.AsyncFunctionDef) {
     self._visit_function(`node);
 }
 
-impl _PythonUnreachableCallVisitor.visit_ClassDef(`node: ast.ClassDef) -> None {
+impl _PythonUnreachableCallVisitor.visit_ClassDef(`node: ast.ClassDef) {
     if self._dead {
         for decorator in `node.decorator_list {
             self.visit(decorator);
@@ -285,9 +285,7 @@ impl _PythonUnreachableCallVisitor.visit_ClassDef(`node: ast.ClassDef) -> None {
     self._typing_modules = outer_modules;
 }
 
-impl _PythonUnreachableCallVisitor._visit_function(
-    `node: ast.FunctionDef | ast.AsyncFunctionDef
-) -> None {
+impl _PythonUnreachableCallVisitor._visit_function(`node: ast.FunctionDef | ast.AsyncFunctionDef) {
     if self._dead {
         for decorator in `node.decorator_list {
             self.visit(decorator);
@@ -336,9 +334,7 @@ impl _PythonUnreachableCallVisitor._visit_function(
     self._typing_modules = outer_modules;
 }
 
-impl _PythonUnreachableCallVisitor._visit_statements(
-    statements: list[ast.stmt], *, dead: bool
-) -> None {
+impl _PythonUnreachableCallVisitor._visit_statements(statements: list[ast.stmt], *, dead: bool) {
     outer_dead: any = self._dead;
     is_dead: any = outer_dead or dead;
     self._dead = is_dead;
@@ -406,21 +402,21 @@ impl _python_unreachable_call_positions(source: bytes) -> frozenset[tuple[int, i
     return frozenset(`visitor.positions);
 }
 
-impl _PythonUnreachableImportVisitor.visit_Call(`node: ast.Call) -> None {
+impl _PythonUnreachableImportVisitor.visit_Call(`node: ast.Call) {
     self.generic_visit(`node);
 }
 
-impl _PythonUnreachableImportVisitor.visit_Attribute(`node: ast.Attribute) -> None {
+impl _PythonUnreachableImportVisitor.visit_Attribute(`node: ast.Attribute) {
     self.generic_visit(`node);
 }
 
-impl _PythonUnreachableImportVisitor.visit_Import(`node: ast.Import) -> None {
+impl _PythonUnreachableImportVisitor.visit_Import(`node: ast.Import) {
     if self._dead {
         self.positions.add((`node.lineno, `node.col_offset));
     }
 }
 
-impl _PythonUnreachableImportVisitor.visit_ImportFrom(`node: ast.ImportFrom) -> None {
+impl _PythonUnreachableImportVisitor.visit_ImportFrom(`node: ast.ImportFrom) {
     if self._dead {
         self.positions.add((`node.lineno, `node.col_offset));
     }
@@ -676,13 +672,13 @@ impl _parser_load_probe_succeeds(grammar: str, timeout_seconds: float | None = N
     }
 }
 
-impl _mark_parser_unavailable(grammar: str) -> None {
+impl _mark_parser_unavailable(grammar: str) {
     with _PARSER_PROBE_LOCK {
         _PARSER_PROBE_RESULTS[grammar] = False;
     }
 }
 
-impl _clear_parser_probe_cache -> None {
+impl _clear_parser_probe_cache {
     with _PARSER_PROBE_LOCK {
         _PARSER_PROBE_RESULTS.clear();
         _PARSER_PROBE_FAILURE_DETAILS.clear();
@@ -854,14 +850,14 @@ impl _with_post_init(cls: any) -> any {
     return cls;
 }
 
-impl NodeInfo.postinit -> None {
+impl NodeInfo.postinit {
     self.file_path = normalize_file_path(self.file_path);
     if self.kind == "File" {
         self.name = normalize_file_path(self.name);
     }
 }
 
-impl EdgeInfo.postinit -> None {
+impl EdgeInfo.postinit {
     self.file_path = normalize_file_path(self.file_path);
 }
 
@@ -2283,7 +2279,7 @@ impl CodeParser._get_parser(language: str) -> any {
     return self._parsers[language];
 }
 
-impl CodeParser.clear_caches(include_parsers: bool = False, release_memory: bool = True) -> None {
+impl CodeParser.clear_caches(include_parsers: bool = False, release_memory: bool = True) {
     self._dbt_model_paths_cache.clear();
     self._module_file_cache.clear();
     self._ignore_patterns_cache.clear();
@@ -3427,7 +3423,7 @@ impl CodeParser._add_html_section(
     test_file: bool,
     sections: dict[str, NodeInfo],
     file_node: NodeInfo,
-) -> None {
+) {
     html_id: any;
     html_id = attributes.get("id", "").strip();
     if tag not in _HTML_SECTION_TAGS
@@ -3572,7 +3568,7 @@ impl CodeParser._html_handler_calls(handler: str) -> list[str] {
 
 impl CodeParser._add_html_script_import(
     src: str, file_path: str, line: int, edges: list[EdgeInfo]
-) -> None {
+) {
     src = src.strip();
     if not _html_is_local_src(src) {
         return;
@@ -3696,9 +3692,7 @@ impl CodeParser._parse_xslt(path: Path, source: bytes) -> tuple[list[NodeInfo], 
     return (nodes, edges);
 }
 
-impl CodeParser._add_xslt_import(
-    element: Any, how: str, file_path: str, edges: list[EdgeInfo]
-) -> None {
+impl CodeParser._add_xslt_import(element: Any, how: str, file_path: str, edges: list[EdgeInfo]) {
     href: any = _xml_attributes(element).get("href", "").strip();
     if not href or re.match("[A-Za-z][A-Za-z0-9+.-]*:", href) {
         return;
@@ -3794,7 +3788,7 @@ impl CodeParser._walk_xslt_body(
     named: dict[str, str],
     file_path: str,
     edges: list[EdgeInfo],
-) -> None {
+) {
     child: any;
     child_scope: any;
     source: any = owner.qualified if owner is not None else file_path;
@@ -3836,7 +3830,7 @@ impl CodeParser._add_xslt_apply(
     file_path: str,
     line: int,
     edges: list[EdgeInfo],
-) -> None {
+) {
     attributes: any = _xml_attributes(element);
     select: any = " ".join(attributes.get("select", "").split());
     written_mode: any = attributes.get("mode", "").strip();
@@ -4247,7 +4241,7 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
         return self._qualify(scope, file_path, None) if scope else file_path;
     }
 
-    def close_member(line_no: int) -> None {
+    def close_member(line_no: int) {
         if not member_stack {
             return;
         }
@@ -4256,7 +4250,7 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
         `node.line_end = max(`node.line_end, line_no);
     }
 
-    def close_type(line_no: int, kind: Optional[str] = None) -> None {
+    def close_type(line_no: int, kind: Optional[str] = None) {
         wanted: any;
         while member_stack {
             close_member(line_no);
@@ -4279,7 +4273,7 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
         nodes[`entry["node_index"]].line_end = line_no;
     }
 
-    def emit_relationships(statement: str, source_qn: str, line_no: int) -> None {
+    def emit_relationships(statement: str, source_qn: str, line_no: int) {
         for (pattern, edge_kind) in (
             (_VBNET_INHERITS_RE, "INHERITS"),
             (_VBNET_IMPLEMENTS_RE, "IMPLEMENTS"),
@@ -4303,7 +4297,7 @@ impl CodeParser._parse_vbnet(path: Path, source: bytes) -> tuple[list[NodeInfo],
         }
     }
 
-    def emit_calls(statement: str, source_qn: str, line_no: int) -> None {
+    def emit_calls(statement: str, source_qn: str, line_no: int) {
         `match: any;
         new_spans: list[tuple[int, int]] = [];
         for match_ in _VBNET_NEW_RE.finditer(statement) {
@@ -4666,7 +4660,7 @@ impl CodeParser._parse_robot(path: Path, source: bytes) -> tuple[list[NodeInfo],
         return re.sub("[\\s_]+", "", name).casefold();
     }
 
-    def add_call(source_name: str, target: str, line: int) -> None {
+    def add_call(source_name: str, target: str, line: int) {
         edges.append(
             EdgeInfo(
                 kind="CALLS", source=source_name, target=target, file_path=file_path, line=line
@@ -4674,7 +4668,7 @@ impl CodeParser._parse_robot(path: Path, source: bytes) -> tuple[list[NodeInfo],
         );
     }
 
-    def finish(end_line: int) -> None {
+    def finish(end_line: int) {
         if current is None {
             return;
         }
@@ -5041,9 +5035,6 @@ impl CodeParser._parse_rescript(
     );
     modules = _scan_rescript_modules(cleaned, offset_to_line);
     depth_arr = _rescript_brace_depth_array(cleaned);
-
-    """True if offset is at file scope (depth 0) or directly inside
-            `parent_mod`'s body (depth = module body depth)."""
     def is_top_level(off: int, parent_mod: Optional[str]) -> bool {
         d: any = depth_arr[off] if off < len(depth_arr) else 0;
         if parent_mod is None {
@@ -5640,7 +5631,7 @@ impl CodeParser._parse_sql(path: Path, source: bytes) -> tuple[list[NodeInfo], l
             );
         }
     }
-    for m in self._SQL_PLSQL_FUNC_RE.finditer(clean_text) if is_plsql else () {
+    for m in self._SQL_PLSQL_FUNC_RE.finditer(clean_text) if is_plsql else iter(()) {
         raw_name = m.group(1);
         name = raw_name.split(".")[-1];
         if name in existing_function_names {
@@ -5671,7 +5662,7 @@ impl CodeParser._parse_sql(path: Path, source: bytes) -> tuple[list[NodeInfo], l
         );
         self._extract_plsql_calls(clean_text, m.end(), body_end, qualified, file_path_str, edges);
     }
-    for m in self._SQL_TRIGGER_RE.finditer(clean_text) if is_plsql else () {
+    for m in self._SQL_TRIGGER_RE.finditer(clean_text) if is_plsql else iter(()) {
         raw_name = m.group(1);
         name = raw_name.split(".")[-1];
         line = clean_text[:m.start()].count("\n") + 1;
@@ -5699,7 +5690,7 @@ impl CodeParser._parse_sql(path: Path, source: bytes) -> tuple[list[NodeInfo], l
         );
         self._extract_plsql_calls(clean_text, m.end(), body_end, qualified, file_path_str, edges);
     }
-    for m in self._SQL_PACKAGE_RE.finditer(clean_text) if is_plsql else () {
+    for m in self._SQL_PACKAGE_RE.finditer(clean_text) if is_plsql else iter(()) {
         raw_name = m.group(1);
         name = raw_name.split(".")[-1];
         line = clean_text[:m.start()].count("\n") + 1;
@@ -5726,7 +5717,7 @@ impl CodeParser._parse_sql(path: Path, source: bytes) -> tuple[list[NodeInfo], l
             ),
         );
     }
-    for m in self._SQL_PACKAGE_BODY_RE.finditer(clean_text) if is_plsql else () {
+    for m in self._SQL_PACKAGE_BODY_RE.finditer(clean_text) if is_plsql else iter(()) {
         raw_name = m.group(1);
         pkg_name: any = raw_name.split(".")[-1];
         body_identity: any = f"{pkg_name}$body";
@@ -5907,7 +5898,7 @@ impl CodeParser._extract_dbt_model(
     test_file: bool,
     nodes: list[NodeInfo],
     edges: list[EdgeInfo],
-) -> None {
+) {
     model_name: any = path.stem;
     qualified: any = f"{file_path_str}::{model_name}";
     nodes.append(
@@ -6021,7 +6012,7 @@ impl CodeParser._extract_plsql_calls(
     caller_qualified: str,
     file_path_str: str,
     edges: list[EdgeInfo],
-) -> None {
+) {
     body_text: any = text[body_start:body_end];
     seen: set[str] = set[any]();
     line: any = text.count("\n", 0, body_start) + 1;
@@ -6075,7 +6066,7 @@ impl CodeParser._extract_plsql_calls(
 
 impl CodeParser._walk_sql_tree(
     `node, source: bytes, file_path_str: str, nodes: list[NodeInfo], edges: list[EdgeInfo]
-) -> None {
+) {
     if `node.type in self._SQL_DDL_NODE_TYPES {
         self._extract_sql_ddl(`node, source, file_path_str, nodes, edges);
         return;
@@ -6087,7 +6078,7 @@ impl CodeParser._walk_sql_tree(
 
 impl CodeParser._extract_sql_ddl(
     `node, source: bytes, file_path_str: str, nodes: list[NodeInfo], edges: list[EdgeInfo]
-) -> None {
+) {
     node_type: any = `node.type;
     line_start: any = `node.start_point[0] + 1;
     line_end: any = `node.end_point[0] + 1;
@@ -6620,8 +6611,6 @@ impl CodeParser._collect_typed_call_targets(
         or set[any]();
     targets = {};
     declared_type_parameters = [];
-
-    """Every generic parameter name declared in the file, read once."""
     def type_parameters -> set[str] {
         if not declared_type_parameters {
             names: set[str] = set[any]();
@@ -6647,9 +6636,7 @@ impl CodeParser._collect_typed_call_targets(
         return declared_type_parameters[0];
     }
 
-    def walk(
-        `node, bindings: dict[str, str], class_fields: dict[str, str], depth: int = 0
-    ) -> None {
+    def walk(`node, bindings: dict[str, str], class_fields: dict[str, str], depth: int = 0) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -6784,7 +6771,7 @@ impl CodeParser._collect_class_typed_fields(
     fields: dict[str, str];
     fields = {};
 
-    def `visit(`node, depth: int = 0) -> None {
+    def `visit(`node, depth: int = 0) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -6825,7 +6812,7 @@ impl CodeParser._collect_function_typed_parameters(function_node, language: str)
     }.get(language)
         or set[any]();
 
-    def `visit(`node, depth: int = 0) -> None {
+    def `visit(`node, depth: int = 0) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -6852,7 +6839,7 @@ impl CodeParser._collect_ts_parameter_properties(constructor_node) -> dict[str, 
     bindings: dict[str, str];
     bindings = {};
 
-    def `visit(`node, depth: int = 0) -> None {
+    def `visit(`node, depth: int = 0) {
         child: any;
         if depth > self._MAX_AST_DEPTH {
             return;
@@ -7014,7 +7001,7 @@ impl CodeParser._php_assigned_variables(`node) -> set[str] {
 
 impl CodeParser._store_typed_binding(
     result: dict[str, str], name_node, type_node, *, csharp: bool = False
-) -> None {
+) {
     if name_node is None {
         return;
     }
@@ -7032,7 +7019,7 @@ impl CodeParser._store_typed_binding(
     }
 }
 
-impl CodeParser._store_java_typed_binding(result: dict[str, str], name_node, type_node) -> None {
+impl CodeParser._store_java_typed_binding(result: dict[str, str], name_node, type_node) {
     cls._store_typed_binding(result, name_node, type_node);
     if name_node is None or type_node is None {
         return;
@@ -7243,7 +7230,7 @@ impl CodeParser._collect_python_receiver_evidence(
 
     def scan_declarations(
         `node, owner_class: Optional[str], in_function: bool = False, depth: int = 0
-    ) -> None {
+    ) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -7359,8 +7346,6 @@ impl CodeParser._collect_python_receiver_evidence(
     property_read_edges = [];
     unreachable_positions = _python_unreachable_call_positions(source);
     function_scopes = _python_function_scope_bindings(source);
-
-    """Record what one binding form says about each name it binds."""
     def bind_targets(
         left,
         value,
@@ -7370,7 +7355,7 @@ impl CodeParser._collect_python_receiver_evidence(
         current_class,
         instance_receiver_name,
         class_receiver_name,
-    ) -> None {
+    ) {
         for (name, path) in self._python_binding_targets(left) {
             bound: any = self._python_binding_evidence(
                 value,
@@ -7406,8 +7391,6 @@ impl CodeParser._collect_python_receiver_evidence(
         }
         return None;
     }
-
-    """Name the implicit instance parameter of an ordinary method."""
     def instance_receiver_parameter(function_node) -> Optional[str] {
         if `any(
             decorator.rsplit(".", 1)[-1] in {"classmethod", "staticmethod"}
@@ -7417,8 +7400,6 @@ impl CodeParser._collect_python_receiver_evidence(
         }
         return first_parameter_name(function_node);
     }
-
-    """Name the implicit class-object parameter of a class method."""
     def class_receiver_parameter(function_node) -> Optional[str] {
         if `any(
             operator.eq(decorator.rsplit(".", 1)[-1], "classmethod")
@@ -7435,14 +7416,6 @@ impl CodeParser._collect_python_receiver_evidence(
             and receiver_name is not None
             and operator.eq(expression.text.decode("utf-8", errors="replace"), receiver_name);
     }
-
-    """Whether this attribute itself is stored, deleted, or loop-bound.
-
-            Stop at an enclosing attribute/subscript: its receiver is still a
-            load (``self.value.child = ...`` reads ``self.value``). Augmented
-            assignment deliberately remains a read because Python fetches the
-            old property value before applying the operator.
-            """
     def is_attribute_store_target(attribute_node) -> bool {
         parent: any = attribute_node.parent;
         while parent is not None {
@@ -7477,7 +7450,7 @@ impl CodeParser._collect_python_receiver_evidence(
         depth: int = 0,
         instance_receiver_name: Optional[str] = None,
         class_receiver_name: Optional[str] = None,
-    ) -> None {
+    ) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -7706,7 +7679,7 @@ impl CodeParser._collect_python_class_fields(
     gathered: dict[str, list[tuple[str, str]]];
     gathered = {};
 
-    def record(left, value, type_node, nested: bool) -> None {
+    def record(left, value, type_node, nested: bool) {
         for (name, path) in self._python_binding_targets(left) {
             if nested and not self._python_target_is_attribute(left, name) {
                 continue;
@@ -7718,7 +7691,7 @@ impl CodeParser._collect_python_class_fields(
         }
     }
 
-    def `visit(`node, in_function: bool, depth: int = 0) -> None {
+    def `visit(`node, in_function: bool, depth: int = 0) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -7878,7 +7851,7 @@ impl CodeParser._python_module_class_identities(module_file: str) -> dict[str, t
     module_bindings = {};
     symbol_bindings = {};
 
-    def `visit(`node, depth: int = 0) -> None {
+    def `visit(`node, depth: int = 0) {
         if depth > self._MAX_AST_DEPTH or `node.type == "function_definition" {
             return;
         }
@@ -8144,7 +8117,7 @@ impl CodeParser._python_binding_targets(left) -> list[tuple[str, tuple[int, ...]
     found: list[tuple[str, tuple[int, ...]]];
     found = [];
 
-    def `visit(`node, path: tuple[int, ...], depth: int = 0) -> None {
+    def `visit(`node, path: tuple[int, ...], depth: int = 0) {
         if `node is None or depth > 8 {
             return;
         }
@@ -8565,7 +8538,7 @@ impl CodeParser._read_python_return_annotations(module_path: Path) -> dict[str, 
 
 impl CodeParser._python_plain_import_bindings(
     `node, file_path: str, module_bindings: dict[str, set[str]], imported_names: set[str]
-) -> None {
+) {
     for child in `node.children {
         local: Optional[str] = None;
         module: Optional[str] = None;
@@ -8602,7 +8575,7 @@ impl CodeParser._python_from_import_bindings(
     imported_names: set[str],
     symbol_origins: Optional[dict[str, str]] = None,
     symbol_names: Optional[dict[str, str]] = None,
-) -> None {
+) {
     package_dir: any;
     submodules: any;
     module_file: any;
@@ -8619,7 +8592,7 @@ impl CodeParser._python_from_import_bindings(
         if symbol_origins is not None
         else None;
 
-    def bind(local: str, imported: str) -> None {
+    def bind(local: str, imported: str) {
         if package_dir is not None and imported in submodules {
             target: any = self._python_submodule_file(package_dir, imported);
             if target is not None {
@@ -8819,7 +8792,7 @@ impl CodeParser._collect_ruby_test_receivers(
         return `node.text.decode("utf-8", errors="replace") if `node is not None else "";
     }
 
-    def share(name: str, class_ref: Optional[_RubyClassRef]) -> None {
+    def share(name: str, class_ref: Optional[_RubyClassRef]) {
         shared[name] = class_ref if shared.get(name, class_ref) == class_ref else None;
     }
 
@@ -8855,7 +8828,7 @@ impl CodeParser._collect_ruby_test_receivers(
 
     def gather(
         `node, described: Optional[_RubyClassRef], nesting: tuple[str, ...], depth: int = 0
-    ) -> None {
+    ) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -8922,7 +8895,7 @@ impl CodeParser._collect_ruby_test_receivers(
         described: Optional[_RubyClassRef],
         nesting: tuple[str, ...],
         depth: int = 0,
-    ) -> None {
+    ) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -9136,7 +9109,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
         return True;
     }
 
-    def add_contains(parent: str, target: str, line: int) -> None {
+    def add_contains(parent: str, target: str, line: int) {
         edge_key: any = (parent, target);
         if edge_key in contains_edges {
             return;
@@ -9174,7 +9147,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
         extra: dict[str, Any],
         yaml_merge: bool,
         line_is_key: bool,
-    ) -> None {
+    ) {
         if not can_emit(schema_path, depth, exact_path, identity_path) {
             return;
         }
@@ -9232,7 +9205,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
         ancestors: frozenset[int],
         yaml_merge: bool = False,
         line_is_key: bool = False,
-    ) -> None {
+    ) {
         if not can_emit(schema_path, depth, exact_path, identity_path) {
             return;
         }
@@ -9440,15 +9413,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
             );
         }
     }
-
-    """Advance alias positions hidden below unsupported complex keys.
-
-            Anchors in here never enter ``shared_targets``, so an alias leads
-            back into a node already walked. Walking it again would double the
-            work at every link of a chain of aliases, and would also count the
-            aliases inside it twice though the source holds them once.
-            """
-    def consume_skipped_aliases(skipped_node: object) -> None {
+    def consume_skipped_aliases(skipped_node: object) {
         skipped_id: any = id(skipped_node);
         if skipped_id in shared_targets {
             next_alias_line(skipped_node, _yaml_line(skipped_node));
@@ -9479,7 +9444,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
         document_index: int,
         depth: int,
         ancestors: frozenset[int],
-    ) -> None {
+    ) {
         pairs: any = `list(mapping_node.value);
         key_counts: dict[tuple[str, str], int] = {};
         key_line_samples: dict[tuple[str, str], list[int]] = {};
@@ -9581,7 +9546,7 @@ impl CodeParser._parse_yaml(path: Path, source: bytes) -> tuple[list[NodeInfo], 
         depth: int,
         ancestors: frozenset[int],
         merge_context: bool = False,
-    ) -> None {
+    ) {
         for (index, item) in enumerate(sequence_node.value) {
             exact_path: any = f"{exact_prefix}[{index}]";
             schema_path: any = f"{schema_prefix}[*]";
@@ -9831,7 +9796,7 @@ impl CodeParser._parse_spring_yaml(
     nodes = [self._spring_config_file_node(path, source, "yaml")];
     emitted = set[any]();
 
-    def emit(raw_key: str, value_node: object, document_index: int) -> None {
+    def emit(raw_key: str, value_node: object, document_index: int) {
         key: any = normalize_spring_config_key(raw_key);
         if not key or key in emitted {
             return;
@@ -9860,7 +9825,7 @@ impl CodeParser._parse_spring_yaml(
         );
     }
 
-    def `visit(`node: object, prefix: str, document_index: int, ancestors: frozenset[int]) -> None {
+    def `visit(`node: object, prefix: str, document_index: int, ancestors: frozenset[int]) {
         node_id: any = id(`node);
         if node_id in ancestors {
             return;
@@ -10138,7 +10103,7 @@ impl CodeParser._resolve_ansible_notify_targets(
 
 impl CodeParser._parse_ansible_playbook(
     `root: object, file_path: str, nodes: list[NodeInfo], edges: list[EdgeInfo]
-) -> None {
+) {
     if not isinstance(`root, _YamlSequence) {
         return;
     }
@@ -10269,7 +10234,7 @@ impl CodeParser._parse_ansible_tasks(
     edges: list[EdgeInfo],
     is_handler: bool,
     parent_play: Optional[str],
-) -> None {
+) {
     if not isinstance(tasks_node, _YamlSequence) {
         return;
     }
@@ -10423,7 +10388,7 @@ impl CodeParser._parse_ansible_tasks(
 
 impl CodeParser._parse_ansible_meta(
     `root: object, file_path: str, nodes: list[NodeInfo], edges: list[EdgeInfo]
-) -> None {
+) {
     if not isinstance(`root, _YamlMapping) {
         return;
     }
@@ -10524,7 +10489,7 @@ impl CodeParser._extract_from_tree(
     defined_names: Optional[set[str]] = None,
     _depth: int = 0,
     _go_receiver_bindings: Optional[tuple[str, tuple[int, ...], tuple[int, ...]]] = None,
-) -> None {
+) {
     if _depth > self._MAX_AST_DEPTH {
         return;
     }
@@ -11192,7 +11157,7 @@ impl CodeParser._extract_nix_flake_input_urls(attrset_node) -> list[tuple[str, i
     results: list[tuple[str, int]];
     results = [];
 
-    def `visit(n) -> None {
+    def `visit(n) {
         if n is None {
             return;
         }
@@ -11239,11 +11204,6 @@ impl CodeParser._extract_nix_flake_input_urls(attrset_node) -> list[tuple[str, i
 impl CodeParser._extract_nix_import_targets(rhs_node) -> list[tuple[str, int]] {
     results: list[tuple[str, int]];
     results = [];
-
-    """Drill down the left-most side of nested apply_expressions to
-            the callee identifier. ``import ./x`` → ``"import"``;
-            ``pkgs.callPackage ./y { }`` → ``"callPackage"`` (last dotted
-            segment of the select_expression)."""
     def head_call_name(apply) -> Optional[str] {
         cur: any = apply;
         while cur is not None and cur.type == "apply_expression" {
@@ -11280,10 +11240,6 @@ impl CodeParser._extract_nix_import_targets(rhs_node) -> list[tuple[str, int]] {
         }
         return None;
     }
-
-    """For nested apply_expressions like ``import ./x.nix { }``, walk
-            down collecting arguments; return the first ``path_expression``
-            we find."""
     def first_path_arg(apply) -> Optional[str] {
         stack: list = [];
         cur: any = apply;
@@ -11301,7 +11257,7 @@ impl CodeParser._extract_nix_import_targets(rhs_node) -> list[tuple[str, int]] {
         return None;
     }
 
-    def `visit(n) -> None {
+    def `visit(n) {
         if n is None {
             return;
         }
@@ -11628,7 +11584,7 @@ impl CodeParser._walk_hcl_expressions(
     provider_body=None,
     provider_attributes: frozenset[str] = provider_attributes_default_,
     provider_context: bool = False,
-) -> None {
+) {
     if `node.type in ("expression", "body") {
         for (`root, attrs, line) in _hcl_variable_refs(`node) {
             if `root in local_names {
@@ -11726,7 +11682,7 @@ impl CodeParser._extract_dart_calls_from_children(
     edges: list[EdgeInfo],
     enclosing_class: Optional[str],
     enclosing_func: Optional[str],
-) -> None {
+) {
     call_name: Optional[str] = None;
     for sub in parent.children {
         if sub.type == "identifier" {
@@ -13049,7 +13005,7 @@ impl CodeParser._extract_zig_calls_in_subtree(
     edges: list[EdgeInfo],
     enclosing_class: Optional[str],
     enclosing_func: Optional[str],
-) -> None {
+) {
     src_qn: any = self._qualify(enclosing_func, file_path, enclosing_class)
         if enclosing_func
         else file_path;
@@ -13626,7 +13582,7 @@ impl CodeParser._emit_spring_config_edges(
     enclosing_class: Optional[str],
     file_path: str,
     edges: list[EdgeInfo],
-) -> None {
+) {
     source: any = self._qualify(class_name, file_path, enclosing_class);
 
     child: any;
@@ -13713,7 +13669,7 @@ impl CodeParser._emit_spring_injections(
     file_path: str,
     edges: list[EdgeInfo],
     import_map: Optional[dict[str, str]] = None,
-) -> None {
+) {
     if language != "java" {
         return;
     }
@@ -13753,7 +13709,7 @@ impl CodeParser._emit_spring_field_injection(
     has_required_args: bool,
     has_all_args: bool,
     import_map: Optional[dict[str, str]],
-) -> None {
+) {
     field_annotations: list[str] = [];
     has_final: any = False;
     has_static: any = False;
@@ -13852,7 +13808,7 @@ impl CodeParser._emit_spring_constructor_injection(
     file_path: str,
     edges: list[EdgeInfo],
     import_map: Optional[dict[str, str]],
-) -> None {
+) {
     ctor_annotations: any = self._get_java_annotations(ctor_node);
     if not `any(a in _SPRING_INJECT_ANNOTATIONS for a in ctor_annotations) {
         return;
@@ -13914,7 +13870,7 @@ impl CodeParser._scheduled_annotations(method_node) -> list {
     found: list;
     found = [];
 
-    def `visit(`node) -> None {
+    def `visit(`node) {
         if `node.type == "annotation" {
             name: any = self._java_annotation_name(`node);
             if name == "Scheduled" {
@@ -14519,7 +14475,7 @@ impl CodeParser._emit_spring_event_publish_edges(
     source = self._qualify(method_name, file_path, class_name);
     emitted = 0;
 
-    def `visit(`node) -> None {
+    def `visit(`node) {
         child: any;
         if `node.type == "method_invocation" {
             receiver: any;
@@ -14572,7 +14528,7 @@ impl CodeParser._emit_spring_event_publish_edges(
 
 impl CodeParser._emit_temporal_stub_fields(
     class_node, class_name: str, file_path: str, edges: list[EdgeInfo]
-) -> None {
+) {
     qualified_source: any = self._qualify(class_name, file_path, None);
 
     for `node in class_node.children {
@@ -14673,7 +14629,7 @@ impl CodeParser._get_kafka_annotation_topics(annotation_node) -> list[str] {
 
 impl CodeParser._emit_kafka_edges_from_class(
     class_node, class_name: str, file_path: str, edges: list[EdgeInfo]
-) -> None {
+) {
     qualified_source: any = self._qualify(class_name, file_path, None);
 
     for `node in class_node.children {
@@ -14767,7 +14723,7 @@ impl CodeParser._emit_kafka_edges_from_class(
 
 impl CodeParser._emit_kafka_edges_from_method(
     method_node, method_name: str, class_name: Optional[str], file_path: str, edges: list[EdgeInfo]
-) -> None {
+) {
     qualified_source: any = self._qualify(method_name, file_path, class_name);
 
     for child in method_node.children {
@@ -15189,7 +15145,7 @@ impl CodeParser._extract_classes(
     return True;
 }
 
-impl CodeParser._index_ambiguous_method_scopes(`root, language: str, import_map: dict) -> None {
+impl CodeParser._index_ambiguous_method_scopes(`root, language: str, import_map: dict) {
     scope: any;
     if language != "python" {
         return;
@@ -16169,7 +16125,7 @@ impl CodeParser._resolve_php_scoped_calls(
         enclosing_class: Optional[str],
         enclosing_func: Optional[str],
         depth: int = 0,
-    ) -> None {
+    ) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -16225,7 +16181,7 @@ impl CodeParser._resolve_php_scoped_calls(
         }
     }
 
-    def walk_sequence(container, namespace: str = "", depth: int = 0) -> None {
+    def walk_sequence(container, namespace: str = "", depth: int = 0) {
         if depth > self._MAX_AST_DEPTH {
             return;
         }
@@ -16293,13 +16249,13 @@ impl CodeParser._resolve_php_scoped_calls(
 
 impl CodeParser._extract_php_laravel_edges(
     `root, file_path: str, nodes: list[NodeInfo], edges: list[EdgeInfo]
-) -> None {
+) {
     self._walk_php_laravel_sequence(`root, file_path, nodes, edges, namespace="");
 }
 
 impl CodeParser._walk_php_laravel_sequence(
     container, file_path: str, nodes: list[NodeInfo], edges: list[EdgeInfo], namespace: str
-) -> None {
+) {
     current_namespace: any = namespace;
     imports: dict[str, str] = {};
 
@@ -16349,7 +16305,7 @@ impl CodeParser._walk_php_laravel_node(
     enclosing_class: Optional[str],
     enclosing_func: Optional[str],
     eloquent_model: bool,
-) -> None {
+) {
     if `node.type in self._class_types["php"] {
         class_name: any = self._get_name(`node, "php", "class");
         is_eloquent: any = operator.eq(`node.type, "class_declaration")
@@ -16800,7 +16756,7 @@ impl CodeParser._emit_laravel_endpoint_nodes(
     edges: list[EdgeInfo],
     namespace: str,
     imports: dict[str, str],
-) -> None {
+) {
     if Path(file_path).parent.name != "routes" {
         return;
     }
@@ -16954,7 +16910,7 @@ impl CodeParser._emit_laravel_route_edge(
     imports: dict[str, str],
     enclosing_class: Optional[str],
     enclosing_func: Optional[str],
-) -> None {
+) {
     receiver: any;
     verb: any;
     (receiver, verb) = self._php_scoped_call_parts(`node) as any;
@@ -16992,7 +16948,7 @@ impl CodeParser._emit_laravel_relationship_edge(
     imports: dict[str, str],
     enclosing_class: Optional[str],
     enclosing_func: Optional[str],
-) -> None {
+) {
     if not `node.children or `node.children[0].type != "variable_name" {
         return;
     }
@@ -17129,7 +17085,7 @@ impl CodeParser._extract_jsx_component_call(
     enclosing_func: Optional[str],
     import_map: Optional[dict[str, str]],
     defined_names: Optional[set[str]],
-) -> None {
+) {
     target: any = self._resolve_jsx_component_target(
         child, language, file_path, import_map or {}, defined_names or set[any]()
     );
@@ -17189,7 +17145,7 @@ impl CodeParser._extract_ts_type_reference(
     enclosing_func: Optional[str],
     import_map: Optional[dict[str, str]],
     defined_names: Optional[set[str]],
-) -> None {
+) {
     parent: any = child.parent;
     if parent is not None {
         if parent.type in _TS_TYPE_DECLARATIONS {
@@ -17250,7 +17206,7 @@ impl CodeParser._extract_value_references(
     enclosing_func: Optional[str],
     import_map: Optional[dict[str, str]],
     defined_names: Optional[set[str]],
-) -> None {
+) {
     imap: any = import_map or {};
     dnames: any = defined_names or set[any]();
     if enclosing_func {
@@ -17293,7 +17249,7 @@ impl CodeParser._emit_reference_if_known(
     import_map: dict[str, str],
     defined_names: set[str],
     line: int = 0,
-) -> None {
+) {
     if not name or name in self._VALUE_REF_SKIP_NAMES {
         return;
     }
@@ -17319,7 +17275,7 @@ impl CodeParser._ref_from_pair(
     edges: list[EdgeInfo],
     import_map: dict[str, str],
     defined_names: set[str],
-) -> None {
+) {
     children: any = pair_node.children;
     value_node: any = None;
     for ch in reversed(children) {
@@ -17355,7 +17311,7 @@ impl CodeParser._ref_from_assignment(
     edges: list[EdgeInfo],
     import_map: dict[str, str],
     defined_names: set[str],
-) -> None {
+) {
     children: any = assign_node.children;
     if len(children) < 3 {
         return;
@@ -17396,7 +17352,7 @@ impl CodeParser._ref_from_array(
     edges: list[EdgeInfo],
     import_map: dict[str, str],
     defined_names: set[str],
-) -> None {
+) {
     for ch in array_node.children {
         if ch.type == "identifier" {
             name: any = ch.text.decode("utf-8", errors="replace");
@@ -17423,7 +17379,7 @@ impl CodeParser._ref_from_arguments(
     edges: list[EdgeInfo],
     import_map: dict[str, str],
     defined_names: set[str],
-) -> None {
+) {
     for ch in args_node.children {
         reference_node: any = ch;
         if ch.type == "keyword_argument" and language == "python" {
@@ -17725,7 +17681,7 @@ impl CodeParser._extract_rust_impl(
     import_map: dict[str, str],
     defined_names: set[str],
     depth: int,
-) -> None {
+) {
     type_node: any = impl_node.child_by_field_name("type");
     target_segments: any = self._rust_path_segments(type_node);
     if not target_segments {
@@ -17801,7 +17757,7 @@ impl CodeParser._extract_verilog_constructs(
         modifiers: Optional[str] = None,
         return_type: Optional[str] = None,
         `default: Optional[str] = None,
-    ) -> None {
+    ) {
         if not name {
             return;
         }
@@ -18049,7 +18005,7 @@ impl CodeParser._extract_verilog_constructs(
         }
         roots = set[any]();
 
-        def collect_roots(`node) -> None {
+        def collect_roots(`node) {
             if `node.type == "simple_identifier" {
                 roots.add(decode(`node));
                 return;
@@ -18229,7 +18185,7 @@ impl CodeParser._collect_file_scope(
 
 impl CodeParser._collect_julia_scoped_import_names(
     `node, source: bytes, import_map: dict[str, str], scope: Optional[str] = None
-) -> None {
+) {
     current_scope: any = scope;
     if `node.type == "module_definition" {
         name_node: any = `node.child_by_field_name("name");
@@ -18261,7 +18217,7 @@ impl CodeParser._expand_python_star_imports(
     file_path: str,
     import_map: dict[str, str],
     resolving: frozenset[str] = resolving_default_,
-) -> None {
+) {
     for child in `root.children {
         if child.type != "import_from_statement" {
             continue;
@@ -18920,7 +18876,7 @@ impl CodeParser._resolve_python_namespace_dir(module: str, file_path: str) -> Op
     return None;
 }
 
-impl CodeParser._collect_js_exported_local_names(`node, defined_names: set[str]) -> None {
+impl CodeParser._collect_js_exported_local_names(`node, defined_names: set[str]) {
     for child in `node.children {
         if child.type in ("lexical_declaration", "variable_declaration") {
             for sub in child.children {
@@ -18978,7 +18934,7 @@ impl CodeParser._js_static_module_target(call_node) -> Optional[str] {
 
 impl CodeParser._extract_js_module_call(
     call_node, file_path: str, language: str, edges: list[EdgeInfo]
-) -> None {
+) {
     module: any = self._js_static_module_target(call_node);
     if not module {
         return;
@@ -19036,7 +18992,7 @@ impl CodeParser._js_module_call_is_deferred(call_node) -> bool {
     return False;
 }
 
-impl CodeParser._collect_js_require_names(declaration, import_map: dict[str, str]) -> None {
+impl CodeParser._collect_js_require_names(declaration, import_map: dict[str, str]) {
     for declarator in declaration.named_children {
         if declarator.type != "variable_declarator" {
             continue;
@@ -19071,7 +19027,7 @@ impl CodeParser._collect_js_require_names(declaration, import_map: dict[str, str
 
 impl CodeParser._collect_import_names(
     `node, language: str, source: bytes, import_map: dict[str, str], file_path: Optional[str] = None
-) -> None {
+) {
     module: any;
     package_dir: any;
     submodules: any;
@@ -19093,7 +19049,7 @@ impl CodeParser._collect_import_names(
                 module = resolved or module;
             }
 
-            def _bind(local_name: str, imported_name: str) -> None {
+            def _bind(local_name: str, imported_name: str) {
                 if imported_name in submodules and package_dir is not None {
                     target: any = self._python_submodule_file(package_dir, imported_name);
                     if target is not None {
@@ -19258,9 +19214,7 @@ impl CodeParser._collect_import_names(
     }
 }
 
-impl CodeParser._collect_js_import_names(
-    clause_node, module: str, import_map: dict[str, str]
-) -> None {
+impl CodeParser._collect_js_import_names(clause_node, module: str, import_map: dict[str, str]) {
     for child in clause_node.children {
         if child.type == "identifier" {
             import_map[child.text.decode("utf-8", errors="replace")] = module;
@@ -19301,7 +19255,7 @@ impl CodeParser._js_imported_symbol_name(local_name: str, import_map: dict[str, 
     return import_map.get(f"{_JS_IMPORT_ORIGINAL_PREFIX_KEY}{local_name}", local_name);
 }
 
-impl CodeParser.exclude_files(paths: set[str]) -> None {
+impl CodeParser.exclude_files(paths: set[str]) {
     self._excluded_files = {normalize_file_path(Path(p).resolve()) for p in paths};
     self._module_file_cache.clear();
     self._python_reexport_cache.clear();
@@ -19884,7 +19838,7 @@ impl CodeParser._ruby_load_roots(boundary: Path) -> tuple[Path, ...] {
     roots = [];
     seen = set[any]();
 
-    def add(path: Path) -> None {
+    def add(path: Path) {
         try {
             candidate: any = Path(os.path.normpath(`str(path)));
         } except (OSError, ValueError) {
@@ -21997,7 +21951,7 @@ impl CodeParser._extract_go_import_specs(`node) -> list[_ImportSpec] {
     specs: list[_ImportSpec];
     specs = [];
 
-    def add(spec_node) -> None {
+    def add(spec_node) {
         for part in spec_node.children {
             if part.type != "interpreted_string_literal" {
                 continue;
@@ -23164,7 +23118,7 @@ impl CodeParser._extract_r_methods(
     class_name: str,
     import_map: Optional[dict[str, str]],
     defined_names: Optional[set[str]],
-) -> None {
+) {
     for (method_name, func_def) in self._r_iter_args(list_call) {
         if not method_name or func_def is None {
             continue;

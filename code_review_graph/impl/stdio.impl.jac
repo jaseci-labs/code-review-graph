@@ -1,4 +1,4 @@
-impl configure_utf8_stdio -> None {
+impl configure_utf8_stdio {
     for stream in (sys.stdout, sys.stderr) {
         encoding: any = getattr(stream, "encoding", None);
         if not encoding or encoding.lower().replace("-", "") == "utf8" {

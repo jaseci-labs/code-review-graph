@@ -187,7 +187,7 @@ impl _Child.init(router: "MultiWorktreeRouter", `root: Path) {
     self.ready = threading.Event();
 }
 
-impl _Child.start(initialize: bool = True) -> None {
+impl _Child.start(initialize: bool = True) {
     verified_root: any = self.router.authorizer.authorize(`str(self.root));
     if verified_root != self.root {
         raise MultiWorktreeError("worktree root changed during child startup");
@@ -230,7 +230,7 @@ impl _Child.start(initialize: bool = True) -> None {
     }
 }
 
-impl _Child._initialize(params: dict[str, Any]) -> None {
+impl _Child._initialize(params: dict[str, Any]) {
     request_id: any = f"multi-worktree-init-{uuid.uuid4()}";
     event: any = threading.Event();
     result: dict[str, Any] = {};
@@ -255,7 +255,7 @@ impl _Child._initialize(params: dict[str, Any]) -> None {
     }
 }
 
-impl _Child.send(message: dict[str, Any]) -> None {
+impl _Child.send(message: dict[str, Any]) {
     process: any = self.process;
     if process is None or process.stdin is None or process.poll() is not None {
         raise MultiWorktreeError(f"MCP child is not running for {self.root}");
@@ -271,7 +271,7 @@ impl _Child.send(message: dict[str, Any]) -> None {
     }
 }
 
-impl _Child._read_stdout -> None {
+impl _Child._read_stdout {
     assert self.process is not None;
     assert self.process.stdout is not None;
     try {
@@ -312,7 +312,7 @@ impl _Child._read_stdout -> None {
     }
 }
 
-impl _Child._read_stderr -> None {
+impl _Child._read_stderr {
     assert self.process is not None;
     assert self.process.stderr is not None;
     while True {
@@ -332,7 +332,7 @@ impl _Child._read_stderr -> None {
     }
 }
 
-impl _Child.stop -> None {
+impl _Child.stop {
     process: any = self.process;
     if process is None {
         return;
@@ -405,7 +405,7 @@ impl MultiWorktreeRouter.init(authorizer: WorktreeAuthorizer, tools: str | None,
     self.waiting_for_start = threading.BoundedSemaphore(_MAX_INFLIGHT_REQUESTS);
 }
 
-impl MultiWorktreeRouter.write(message: dict[str, Any]) -> None {
+impl MultiWorktreeRouter.write(message: dict[str, Any]) {
     encoded: any = (json.dumps(message, separators=(",", ":")) + "\n").encode();
     with self.output_lock {
         try {
@@ -417,7 +417,7 @@ impl MultiWorktreeRouter.write(message: dict[str, Any]) -> None {
     }
 }
 
-impl MultiWorktreeRouter.child_message(child: _Child, message: dict[str, Any]) -> None {
+impl MultiWorktreeRouter.child_message(child: _Child, message: dict[str, Any]) {
     if "id" in message and "method" not in message {
         key: any = _request_key(message["id"]);
         with self.routes_lock {
@@ -462,7 +462,7 @@ impl MultiWorktreeRouter.child_message(child: _Child, message: dict[str, Any]) -
     self.write(message);
 }
 
-impl MultiWorktreeRouter.child_failed(child: _Child, reason: str) -> None {
+impl MultiWorktreeRouter.child_failed(child: _Child, reason: str) {
     with self.children_lock {
         if self.children.get(child.root) is not child {
             return;
@@ -565,7 +565,7 @@ impl MultiWorktreeRouter.get_child(`root: Path, *, initialize: bool = True) -> _
     return child;
 }
 
-impl MultiWorktreeRouter._forward(child: _Child, message: dict[str, Any]) -> None {
+impl MultiWorktreeRouter._forward(child: _Child, message: dict[str, Any]) {
     if "id" in message {
         key: any = _request_key(message["id"]);
         with self.routes_lock {
@@ -590,7 +590,7 @@ impl MultiWorktreeRouter._forward(child: _Child, message: dict[str, Any]) -> Non
     }
 }
 
-impl MultiWorktreeRouter.handle(message: object) -> None {
+impl MultiWorktreeRouter.handle(message: object) {
     `root: any;
     if not isinstance(message, `dict) {
         self.write(_json_error(None, -32600, "JSON-RPC message must be an object"));
@@ -730,7 +730,7 @@ impl MultiWorktreeRouter.handle(message: object) -> None {
         return;
     }
 
-    def start_then_route -> None {
+    def start_then_route {
         try {
             self._route(`root, message);
         } finally {
@@ -753,7 +753,7 @@ impl MultiWorktreeRouter._child_is_running(`root: Path) -> bool {
     }
 }
 
-impl MultiWorktreeRouter._route(`root: Path, message: dict[str, Any]) -> None {
+impl MultiWorktreeRouter._route(`root: Path, message: dict[str, Any]) {
     try {
         self._forward(self.get_child(`root), message);
     } except Exception as exc {
@@ -764,7 +764,7 @@ impl MultiWorktreeRouter._route(`root: Path, message: dict[str, Any]) -> None {
     }
 }
 
-impl MultiWorktreeRouter.run -> None {
+impl MultiWorktreeRouter.run {
     try {
         for raw_line in _iter_bounded_lines(sys.stdin.buffer, _MAX_FRAME_BYTES) {
             if raw_line is None {
@@ -787,7 +787,7 @@ impl MultiWorktreeRouter.run -> None {
     }
 }
 
-impl MultiWorktreeRouter.close -> None {
+impl MultiWorktreeRouter.close {
     self.shutdown = True;
     with self.children_lock {
         children: any = `list(self.children.values());
@@ -813,7 +813,7 @@ impl MultiWorktreeRouter.__hash__ -> int {
 
 impl run_multi_worktree_server(
     repo_root: str | None = None, tools: str | None = None, auto_watch: bool = False
-) -> None {
+) {
     if os.environ.get("CRG_DATA_DIR", "").strip() {
         raise ValueError(
             "--multi-worktree cannot be combined with CRG_DATA_DIR; use per-repository Registry data_dir entries instead",
@@ -822,7 +822,7 @@ impl run_multi_worktree_server(
     router: any = MultiWorktreeRouter(WorktreeAuthorizer(repo_root), tools, auto_watch);
     atexit.register(router.close);
 
-    def _stop_on_signal(signum: int, _frame: Any) -> None {
+    def _stop_on_signal(signum: int, _frame: Any) {
         raise SystemExit(128 + signum);
     }
 

@@ -63,7 +63,7 @@ impl _run_embedding_refresh(
     *,
     provider: str | None,
     model: str | None,
-) -> None {
+) {
     if provider is None and model is None {
         return;
     }
@@ -89,7 +89,7 @@ impl _run_embedding_refresh(
     }
 }
 
-impl _report_refresh_skipped(result: dict[str, Any], warnings: list[str]) -> None {
+impl _report_refresh_skipped(result: dict[str, Any], warnings: list[str]) {
     REFRESH_SKIPPED_WARNING = lazy("embeddings", "REFRESH_SKIPPED_WARNING");
 
     logger.warning(REFRESH_SKIPPED_WARNING);
@@ -110,7 +110,7 @@ impl is_lock_contention(exc: BaseException) -> bool {
     return `any(text in message for text in _CONTENTION_MESSAGES);
 }
 
-impl _note_contention(build_result: dict[str, Any], exc: BaseException) -> None {
+impl _note_contention(build_result: dict[str, Any], exc: BaseException) {
     if not isinstance(exc, sqlite3.OperationalError) {
         return;
     }

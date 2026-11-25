@@ -1,5 +1,3 @@
-"""Shared constants for code-review-graph."""
-
 import from __future__ { annotations }
 
 import logging;
@@ -94,36 +92,15 @@ with entry {
     READ_ONLY_ENV = "CRG_READ_ONLY";
 }
 
-"""Return whether this process must avoid writes to graph state."""
 def read_only_requested -> bool;
 
 with entry {
     _warned_env_vars = set[any]();
 }
 
-"""Warn once per variable that its value was ignored."""
-def _warn_invalid_env(name: str, raw: str, `default: object) -> None;
-
-"""Read *name* as an int, falling back to *default* when it is unusable.
-
-    An unset variable is the default silently; a set-but-unparseable one
-    (empty string, word, version number) is the default *and* a warning
-    naming the variable, so the operator can find the typo.
-    """
+def _warn_invalid_env(name: str, raw: str, `default: object);
 def env_int(name: str, `default: int) -> int;
-
-"""Read *name* as a float. See :func:`env_int` for the fallback rules.
-
-    NaN and infinity are rejected alongside unparseable text: they are
-    accepted by ``float()`` but poison every comparison they reach.
-    """
 def env_float(name: str, `default: float) -> float;
-
-"""Read a finite float strictly inside ``(lower, upper)``.
-
-    Invalid environment configuration falls back to the documented default
-    instead of making graph traversal unbounded or failing during import.
-    """
 def _bounded_float_env(name: str, `default: float, *, lower: float, upper: float) -> float;
 
 with entry {
@@ -160,45 +137,6 @@ with entry {
     GIT_TIMEOUT_ENV = "CRG_GIT_TIMEOUT";
 }
 
-"""Return the per-subprocess budget for read-only change discovery.
-
-    Discovery is what a review tool runs when the caller did **not** pass
-    ``changed_files``: ``resolve_review_base`` -> ``get_changed_files`` ->
-    ``get_staged_and_unstaged``, three or four Git subprocesses in series. At
-    the 30-second :data:`GIT_TIMEOUT` default that chain has a two-minute
-    worst case, which is how one MCP review call overruns a client's request
-    ceiling and comes back as MCP error -32001 (#262). All discovery is ever
-    answering is "what am I looking at?", so it gets its own, far shorter
-    budget by default, and build/update/watch keep the generous one.
-
-    A short budget is only safe because discovery runs with ``require_vcs``:
-    exhausting it raises
-    :class:`~code_review_graph.errors.ChangeDiscoveryError` rather than
-    returning an empty list. Shortening a budget that failed *silently* would
-    only make a wrong all-clear more likely; shortening one that fails *loudly*
-    trades a client-side -32001 for a message naming the knob.
-
-    Resolved on **every call**, deliberately. ``CRG_GIT_TIMEOUT`` is parsed
-    once at import into :data:`GIT_TIMEOUT`, so a test or a long-lived MCP
-    server that sets that variable afterwards never sees the new value.
-    Whatever these variables say when a discovery call starts is what that
-    call uses.
-
-    Precedence:
-
-    1. ``CRG_DISCOVERY_TIMEOUT``, when it parses as a number >= 0. Used as
-       given, including values above :data:`GIT_TIMEOUT` -- an explicit
-       override is an instruction, not a hint.
-    2. Otherwise ``CRG_GIT_TIMEOUT`` when the operator set it, verbatim.
-       Raising that variable is the documented answer to slow Git, and it
-       predates this one; a new default must not quietly cap it. Someone who
-       asked for 120 seconds of Git gets 120 seconds of discovery.
-    3. Otherwise :data:`DISCOVERY_TIMEOUT_DEFAULT`, capped at
-       :data:`GIT_TIMEOUT` so an unset-but-lowered general budget still wins.
-
-    An unparseable or negative value logs a warning and falls back to the next
-    rule rather than leaving discovery unbounded or raising inside a tool call.
-    """
 def discovery_timeout -> float;
 
 with entry {
@@ -242,16 +180,6 @@ with entry {
     CRG_HOME_ENV = "CRG_HOME";
 }
 
-"""Return the per-user state directory for code-review-graph.
-
-    ``$CRG_HOME`` wins when set and non-empty; otherwise
-    ``~/.code-review-graph``.
-
-    Resolved per call rather than captured in a module-level constant. An
-    import-time constant cannot be redirected afterwards, which is what let
-    the test suite write into the real home directory of whoever ran it: by
-    the time a fixture set the variable, the value had already been frozen.
-    """
 def crg_home -> Path;
 
 with entry {
@@ -265,17 +193,6 @@ with entry {
     IMPORT_SCOPES = (IMPORT_SCOPE_PACKAGE, IMPORT_SCOPE_TREE);
 }
 
-"""Return *path* as a forward-slash (POSIX) string for graph identity.
-
-    ``file_path`` values and the path component of qualified names are graph
-    identity: they must be separator-stable across operating systems so a
-    graph built on Windows produces the same identifiers as one built on
-    Linux/macOS, and so consumers that reconstruct identifiers from ``Path``
-    objects always agree with the parser. See issue #774.
-
-    Only apply this to file *paths* — never to symbol names: PHP namespace
-    identifiers (``App\\Domain\\Job``) legitimately contain backslashes.
-    """
 def normalize_file_path(path: "str | os.PathLike[str]") -> str;
 
 with entry {
@@ -283,14 +200,7 @@ with entry {
     _MALLOC_TRIM_PROBED = False;
 }
 
-"""Run garbage collection and return free heap pages to the OS where supported.
-
-    Python's pymalloc and glibc's ptmalloc retain freed arenas in the process
-    address space after large graph builds, AST parses, or NetworkX/embedding
-    operations. Calling ``malloc_trim(0)`` on Linux returns unused heap pages
-    to the kernel, directly lowering resident memory (RSS).
-    """
-def release_os_memory -> None;
+def release_os_memory;
 
 with entry {
     IMPORT_CONTEXT_KEY = "import_context";

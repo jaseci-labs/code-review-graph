@@ -1,5 +1,3 @@
-"""Code Review Graph - MCP server for persistent incremental code knowledge graphs."""
-
 glob __version__: any = "2.4.0";
 
 glob __all__: any = [

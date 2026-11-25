@@ -128,7 +128,7 @@ impl Plan._entry(path: PathLike) -> FileChange {
     return `entry;
 }
 
-impl Plan._check_can_create(key: Path) -> None {
+impl Plan._check_can_create(key: Path) {
     planned: any = self._files.get(key);
     if planned is not None and planned.after is not None {
         return;
@@ -150,7 +150,7 @@ impl Plan._check_can_create(key: Path) -> None {
     }
 }
 
-impl Plan.write_bytes(path: PathLike, data: bytes, mode: int | None = None) -> None {
+impl Plan.write_bytes(path: PathLike, data: bytes, mode: int | None = None) {
     self._check_can_create(_real_key(path));
     `entry: any = self._entry(path);
     `entry.after = data;
@@ -159,14 +159,14 @@ impl Plan.write_bytes(path: PathLike, data: bytes, mode: int | None = None) -> N
     }
 }
 
-impl Plan.chmod(path: PathLike, mode: int) -> None {
+impl Plan.chmod(path: PathLike, mode: int) {
     if not self.is_file(path) {
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), `str(path));
     }
     self._entry(path).mode = mode;
 }
 
-impl Plan.unlink(path: PathLike) -> None {
+impl Plan.unlink(path: PathLike) {
     if not self.is_file(path) {
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), `str(path));
     }
@@ -204,7 +204,7 @@ impl Plan.changes_since(saved: dict[Path, tuple[bytes | None, int | None]]) -> l
     ];
 }
 
-impl Plan.rollback(saved: dict[Path, tuple[bytes | None, int | None]]) -> None {
+impl Plan.rollback(saved: dict[Path, tuple[bytes | None, int | None]]) {
     for key in `list(self._files) {
         if key in saved {
             items_: any = list(saved[key] as any);
@@ -317,7 +317,7 @@ impl read_text(path: PathLike, encoding: str = "utf-8", errors: str = "strict") 
     return _decode_text(plan.read_bytes(path), encoding, errors);
 }
 
-impl write_text(path: PathLike, text: str, encoding: str = "utf-8") -> None {
+impl write_text(path: PathLike, text: str, encoding: str = "utf-8") {
     plan: any = active();
     if plan is not None {
         plan.write_bytes(path, _encode_text(text, encoding));
@@ -328,7 +328,7 @@ impl write_text(path: PathLike, text: str, encoding: str = "utf-8") -> None {
     target.write_text(text, encoding=encoding);
 }
 
-impl write_bytes(path: PathLike, data: bytes) -> None {
+impl write_bytes(path: PathLike, data: bytes) {
     plan: any = active();
     if plan is not None {
         plan.write_bytes(path, data);
@@ -339,7 +339,7 @@ impl write_bytes(path: PathLike, data: bytes) -> None {
     target.write_bytes(data);
 }
 
-impl copy_file(source: PathLike, destination: PathLike) -> None {
+impl copy_file(source: PathLike, destination: PathLike) {
     plan: any = active();
     if plan is None {
         Path(destination).parent.mkdir(parents=True, exist_ok=True);
@@ -349,7 +349,7 @@ impl copy_file(source: PathLike, destination: PathLike) -> None {
     plan.write_bytes(destination, plan.read_bytes(source), mode=plan.mode(source));
 }
 
-impl chmod(path: PathLike, mode: int) -> None {
+impl chmod(path: PathLike, mode: int) {
     plan: any = active();
     if plan is not None {
         plan.chmod(path, mode);
@@ -358,7 +358,7 @@ impl chmod(path: PathLike, mode: int) -> None {
     }
 }
 
-impl unlink(path: PathLike) -> None {
+impl unlink(path: PathLike) {
     plan: any = active();
     if plan is not None {
         plan.unlink(path);

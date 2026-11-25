@@ -3,7 +3,7 @@ impl _process_already_gone(error: OSError) -> bool {
         or operator.eq(getattr(error, "winerror", None), 87);
 }
 
-impl _handle_start(args: argparse.Namespace) -> None {
+impl _handle_start(args: argparse.Namespace) {
     import from code_review_graph.daemon { DaemonAlreadyRunningError }
     WatchDaemon = lazy("daemon", "WatchDaemon");
     claim_daemon_lock = lazy("daemon", "claim_daemon_lock");
@@ -53,7 +53,7 @@ impl _handle_start(args: argparse.Namespace) -> None {
     }
 }
 
-impl _handle_stop(_args: argparse.Namespace) -> None {
+impl _handle_stop(_args: argparse.Namespace) {
     clear_pid = lazy("daemon", "clear_pid");
     is_daemon_running = lazy("daemon", "is_daemon_running");
     pid_alive = lazy("daemon", "pid_alive");
@@ -146,7 +146,7 @@ impl _handle_stop(_args: argparse.Namespace) -> None {
     print("Daemon stopped.");
 }
 
-impl _reap_watchers_left_behind -> None {
+impl _reap_watchers_left_behind {
     reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
 
     for orphan in reap_orphaned_watchers() {
@@ -160,7 +160,7 @@ impl _reap_watchers_left_behind -> None {
     }
 }
 
-impl _handle_restart(args: argparse.Namespace) -> None {
+impl _handle_restart(args: argparse.Namespace) {
     is_daemon_running = lazy("daemon", "is_daemon_running");
 
     if is_daemon_running() {
@@ -189,7 +189,7 @@ impl _format_age(seconds: float | None) -> str {
     return f"{seconds / 86400:.0f}d";
 }
 
-impl _handle_status(_args: argparse.Namespace) -> None {
+impl _handle_status(_args: argparse.Namespace) {
     orphan: any;
     find_orphaned_watchers = lazy("daemon", "find_orphaned_watchers");
     is_daemon_running = lazy("daemon", "is_daemon_running");
@@ -346,7 +346,7 @@ impl _handle_status(_args: argparse.Namespace) -> None {
     }
 }
 
-impl _handle_logs(args: argparse.Namespace) -> None {
+impl _handle_logs(args: argparse.Namespace) {
     load_config = lazy("daemon", "load_config");
 
     config: any = load_config();
@@ -383,7 +383,7 @@ impl _handle_logs(args: argparse.Namespace) -> None {
     }
 }
 
-impl _handle_add(args: argparse.Namespace) -> None {
+impl _handle_add(args: argparse.Namespace) {
     add_repo_to_config = lazy("daemon", "add_repo_to_config");
     is_daemon_running = lazy("daemon", "is_daemon_running");
 
@@ -401,7 +401,7 @@ impl _handle_add(args: argparse.Namespace) -> None {
     }
 }
 
-impl _handle_remove(args: argparse.Namespace) -> None {
+impl _handle_remove(args: argparse.Namespace) {
     is_daemon_running = lazy("daemon", "is_daemon_running");
     load_config = lazy("daemon", "load_config");
     remove_repo_from_config = lazy("daemon", "remove_repo_from_config");
@@ -424,7 +424,7 @@ impl _handle_remove(args: argparse.Namespace) -> None {
     }
 }
 
-impl main -> None {
+impl main {
     configure_utf8_stdio();
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s");
 

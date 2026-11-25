@@ -170,7 +170,7 @@ impl _resolve_graph_file_paths_with_unmatched(
     seen = set[any]();
     unmatched_seen: set[str] = set[any]();
 
-    def add(path: str) -> None {
+    def add(path: str) {
         if path not in seen {
             resolved.append(path);
             seen.add(path);

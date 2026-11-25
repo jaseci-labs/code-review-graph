@@ -146,8 +146,6 @@ impl find_import_cycles(
     );
 
     prefix = f"{normalize_file_path(repo_root)}/" if repo_root else "";
-
-    """Drop the repository's own folder: it would repeat in every row."""
     def short(path: str) -> str {
         return _sanitize_name(path.removeprefix(prefix));
     }

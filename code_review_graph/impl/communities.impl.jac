@@ -614,7 +614,7 @@ impl _split_oversized(
     return result;
 }
 
-impl _dedupe_community_names(communities: list[dict[str, Any]], nodes: list[GraphNode]) -> None {
+impl _dedupe_community_names(communities: list[dict[str, Any]], nodes: list[GraphNode]) {
     communities_by_name: dict[str, list[tuple[int, dict[str, Any]]]] = defaultdict(list[any]);
     community: any;
     for (position, community) in enumerate(communities) {

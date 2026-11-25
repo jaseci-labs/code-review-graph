@@ -463,7 +463,7 @@ impl _set_call(store: GraphStore, row, target: str, extra: dict) -> bool {
     return True;
 }
 
-impl restore_csharp_references(store: GraphStore, deleted_files: list[str]) -> None {
+impl restore_csharp_references(store: GraphStore, deleted_files: list[str]) {
     if not deleted_files {
         return;
     }

@@ -43,7 +43,7 @@ impl _incremental_build(tree: Path, db_path: Path, base: str) -> dict[str, Any] 
     }
 }
 
-impl _copy_db(source: Path, target: Path) -> None {
+impl _copy_db(source: Path, target: Path) {
     shutil.copy2(source, target);
     for suffix in ("-wal", "-shm") {
         sidecar: any = Path(`str(source) + suffix);
@@ -61,7 +61,7 @@ impl _join(row: sqlite3.Row, columns: tuple[str, ...]) -> str {
     return "|".join(_blank(row[c]) for c in columns);
 }
 
-impl _add(target: _Projection, key: str, value: str) -> None {
+impl _add(target: _Projection, key: str, value: str) {
     target.setdefault(key, Counter())[value] += 1;
 }
 
@@ -378,7 +378,7 @@ impl _commit_all(tree: Path, message: str) -> str {
     return _head(tree);
 }
 
-impl _reset(tree: Path, sha: str) -> None {
+impl _reset(tree: Path, sha: str) {
     _git(tree, "reset", "-q", "--hard", sha);
     _git(tree, "clean", "-qfd");
 }
@@ -447,7 +447,7 @@ impl _read_lines(path: Path) -> list[str] {
     return path.read_text(encoding="utf-8", errors="replace").splitlines(True);
 }
 
-impl _write_lines(path: Path, lines: list[str]) -> None {
+impl _write_lines(path: Path, lines: list[str]) {
     path.write_text("".join(lines), encoding="utf-8");
 }
 
@@ -624,7 +624,7 @@ impl _blank_row(repo: str, kind: str) -> dict[str, Any] {
     return row;
 }
 
-impl _record(row: dict[str, Any], diff: dict[str, Any]) -> None {
+impl _record(row: dict[str, Any], diff: dict[str, Any]) {
     for table in COMPARED_TABLES {
         row[f"{table}_diff"] = diff["tables"][table]["differing_rows"];
     }

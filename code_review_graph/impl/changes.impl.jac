@@ -294,7 +294,7 @@ impl _parse_unified_diff(diff_text: str) -> DiffRanges {
     return DiffRanges(ranges, deletions);
 }
 
-impl clear_churn_cache -> None {
+impl clear_churn_cache {
     with _CHURN_CACHE_LOCK {
         _CHURN_CACHE.clear();
         _CHURN_UNAVAILABLE.clear();
@@ -307,7 +307,7 @@ impl _churn_is_unavailable(fail_key: tuple[str, int]) -> bool {
     }
 }
 
-impl _mark_churn_unavailable(fail_key: tuple[str, int]) -> None {
+impl _mark_churn_unavailable(fail_key: tuple[str, int]) {
     with _CHURN_CACHE_LOCK {
         if len(_CHURN_UNAVAILABLE) >= _CHURN_CACHE_MAX_ENTRIES {
             _CHURN_UNAVAILABLE.clear();
@@ -617,7 +617,7 @@ impl _removed_symbol_users(store: GraphStore, removed: GraphNode) -> _RemovedUse
     users = {};
     found = _RemovedUsers(users=[], call_sources=[], caller_ids=set[any]());
 
-    def add(source: str, relation: str, line: int) -> None {
+    def add(source: str, relation: str, line: int) {
         `node: any = store.get_node(source) if source != qualified_name else None;
         if `node is None {
             return;

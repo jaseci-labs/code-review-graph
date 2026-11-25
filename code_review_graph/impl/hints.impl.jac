@@ -6,12 +6,12 @@ impl SessionState.init {
     self.last_tool_time = 0.0;
 }
 
-impl SessionState.record_tool_call(tool_name: str) -> None {
+impl SessionState.record_tool_call(tool_name: str) {
     self.tools_called.append(tool_name);
     self.last_tool_time = time.time();
 }
 
-impl SessionState.record_nodes(node_ids: list[str]) -> None {
+impl SessionState.record_nodes(node_ids: list[str]) {
     for nid in node_ids {
         if len(self.nodes_queried) >= _MAX_NODES_TRACKED {
             break;
@@ -20,7 +20,7 @@ impl SessionState.record_nodes(node_ids: list[str]) -> None {
     }
 }
 
-impl SessionState.record_files(files: list[str]) -> None {
+impl SessionState.record_files(files: list[str]) {
     self.files_touched.update(files);
 }
 
@@ -77,7 +77,7 @@ impl generate_hints(
     };
 }
 
-impl _track_result(result: dict[str, Any], session: SessionState) -> None {
+impl _track_result(result: dict[str, Any], session: SessionState) {
     key: any;
     for key in ("changed_files", "impacted_files") {
         files: any = result.get(key);
@@ -164,6 +164,6 @@ impl get_session -> SessionState {
     return _session;
 }
 
-impl reset_session -> None {
+impl reset_session {
     _session = SessionState();
 }

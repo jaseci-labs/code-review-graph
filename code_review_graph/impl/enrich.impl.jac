@@ -235,7 +235,7 @@ impl enrich_file_read(file_path: str, repo_root: str) -> str {
     }
 }
 
-impl run_hook -> None {
+impl run_hook {
     try {
         hook_input: any = json.loads(getattr(sys.stdin, "buffer", sys.stdin).read());
     } except (json.JSONDecodeError, OSError, ValueError) {

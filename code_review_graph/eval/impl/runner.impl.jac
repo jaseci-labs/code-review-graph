@@ -39,7 +39,7 @@ impl load_all_configs -> list[dict] {
     return configs;
 }
 
-impl _assert_standalone_repo(repo_path: Path) -> None {
+impl _assert_standalone_repo(repo_path: Path) {
     proc: any = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"], cwd=`str(repo_path), capture_output=True, text=True
     );
@@ -100,7 +100,7 @@ impl clone_or_update(config: dict, repos_dir: Path | None = None) -> Path {
     return repo_path;
 }
 
-impl write_csv(results: list[dict], path: Path) -> None {
+impl write_csv(results: list[dict], path: Path) {
     if not results {
         return;
     }
@@ -126,7 +126,7 @@ impl _embedding_count(store) -> int | None {
     return `int(row[0]) if row else 0;
 }
 
-impl _build_embedding_index(store, db_path, provider: str | None, model: str | None) -> None {
+impl _build_embedding_index(store, db_path, provider: str | None, model: str | None) {
     EmbeddingStore = lazy("embeddings", "EmbeddingStore");
     embed_all_nodes = lazy("embeddings", "embed_all_nodes");
 
@@ -152,7 +152,7 @@ impl _build_embedding_index(store, db_path, provider: str | None, model: str | N
     }
 }
 
-impl _warn_if_semantic_index_missing(store, benchmark_names: list[str]) -> None {
+impl _warn_if_semantic_index_missing(store, benchmark_names: list[str]) {
     requested: any = SEMANTIC_BENCHMARKS.intersection(benchmark_names);
     if not requested or _embedding_count(store) {
         return;

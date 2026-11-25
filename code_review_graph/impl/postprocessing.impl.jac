@@ -23,9 +23,7 @@ impl run_post_processing(
     return result;
 }
 
-impl _resolve_bare_endpoints(
-    store: GraphStore, result: dict[str, Any], warnings: list[str]
-) -> None {
+impl _resolve_bare_endpoints(store: GraphStore, result: dict[str, Any], warnings: list[str]) {
     try {
         resolved: any = store.resolve_bare_call_targets();
         resolved += store.resolve_bare_tested_by_sources();
@@ -38,7 +36,7 @@ impl _resolve_bare_endpoints(
     }
 }
 
-impl _compute_signatures(store: GraphStore, result: dict[str, Any], warnings: list[str]) -> None {
+impl _compute_signatures(store: GraphStore, result: dict[str, Any], warnings: list[str]) {
     try {
         rows: any = store.get_nodes_without_signature();
         signature_rows: list[tuple[str, int]] = [];
@@ -74,7 +72,7 @@ impl _sync_fts_index(
     result: dict[str, Any],
     warnings: list[str],
     changed_files: Sequence[str] | None = None,
-) -> None {
+) {
     try {
         update_fts_index = lazy("search", "update_fts_index");
 
@@ -89,7 +87,7 @@ impl _sync_fts_index(
     }
 }
 
-impl _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str]) -> None {
+impl _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str]) {
     try {
         store_flows = lazy("flows", "store_flows");
         trace_flows = lazy("flows", "trace_flows");
@@ -103,7 +101,7 @@ impl _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str]
     }
 }
 
-impl _detect_communities(store: GraphStore, result: dict[str, Any], warnings: list[str]) -> None {
+impl _detect_communities(store: GraphStore, result: dict[str, Any], warnings: list[str]) {
     try {
         detect_communities = lazy("communities", "detect_communities");
         store_communities = lazy("communities", "store_communities");
@@ -124,7 +122,7 @@ impl _refresh_embeddings(
     *,
     provider: str | None,
     model: str | None,
-) -> None {
+) {
     if provider is None and model is None {
         return;
     }

@@ -10,7 +10,7 @@ impl Registry.init(path: Path | None = None) {
     self._load();
 }
 
-impl Registry._load -> None {
+impl Registry._load {
     if self._path.exists() {
         try {
             data: any = json.loads(self._path.read_text(encoding="utf-8", errors="replace"));
@@ -24,7 +24,7 @@ impl Registry._load -> None {
     }
 }
 
-impl Registry._save -> None {
+impl Registry._save {
     self._path.parent.mkdir(parents=True, exist_ok=True);
     data: any = {"repos": self._repos};
     self._path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8");
@@ -197,7 +197,7 @@ impl ConnectionPool.get(db_path: str) -> sqlite3.Connection {
     }
 }
 
-impl ConnectionPool.close_all -> None {
+impl ConnectionPool.close_all {
     with self._lock {
         for (key, conn) in self._pool.items() {
             try {

@@ -41,10 +41,12 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Iterable, Optional
 
+from tests._project import package_dir
+
 TESTS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TESTS_DIR.parent
 BASELINE_PATH = TESTS_DIR / "corpus_baselines.json"
-EVAL_CONFIGS_DIR = REPO_ROOT / "code_review_graph" / "eval" / "configs"
+EVAL_CONFIGS_DIR = package_dir() / "eval" / "configs"
 
 #: Wall-clock ceiling for one clone. A stalled fetch must fail the check rather
 #: than hang a CI job forever.

@@ -242,7 +242,7 @@ impl _created_entries(repo_root: Path, install_plan: Plan, dry_run: bool) -> lis
 
     entries = [];
 
-    def `visit(path: str) -> None {
+    def `visit(path: str) {
         if not paths[path] {
             if path not in tracked {
                 entries.append(path);

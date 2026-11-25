@@ -2,7 +2,7 @@
 exclude = ["tests/fixtures"]
 
 [check.lint]
-exclude = ["code_review_graph/main.jac", "code_review_graph/impl/main.impl.jac"]
+exclude = ["code_review_graph/main.jac", "code_review_graph/impl/main.impl.jac", "code_review_graph/prompts.jac", "code_review_graph/impl/prompts.impl.jac"]
 
 [pypi."."]
 [pypi.".".build-system]
@@ -207,7 +207,7 @@ files = [
     "code_review_graph/aop_resolver.jac",
     "code_review_graph/assets/code-review-graph/SKILL.md",
     "code_review_graph/assets/code-review-graph/agents/openai.yaml",
-    "code_review_graph/assets/code-review-graph/scripts/crg_readonly.jac",
+    "code_review_graph/assets/code-review-graph/scripts/crg_readonly.py",
     "code_review_graph/assets/d3.v7.min.js",
     "code_review_graph/build_state.jac",
     "code_review_graph/change_details.jac",

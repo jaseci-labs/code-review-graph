@@ -1,4 +1,4 @@
-impl _ensure_fts_state_table(conn: sqlite3.Connection) -> None {
+impl _ensure_fts_state_table(conn: sqlite3.Connection) {
     ensure_nodes_fts_state(conn);
 }
 
@@ -289,7 +289,7 @@ impl _split_query_terms(query: str) -> list[_QueryTerm] {
     terms = [];
     seen = set[any]();
 
-    def _add(text: str, expression: str, is_phrase: bool) -> None {
+    def _add(text: str, expression: str, is_phrase: bool) {
         key: any = text.lower();
         if key in seen {
             return;

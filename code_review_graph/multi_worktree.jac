@@ -1,19 +1,10 @@
-"""Route one stdio MCP session to one server process per Git worktree.
-
-The normal MCP server already resolves an explicit ``repo_root`` per tool
-call. This module adds process isolation for linked worktrees: each root gets
-its own child server and therefore its own SQLite connection state and graph
-database path. Only the primary checkout and worktrees reported by Git for
-the same ``git common dir`` are accepted.
-"""
+import from __future__ { annotations }
 
 import builtins;
 
 import operator;
 
 import from jaclang.comptime { target as target_ }
-
-import from __future__ { annotations }
 
 import atexit;
 
@@ -71,7 +62,6 @@ with entry {
     _CHILD_ENV_DROPPED = frozenset({"CRG_DATA_DIR", "CRG_REPO_ROOT"});
 }
 
-"""Raised when a worktree cannot be safely routed."""
 obj MultiWorktreeError(RuntimeError) {
     def __repr__ -> str;
 
@@ -90,7 +80,6 @@ def _canonical_git_identity(path: str | Path) -> tuple[Path, Path];
 
 def _listed_worktree_roots(primary_root: Path) -> set[Path];
 
-"""Authorize the primary checkout and its currently linked worktrees."""
 obj WorktreeAuthorizer {
     has primary_root: any,
         primary_common: any;
@@ -107,8 +96,6 @@ obj WorktreeAuthorizer {
 }
 
 def _json_error(request_id: object, code: int, message: str) -> dict[str, object];
-
-"""Yield newline-delimited frames without buffering an unbounded line."""
 def _iter_bounded_lines(stream: Any, max_bytes: int) -> Generator[any, any, any];
 
 obj _Child {
@@ -126,17 +113,17 @@ obj _Child {
 
     def init(router: "MultiWorktreeRouter", `root: Path);
 
-    def start(initialize: bool = True) -> None;
+    def start(initialize: bool = True);
 
-    def _initialize(params: dict[str, Any]) -> None;
+    def _initialize(params: dict[str, Any]);
 
-    def send(message: dict[str, Any]) -> None;
+    def send(message: dict[str, Any]);
 
-    def _read_stdout -> None;
+    def _read_stdout;
 
-    def _read_stderr -> None;
+    def _read_stderr;
 
-    def stop -> None;
+    def stop;
 
     def __repr__ -> str;
 
@@ -145,7 +132,6 @@ obj _Child {
     def __hash__ -> int;
 }
 
-"""Multiplex JSON-RPC requests across repository-bound child servers."""
 obj MultiWorktreeRouter {
     has authorizer: any,
         tools: any,
@@ -169,25 +155,25 @@ obj MultiWorktreeRouter {
         }
     }
 
-    def write(message: dict[str, Any]) -> None;
+    def write(message: dict[str, Any]);
 
-    def child_message(child: _Child, message: dict[str, Any]) -> None;
+    def child_message(child: _Child, message: dict[str, Any]);
 
-    def child_failed(child: _Child, reason: str) -> None;
+    def child_failed(child: _Child, reason: str);
 
     def get_child(`root: Path, *, initialize: bool = True) -> _Child;
 
-    def _forward(child: _Child, message: dict[str, Any]) -> None;
+    def _forward(child: _Child, message: dict[str, Any]);
 
-    def handle(message: object) -> None;
+    def handle(message: object);
 
     def _child_is_running(`root: Path) -> bool;
 
-    def _route(`root: Path, message: dict[str, Any]) -> None;
+    def _route(`root: Path, message: dict[str, Any]);
 
-    def run -> None;
+    def run;
 
-    def close -> None;
+    def close;
 
     def __repr__ -> str;
 
@@ -196,7 +182,6 @@ obj MultiWorktreeRouter {
     def __hash__ -> int;
 }
 
-"""Run the opt-in multi-worktree stdio MCP server."""
 def run_multi_worktree_server(
     repo_root: str | None = None, tools: str | None = None, auto_watch: bool = False
-) -> None;
+);

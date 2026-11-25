@@ -125,7 +125,7 @@ impl _Source._python_name_at(`node: ast.AST, name: str) -> Optional[tuple[int, i
 impl _Source._python_fstring_names(name: str) -> list[tuple[int, int, bool]] {
     tree: any = self.python_tree();
     found: set[tuple[int, int, bool]] = set[any]();
-    for `node in ast.walk(tree) if tree is not None else () {
+    for `node in ast.walk(tree) if tree is not None else iter(()) {
         if isinstance(`node, ast.JoinedStr) {
             for inner in ast.walk(`node) {
                 site: any = self._python_name_at(inner, name);
@@ -143,7 +143,7 @@ impl _Source.python_call_names(name: str) -> dict[int, list[tuple[int, int, bool
         self._py_calls_for = name;
         calls: dict[int, list[tuple[int, int, bool]]] = {};
         tree: any = self.python_tree();
-        for `node in ast.walk(tree) if tree is not None else () {
+        for `node in ast.walk(tree) if tree is not None else iter(()) {
             if isinstance(`node, ast.Call) {
                 site: any = self._python_name_at(`node.func, name);
                 if site is not None {
@@ -268,7 +268,7 @@ impl _PyScope.init(kind: str, parent: Optional[_PyScope]) {
     self.star = False;
 }
 
-impl _PyScope.bind(target: bool = False) -> None {
+impl _PyScope.bind(target: bool = False) {
     value_: any = True;
     self.binds = value_;
     self.bound_yet = value_;
@@ -295,6 +295,15 @@ impl _PyScope.__eq__(other: any) -> bool {
 
 impl _PyScope.__hash__ -> int {
     return id(self);
+}
+
+impl _any_submodule(submodule_of: any, target: str, imported_names: list[str]) -> bool {
+    for imported in imported_names {
+        if submodule_of(target, imported) {
+            return True;
+        }
+    }
+    return False;
 }
 
 impl _py_module_matches(target: str, module_path: str, exact: bool) -> bool {
@@ -434,13 +443,11 @@ impl _PyRenameScan._owner(scope: _PyScope) -> _PyScope {
     }
 }
 
-impl _PyRenameScan._use(
-    scope: _PyScope, line: int, byte_col: int, site: str = "reference"
-) -> None {
+impl _PyRenameScan._use(scope: _PyScope, line: int, byte_col: int, site: str = "reference") {
     self.uses.append((scope, line, self.src.char_col(line, byte_col), site));
 }
 
-impl _PyRenameScan._use_after(scope: _PyScope, line: int, byte_col: int, prefix: str = "") -> None {
+impl _PyRenameScan._use_after(scope: _PyScope, line: int, byte_col: int, prefix: str = "") {
     text: any = self.src.line(line);
     start: any = self.src.char_col(line, byte_col);
     pattern: any = re.compile(prefix + self.word.pattern) if prefix else self.word;
@@ -477,7 +484,7 @@ impl _PyRenameScan._string_entry_col(const: ast.Constant) -> Optional[int] {
     return start + len(`match.group(1)) + len(`match.group(2));
 }
 
-impl _PyRenameScan._collect_all(stmt: ast.stmt) -> None {
+impl _PyRenameScan._collect_all(stmt: ast.stmt) {
     values: list[ast.AST] = [];
     if isinstance(stmt, (ast.Assign, ast.AnnAssign, ast.AugAssign)) {
         targets: any = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target];
@@ -514,7 +521,7 @@ impl _PyRenameScan._collect_all(stmt: ast.stmt) -> None {
     }
 }
 
-impl _PyRenameScan._visit(`node: ast.AST, scope: _PyScope) -> None {
+impl _PyRenameScan._visit(`node: ast.AST, scope: _PyScope) {
     if isinstance(`node, (ast.FunctionDef, ast.AsyncFunctionDef)) {
         self._visit_function(`node, scope);
     } elif isinstance(`node, ast.ClassDef) {
@@ -611,7 +618,7 @@ impl _PyRenameScan._visit(`node: ast.AST, scope: _PyScope) -> None {
     }
 }
 
-impl _PyRenameScan._bind_import_module(`node: ast.Assign) -> None {
+impl _PyRenameScan._bind_import_module(`node: ast.Assign) {
     module_path: any;
     call: any = `node.value;
     if not (
@@ -636,7 +643,7 @@ impl _PyRenameScan._bind_import_module(`node: ast.Assign) -> None {
 
 impl _PyRenameScan._visit_function(
     `node: Union[ast.FunctionDef, ast.AsyncFunctionDef], scope: _PyScope
-) -> None {
+) {
     for decorator in `node.decorator_list {
         self._visit(decorator, scope);
     }
@@ -652,7 +659,7 @@ impl _PyRenameScan._visit_function(
     }
 }
 
-impl _PyRenameScan._visit_class(`node: ast.ClassDef, scope: _PyScope) -> None {
+impl _PyRenameScan._visit_class(`node: ast.ClassDef, scope: _PyScope) {
     for decorator in `node.decorator_list {
         self._visit(decorator, scope);
     }
@@ -671,7 +678,7 @@ impl _PyRenameScan._visit_class(`node: ast.ClassDef, scope: _PyScope) -> None {
 
 impl _PyRenameScan._bind_definition(
     `node: Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef], scope: _PyScope
-) -> None {
+) {
     if `node.name != self.name {
         return;
     }
@@ -684,7 +691,7 @@ impl _PyRenameScan._bind_definition(
     }
 }
 
-impl _PyRenameScan._visit_arguments(args: ast.arguments, scope: _PyScope) -> None {
+impl _PyRenameScan._visit_arguments(args: ast.arguments, scope: _PyScope) {
     for arg in (*args.posonlyargs, *args.args, *args.kwonlyargs, args.vararg, args.kwarg) {
         if arg is not None and arg.annotation is not None {
             self._visit(arg.annotation, scope);
@@ -697,7 +704,7 @@ impl _PyRenameScan._visit_arguments(args: ast.arguments, scope: _PyScope) -> Non
     }
 }
 
-impl _PyRenameScan._bind_arguments(args: ast.arguments, inner: _PyScope) -> None {
+impl _PyRenameScan._bind_arguments(args: ast.arguments, inner: _PyScope) {
     for arg in (*args.posonlyargs, *args.args, *args.kwonlyargs, args.vararg, args.kwarg) {
         if arg is not None and arg.arg == self.name {
             inner.bind();
@@ -708,7 +715,7 @@ impl _PyRenameScan._bind_arguments(args: ast.arguments, inner: _PyScope) -> None
 
 impl _PyRenameScan._visit_comprehension(
     `node: Union[ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp], scope: _PyScope
-) -> None {
+) {
     generators: any = `node.generators;
     self._visit(generators[0].iter, scope);
     inner: any = _PyScope("comprehension", scope);
@@ -739,7 +746,7 @@ impl _PyRenameScan._alias_asname_col(alias: ast.alias) -> tuple[int, int] {
     return (line, self.src.char_col(line, end - self.name_bytes));
 }
 
-impl _PyRenameScan._visit_import(`node: ast.Import, scope: _PyScope) -> None {
+impl _PyRenameScan._visit_import(`node: ast.Import, scope: _PyScope) {
     module_path: any;
     targets: any = self.import_targets.get(`node.lineno, set[any]());
     exporting: any = targets & self.exporters;
@@ -770,7 +777,7 @@ impl _PyRenameScan._visit_import(`node: ast.Import, scope: _PyScope) -> None {
     }
 }
 
-impl _PyRenameScan._visit_import_from(`node: ast.ImportFrom, scope: _PyScope) -> None {
+impl _PyRenameScan._visit_import_from(`node: ast.ImportFrom, scope: _PyScope) {
     module_path: any;
     exact: any;
     alias: any;
@@ -792,10 +799,9 @@ impl _PyRenameScan._visit_import_from(`node: ast.ImportFrom, scope: _PyScope) ->
 
     module_targets: any = {t for t in targets if _py_module_matches(t, module_path, exact)};
     if not module_targets {
+        imported_names: any = [alias.name for alias in `node.names];
         module_targets = {
-            t
-            for t in targets
-            if not `any(submodule_of(t, alias.name) for alias in `node.names)
+            t for t in targets if not _any_submodule(submodule_of, t, imported_names)
         };
     }
     from_exporter: any = `bool(module_targets & self.exporters);
@@ -1113,7 +1119,7 @@ impl _JsScan.occurrence(leaf: Any, site: str, new: Optional[str] = None) -> _Occ
     return (line, self.src.char_col(line, leaf.start_point[1]), site, new);
 }
 
-impl _JsScan.declare(`node: Any, target: bool) -> None {
+impl _JsScan.declare(`node: Any, target: bool) {
     self.scopes.append((`node.start_byte, `node.end_byte, target));
 }
 
@@ -1130,7 +1136,7 @@ impl _JsScan.statement_targets(statement: Any) -> set[str] {
     return targets;
 }
 
-impl _JsScan.run(`root: Any) -> None {
+impl _JsScan.run(`root: Any) {
     obj_start: any;
     self.root = `root;
     stack: any = [`root];
@@ -1215,7 +1221,7 @@ impl _JsScan.resolves_to_symbol(start: int, end: int) -> Optional[bool] {
     return None if best is None else best[1];
 }
 
-impl _JsScan.visit_name(leaf: Any) -> None {
+impl _JsScan.visit_name(leaf: Any) {
     if _js_is_declaration(leaf) {
         line: any = leaf.start_point[0] + 1;
         is_target: any = self.def_lines is not None
@@ -1254,7 +1260,7 @@ impl _JsScan.visit_name(leaf: Any) -> None {
     ));
 }
 
-impl _JsScan.namespace(ident: Any, targets: set[str], scope: Any) -> None {
+impl _JsScan.namespace(ident: Any, targets: set[str], scope: Any) {
     if targets & self.exporters {
         self.prefixes.setdefault(_ts_text(ident), []).append((scope.start_byte, scope.end_byte));
     } else {
@@ -1273,7 +1279,7 @@ impl _JsScan.module_targets(spec: Any) -> set[str] {
     return `set(self.import_targets.get(spec.start_point[0] + 1, set[any]()));
 }
 
-impl _JsScan.visit_module_value(declarator: Any) -> None {
+impl _JsScan.visit_module_value(declarator: Any) {
     ident: any = declarator.child_by_field_name("name");
     value: any = declarator.child_by_field_name("value");
     if ident is None or ident.type != "identifier" or value is None {
@@ -1288,7 +1294,7 @@ impl _JsScan.visit_module_value(declarator: Any) -> None {
     }
 }
 
-impl _JsScan.visit_import_then(call: Any) -> None {
+impl _JsScan.visit_import_then(call: Any) {
     func: any = call.child_by_field_name("function");
     if func is None or func.type != "member_expression" {
         return;
@@ -1319,7 +1325,7 @@ impl _JsScan.visit_import_then(call: Any) -> None {
     }
 }
 
-impl _JsScan.visit_import(statement: Any) -> None {
+impl _JsScan.visit_import(statement: Any) {
     targets: any = self.statement_targets(statement);
     from_exporter: any = `bool(targets & self.exporters);
     require: any = next((c for c in statement.children if c.type == "import_require_clause"), None);
@@ -1361,7 +1367,7 @@ impl _JsScan.visit_import(statement: Any) -> None {
     }
 }
 
-impl _JsScan.visit_import_specifier(spec: Any, targets: set[str], from_exporter: bool) -> None {
+impl _JsScan.visit_import_specifier(spec: Any, targets: set[str], from_exporter: bool) {
     name: any = spec.child_by_field_name("name");
     alias: any = spec.child_by_field_name("alias");
     alias_is_name: any = alias is not None and operator.eq(_ts_text(alias), self.name);
@@ -1387,7 +1393,7 @@ impl _JsScan.visit_import_specifier(spec: Any, targets: set[str], from_exporter:
     }
 }
 
-impl _JsScan.visit_reexport(statement: Any) -> None {
+impl _JsScan.visit_reexport(statement: Any) {
     spec: any;
     targets: any = self.statement_targets(statement);
     clause: any = next((c for c in statement.children if c.type == "export_clause"), None);
@@ -1486,7 +1492,7 @@ impl _js_rename_sites(
     pending = deque([home]);
     queued = {home};
 
-    def enqueue(paths: Any) -> None {
+    def enqueue(paths: Any) {
         for path in paths {
             if path not in queued {
                 queued.add(path);
@@ -1789,7 +1795,7 @@ impl _rename_edits(
     sources: any = _Sources(store.get_repo_root());
     graph_lines = {};
 
-    def note(path: str, line: int, site: str) -> None {
+    def note(path: str, line: int, site: str) {
         graph_lines.setdefault(path, {}).setdefault(line, site);
     }
 
@@ -2000,29 +2006,9 @@ impl find_dead_code(
         kinds=[kind] if kind else ["Function", "Class"], file_pattern=file_pattern
     );
     test_root = `root or store.get_repo_root();
-
-    """Directory segments of *file_path* that could name a package.
-
-        Only the part inside the repository counts. The directories above a
-        checkout belong to whoever cloned it, so matching them against an
-        import specifier makes the answer depend on where the repository
-        happens to live: a job directory named "test" or "common" would
-        accept callers that a checkout elsewhere rejects (#1023). When the
-        root is unknown there is nothing better than the whole path, which is
-        what this did before roots were recorded.
-        """
     def _package_segments(file_path: str) -> tuple[str, ...] {
         return _path_segments(_repo_relative(file_path, test_root) or file_path);
     }
-
-    """Whether *file_path* is test code, for dead-code purposes.
-
-        Dead-code detection opts into the ambiguous ``test-utils/`` and
-        ``test_utils/`` directories, which the shared default leaves out
-        because shared libraries are published from them. Here the trade is
-        the other way round: a wrong "this is dead" report sends a reviewer
-        to delete working code, while over-suppressing only costs a hint.
-        """
     def _in_test_file(file_path: str) -> bool {
         return _is_test_file(file_path, test_root, include_helper_dirs=True);
     }
@@ -2115,10 +2101,6 @@ impl find_dead_code(
     ).fetchall() {
         name_counts[row[0]] = row[1];
     }
-
-    """A bare-name edge is plausible if it comes from the same file,
-        from a file that has an IMPORTS_FROM edge whose target matches
-        the node's file path, or the name is globally unique (no ambiguity)."""
     def _is_plausible_caller(edge_file: str, node_file: str, node_name: str = "") -> bool {
         if edge_file == node_file {
             return True;

@@ -19,7 +19,7 @@ impl _count(value: Any) -> int | None {
     return value;
 }
 
-impl record_call(call: CallInfo, *, baseline: int, returned: int, saved: int) -> None {
+impl record_call(call: CallInfo, *, baseline: int, returned: int, saved: int) {
     if not history_enabled() or read_only_requested() {
         return;
     }
@@ -78,7 +78,7 @@ impl _locked(lock_path: Path) -> Generator[any, any, any] {
     }
 }
 
-impl _roll_over_if_full(path: Path) -> None {
+impl _roll_over_if_full(path: Path) {
     try {
         size: any = path.stat().st_size;
     } except FileNotFoundError {
@@ -164,7 +164,7 @@ impl _empty(key: str) -> dict[str, Any] {
     };
 }
 
-impl _add(row: dict[str, Any], `entry: dict[str, Any]) -> None {
+impl _add(row: dict[str, Any], `entry: dict[str, Any]) {
     row["calls"] += 1;
     row["baseline_tokens"] += `entry["baseline_tokens"];
     row["returned_tokens"] += `entry["returned_tokens"];

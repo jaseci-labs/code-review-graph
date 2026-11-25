@@ -73,12 +73,12 @@ impl _done(detail: str, dry_run: bool) -> str {
     return f"{past} {rest}" if rest else past;
 }
 
-impl _record_edit(`report: UninstallReport, path: Path, detail: str, dry_run: bool) -> None {
+impl _record_edit(`report: UninstallReport, path: Path, detail: str, dry_run: bool) {
     `report.edited_paths.append(f"{path} ({_done(detail, dry_run)})");
     `report.touched.append(path);
 }
 
-impl _record_remove(`report: UninstallReport, path: Path, detail: str, dry_run: bool) -> None {
+impl _record_remove(`report: UninstallReport, path: Path, detail: str, dry_run: bool) {
     `report.removed_paths.append(f"{path} ({_done(detail, dry_run)})");
     `report.touched.append(path);
 }
@@ -92,9 +92,7 @@ impl _read_text(path: Path, `report: UninstallReport) -> str | None {
     }
 }
 
-impl _write_text(
-    path: Path, text: str, `report: UninstallReport, *, detail: str, dry_run: bool
-) -> None {
+impl _write_text(path: Path, text: str, `report: UninstallReport, *, detail: str, dry_run: bool) {
     if dry_run {
         _record_edit(`report, path, detail, True);
         return;
@@ -164,7 +162,7 @@ impl _remove_mcp_entry(
     boundary: Path,
     `report: UninstallReport,
     dry_run: bool,
-) -> None {
+) {
     if not path.exists() {
         return;
     }
@@ -238,7 +236,7 @@ impl _remove_mcp_entry(
 
 impl _remove_toml_entry(
     path: Path, key: str, boundary: Path, `report: UninstallReport, *, dry_run: bool
-) -> None {
+) {
     if not path.exists() or not _safe_path(path, boundary, `report) {
         return;
     }
@@ -275,7 +273,7 @@ impl _remove_toml_entry(
 
 impl _remove_dsh_patch_entry(
     path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool
-) -> None {
+) {
     dsh: any = lazy("dsh");
 
     if not path.exists() or not _safe_path(path, boundary, `report) {
@@ -311,7 +309,7 @@ impl _remove_dsh_patch_entry(
 
 impl _remove_yaml_entry(
     path: Path, key: str, boundary: Path, `report: UninstallReport, *, dry_run: bool
-) -> None {
+) {
     lines: any;
     entry_prefix: any;
     import yaml;
@@ -610,7 +608,7 @@ impl _remove_backup_of_ours(
     scoped_commands: dict[str, tuple[str, Any]] | None,
     owns: Callable[[str], bool] | None,
     scoped_owns: tuple[Callable[[str], bool], tuple[str, Any]] | None,
-) -> None {
+) {
     backup: any = path.with_name(f"{path.name}.bak");
     if not install_plan.exists(backup)
         or not _safe_path(backup, boundary, `report, describe_skip=False)
@@ -656,7 +654,7 @@ impl _remove_hooks(
     owns: Callable[[str], bool] | None = None,
     scoped_owns: tuple[Callable[[str], bool], tuple[str, Any]] | None = None,
     backup: bool = True,
-) -> None {
+) {
     if backup {
         _remove_backup_of_ours(
             path,
@@ -721,7 +719,7 @@ impl _holds_nothing(value: Any) -> bool {
 
 impl _write_or_drop(
     path: Path, text: str, boundary: Path, `report: UninstallReport, *, detail: str, dry_run: bool
-) -> None {
+) {
     if os.path.abspath(path) in `report.install_only {
         try {
             empty: any = _holds_nothing(json.loads(text));
@@ -765,7 +763,7 @@ impl _install_only_files(repo_root: Path) -> list[str] {
     return [path for path in listed if path not in tracked];
 }
 
-impl _prune_install_folders(repo_root: Path, relative_files: Sequence[str]) -> None {
+impl _prune_install_folders(repo_root: Path, relative_files: Sequence[str]) {
     folders: set[Path] = set[any]();
     for relative in relative_files {
         parent: any = (repo_root / relative).parent;
@@ -786,7 +784,7 @@ impl _remove_file(
     *,
     dry_run: bool,
     detail: str = "remove owned file",
-) -> None {
+) {
     if not path.exists() and not path.is_symlink() {
         return;
     }
@@ -806,7 +804,7 @@ impl _remove_file(
     _record_remove(`report, path, detail, False);
 }
 
-impl _remove_tree(path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool) -> None {
+impl _remove_tree(path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool) {
     if not path.exists() and not path.is_symlink() {
         return;
     }
@@ -830,7 +828,7 @@ impl _remove_tree(path: Path, boundary: Path, `report: UninstallReport, *, dry_r
     _record_remove(`report, path, "remove owned directory", False);
 }
 
-impl _prune_empty_directory(path: Path, boundary: Path) -> None {
+impl _prune_empty_directory(path: Path, boundary: Path) {
     if not path.is_dir() or path.is_symlink() or not _is_lexical_child(path, boundary) {
         return;
     }
@@ -841,9 +839,7 @@ impl _prune_empty_directory(path: Path, boundary: Path) -> None {
     }
 }
 
-impl _remove_skill_file(
-    path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool
-) -> None {
+impl _remove_skill_file(path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool) {
     existed: any = path.exists();
     _remove_file(path, boundary, `report, dry_run=dry_run, detail="remove generated skill");
     if existed and not dry_run and not path.exists() {
@@ -861,9 +857,7 @@ impl _join_without_instruction(before: str, after: str) -> str {
     return before.rstrip("\n") + "\n\n" + after.lstrip("\n");
 }
 
-impl _remove_instruction(
-    path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool
-) -> None {
+impl _remove_instruction(path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool) {
     if not path.exists() or not _safe_path(path, boundary, `report) {
         return;
     }
@@ -953,7 +947,7 @@ impl _strip_git_hook_blocks(raw: str) -> tuple[str, bool] {
     return (text, removed);
 }
 
-impl _remove_git_hook(repo_root: Path, `report: UninstallReport, *, dry_run: bool) -> None {
+impl _remove_git_hook(repo_root: Path, `report: UninstallReport, *, dry_run: bool) {
     path: any = _resolve_git_hook(repo_root);
     if not path.exists() or not _safe_path(path, repo_root, `report) {
         return;
@@ -997,7 +991,7 @@ impl _rewrite_or_remove_hook(
     *,
     detail: str,
     dry_run: bool,
-) -> None {
+) {
     meaningful: any = [
         line
         for line in new_text.splitlines()
@@ -1016,7 +1010,7 @@ impl _rewrite_or_remove_hook(
     }
 }
 
-impl _remove_git_sync_hooks(repo_root: Path, `report: UninstallReport, *, dry_run: bool) -> None {
+impl _remove_git_sync_hooks(repo_root: Path, `report: UninstallReport, *, dry_run: bool) {
     begin_marker: any = skills._GIT_SYNC_HOOK_BEGIN_MARKER;
     end_marker: any = skills._GIT_SYNC_HOOK_END_MARKER;
     for name in skills._GIT_SYNC_HOOK_NAMES {
@@ -1052,7 +1046,7 @@ impl _remove_git_sync_hooks(repo_root: Path, `report: UninstallReport, *, dry_ru
     }
 }
 
-impl _remove_gitignore(repo_root: Path, `report: UninstallReport, *, dry_run: bool) -> None {
+impl _remove_gitignore(repo_root: Path, `report: UninstallReport, *, dry_run: bool) {
     path: any = repo_root / ".gitignore";
     if not path.exists() or not _safe_path(path, repo_root, `report) {
         return;
@@ -1135,7 +1129,7 @@ impl _process_platform_configs(
     scope: str,
     dry_run: bool,
     platforms: frozenset[str] | None = None,
-) -> None {
+) {
     seen: set[tuple[Path, str, str]] = set[any]();
     active_codex_home: Path | None = None;
     if platforms is None or "codex" in platforms {
@@ -1241,7 +1235,7 @@ impl _qoder_skill_names(repo_root: Path, `report: UninstallReport) -> list[str] 
 
 impl _remove_legacy_mcp_configs(
     repo_root: Path, home: Path, `report: UninstallReport, *, scope: str, dry_run: bool
-) -> None {
+) {
     artifacts: any = {
         "repo": (repo_root / ".opencode.json", repo_root),
         "user": (home / ".cursor" / "mcp.json", home),
@@ -1267,7 +1261,7 @@ impl _process_repo(
     keep_data: bool,
     dry_run: bool,
     platforms: frozenset[str] | None = None,
-) -> None {
+) {
     install_only: any = _install_only_files(repo_root);
     `report.install_only = frozenset(
         os.path.abspath(repo_root / relative) for relative in install_only
@@ -1293,7 +1287,7 @@ impl _process_repo_files(
     keep_data: bool,
     dry_run: bool,
     platforms: frozenset[str] | None = None,
-) -> None {
+) {
     name: any;
     _process_platform_configs(
         repo_root, home, `report, scope="repo", dry_run=dry_run, platforms=platforms
@@ -1403,7 +1397,7 @@ impl _process_user(
     keep_data: bool,
     dry_run: bool,
     platforms: frozenset[str] | None = None,
-) -> None {
+) {
     _process_platform_configs(
         reference_repo, home, `report, scope="user", dry_run=dry_run, platforms=platforms
     );

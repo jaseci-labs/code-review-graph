@@ -1,14 +1,6 @@
-"""Context-aware hints system for MCP tool responses.
-
-Tracks session state (in-memory only) and generates intelligent
-next-step suggestions after each tool call.  Hints are appended as
-``_hints`` to new tool responses so that Claude Code can propose
-follow-up actions without the user having to discover them.
-"""
+import from __future__ { annotations }
 
 import builtins;
-
-import from __future__ { annotations }
 
 import time;
 
@@ -150,7 +142,6 @@ with entry {
     _MAX_NODES_TRACKED = 1000;
 }
 
-"""In-memory session state for a single MCP connection."""
 obj SessionState {
     has tools_called: any,
         nodes_queried: any,
@@ -159,15 +150,9 @@ obj SessionState {
         last_tool_time: any;
 
     def init;
-
-    """Record a tool invocation (FIFO, capped at 100)."""
-    def record_tool_call(tool_name: str) -> None;
-
-    """Record queried node identifiers (capped at 1000)."""
-    def record_nodes(node_ids: list[str]) -> None;
-
-    """Record touched file paths."""
-    def record_files(files: list[str]) -> None;
+    def record_tool_call(tool_name: str);
+    def record_nodes(node_ids: list[str]);
+    def record_files(files: list[str]);
 
     def __repr__ -> str;
 
@@ -176,46 +161,16 @@ obj SessionState {
     def __hash__ -> int;
 }
 
-"""Classify the user's likely intent from their tool-call history.
-
-    Returns one of: ``"reviewing"``, ``"debugging"``, ``"refactoring"``,
-    ``"exploring"`` (default).
-    """
 def infer_intent(session: SessionState) -> str;
-
-"""Build context-aware hints for a tool response.
-
-    Returns::
-
-        {
-            "next_steps": [{"tool": ..., "suggestion": ...}, ...],
-            "related": [...],
-            "warnings": [...],
-        }
-
-    At most ``_MAX_PER_CATEGORY`` items per list.  Tools already called
-    in this session are suppressed from ``next_steps``.
-    """
 def generate_hints(tool_name: str, result: dict[str, Any], session: SessionState) -> dict[str, Any];
-
-"""Extract node IDs and file paths from a tool result and record them."""
-def _track_result(result: dict[str, Any], session: SessionState) -> None;
-
-"""Return next-step suggestions, filtering already-called tools."""
+def _track_result(result: dict[str, Any], session: SessionState);
 def _build_next_steps(tool_name: str, session: SessionState) -> list[dict[str, str]];
-
-"""Pull warning signals from a tool result."""
 def _extract_warnings(result: dict[str, Any]) -> list[str];
-
-"""Suggest related node/file identifiers from the result."""
 def _build_related(tool_name: str, result: dict[str, Any], session: SessionState) -> list[str];
 
 with entry {
     _session = SessionState();
 }
 
-"""Return the global in-memory session state."""
 def get_session -> SessionState;
-
-"""Reset the global session (useful for testing)."""
-def reset_session -> None;
+def reset_session;

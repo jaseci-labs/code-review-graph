@@ -163,7 +163,7 @@ impl _update_target(payload: Any, existing_only: bool = False) -> Path | None {
     return _repo_for_file(edited, session_repo, existing_only);
 }
 
-impl run_update_hook(existing_only: bool = False) -> None {
+impl run_update_hook(existing_only: bool = False) {
     repo_root: any = _update_target(_read_payload(), existing_only);
     if repo_root is None {
         return;
@@ -171,7 +171,7 @@ impl run_update_hook(existing_only: bool = False) -> None {
     _update_repo(repo_root);
 }
 
-impl _update_repo(repo_root: Path) -> None {
+impl _update_repo(repo_root: Path) {
     build_or_update_graph = lazy("tools.build", "build_or_update_graph");
 
     try {
@@ -188,7 +188,7 @@ impl _update_repo(repo_root: Path) -> None {
     }
 }
 
-impl run_status_hook -> None {
+impl run_status_hook {
     repo_root: any = _hook_repo();
     if repo_root is None {
         return;

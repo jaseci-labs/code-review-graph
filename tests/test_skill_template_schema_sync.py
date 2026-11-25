@@ -11,7 +11,7 @@ These go beyond the PR's own regression test:
   (overwrites) stale content
 """
 
-import ast
+import asyncio
 import re
 from pathlib import Path
 
@@ -25,18 +25,10 @@ _IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 def _exported_tool_names() -> set[str]:
-    """Collect function names registered via @mcp.tool() in main.py."""
-    src = (REPO_ROOT / "code_review_graph" / "main.py").read_text(encoding="utf-8")
-    tree = ast.parse(src)
-    names: set[str] = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            continue
-        for dec in node.decorator_list:
-            target = dec.func if isinstance(dec, ast.Call) else dec
-            if isinstance(target, ast.Attribute) and target.attr == "tool":
-                names.add(node.name)
-    return names
+    """The names of the tools the MCP server registers."""
+    from code_review_graph import main
+
+    return {tool.name for tool in asyncio.run(main.mcp.list_tools())}
 
 
 def _backticked_identifiers(markdown: str) -> list[str]:

@@ -18,8 +18,9 @@ import textwrap
 from pathlib import Path
 
 import code_review_graph.main as crg_main
+from tests._project import python_source
 
-MAIN_SOURCE = Path(crg_main.__file__).read_text(encoding="utf-8")
+MAIN_SOURCE = python_source(crg_main)
 LAZY = crg_main._LAZY_TOOL_NAMES | crg_main._LAZY_PROMPT_NAMES
 
 

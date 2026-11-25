@@ -2709,6 +2709,7 @@ graph import {
         compute_risk_score,
         is_test_gap_exempt,
         parse_diff_ranges,
+        parse_git_diff_ranges,
     }
     code_review_graph.context_history ++> code_review_graph.tools.review { CallInfo }
     code_review_graph.context_savings ++> code_review_graph.tools.review {
@@ -3132,4 +3133,15 @@ graph import {
         _validate_positive_int,
     }
     code_review_graph.registry ++> code_review_graph.tools.registry_tools { Registry }
+    code_review_graph --> tests._project;
+    tests._project --> tests.real_repo_corpus { package_dir }
+    tests._project --> tests.test_documentation { package_dir }
+    tests._project --> tests.test_main { function_source }
+    tests._project --> tests.test_main_lazy_tool_imports { python_source }
+    code_review_graph.main --> tests.test_public_tool_hints;
+    code_review_graph.main --> tests.test_skill_template_schema_sync;
+    tests._project --> tests.test_tool_suggestion_names { emitted_package }
+    tests._project --> tests.test_codex_skill_wrapper { package_dir }
+    tests._project --> tests.test_import_target_integrity { project_root }
+    tests._project --> tests.test_utf8_encoding { python_source }
 }

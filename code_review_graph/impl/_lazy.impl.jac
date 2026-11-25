@@ -1,5 +1,7 @@
 impl lazy(module: str, name: str = "") -> any {
-    loaded: any = importlib.import_module(f"code_review_graph.{module}" if module else "code_review_graph");
+    loaded: any = importlib.import_module(
+        f"code_review_graph.{module}" if module else "code_review_graph"
+    );
     if not name {
         return loaded;
     }

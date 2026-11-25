@@ -1,3 +1,5 @@
+import from __future__ { annotations }
+
 """MCP server entry point for Code Review Graph.
 
 Run as: code-review-graph serve
@@ -13,8 +15,6 @@ import importlib;
 import operator;
 
 import from jaclang.comptime { target as target_ }
-
-import from __future__ { annotations }
 
 import asyncio;
 

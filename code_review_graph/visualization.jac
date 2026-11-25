@@ -1,23 +1,8 @@
-"""Interactive D3.js graph visualization for code knowledge graphs.
-
-Exports graph data to JSON and generates a self-contained HTML file with
-a force-directed D3.js visualization. Dark theme, zoomable, draggable,
-with collapsible file clusters, tooltips, legend, and stats bar.
-
-Supports multiple rendering modes for large graphs:
-- ``full``  — render every node (default, current behavior)
-- ``community`` — aggregate by community; double-click to drill down
-- ``file``  — aggregate by file; each file is a node
-- ``auto``  — choose an aggregated mode when the rendered node count or
-  edge count exceeds its threshold (community when community data exists,
-  file otherwise)
-"""
+import from __future__ { annotations }
 
 import importlib;
 
 import builtins;
-
-import from __future__ { annotations }
 
 import base64;
 
@@ -73,20 +58,7 @@ with entry {
     _SAFE_SIDECAR_STEM = re.compile("[A-Za-z0-9._-]{1,64}");
 }
 
-"""Build the D3 loader tags: same-origin script plus SRI-pinned CDN fallback.
-
-    The fallback uses ``document.write`` so it loads *synchronously* during
-    parsing — the rest of the page's inline scripts use ``d3`` immediately.
-    """
 def _d3_script_tags -> str;
-
-"""Copy the vendored D3 build next to the generated HTML.
-
-    The copy is verified against the pinned SRI hash before writing. Returns
-    the written path, or ``None`` if the bundled asset is missing, corrupt, or
-    unwritable — the generated page then loads D3 via the SRI-pinned CDN
-    fallback tag instead.
-    """
 def _write_d3_asset(directory: Path) -> Path | None;
 
 with entry {
@@ -95,35 +67,15 @@ with entry {
     _SEEDED_READ_FALLBACK_NODES = 5000;
 }
 
-"""Short names to qualified names, which can search one name's candidates.
-
-    A name every file defines has thousands of candidates. Checking each one in
-    turn for every edge that uses the name took most of a large export's time.
-    """
 class _NameIndex(builtins.dict) {
     def init;
-
-    """Return the candidate for *key* starting with *prefix*, if exactly one does."""
     def only_under_prefix(key: str, prefix: str) -> str | None;
 }
 
-"""Build a mapping from short/module-style names to qualified names.
-
-    Returns ``{short_name: [qualified_name, ...]}``.
-    """
 def _build_name_index(nodes: list[dict], seen_qn: set[str]) -> _NameIndex;
-
-"""Yield each short or module-style name that can refer to node *n*."""
 def _name_index_keys(n: dict) -> Generator[any, any, any];
-
-"""Try to resolve an unqualified edge target to a full qualified name.
-
-    Returns the resolved qualified name, or None if unresolvable.
-    """
 def _resolve_target(target: str, source: str, seen_qn: set[str], name_index: _NameIndex) -> str
     | None;
-
-"""The record a full read makes for each node in export_graph_data."""
 def _node_payload(gnode: GraphNode, community_id: int | None) -> dict;
 
 def _export_flows(store: GraphStore) -> list[dict];
@@ -131,30 +83,9 @@ def _export_flows(store: GraphStore) -> list[dict];
 def _export_communities(
     store: GraphStore, members_by_community: dict[int, list[str]] | None = None
 ) -> list[dict];
-
-"""Return the fields name resolution needs for every node the export covers.
-
-    ``qualified_name`` is the name the export shows, which ``_sanitize_name`` may
-    have cut, so two nodes can share it; ``stored_name`` is the one in the table.
-    Returns None when a stored path differs from the one a full read looks up.
-    """
 def _read_node_identities(store: GraphStore) -> list[dict] | None;
-
-"""Count the edges a full export keeps, without loading an edge row.
-
-    An edge is kept when both its ends resolve, and whether one end resolves does
-    not depend on the other. Returns None when a stored end only resolves once
-    sanitised: the targeted read looks ends up by their stored form and would
-    miss that edge, so only a full read gets it right.
-    """
 def _count_exported_edges(store: GraphStore, seen_qn: set[str], name_index: _NameIndex) -> int
     | None;
-
-"""Return the resolved edges with an end on one of *names*.
-
-    An edge can reach a node through any name that node is indexed under, so all
-    of them are looked up. Those that resolve to a different node are dropped.
-    """
 def _read_edges_touching_nodes(
     store: GraphStore,
     names: Iterable[str],
@@ -162,16 +93,6 @@ def _read_edges_touching_nodes(
     seen_qn: set[str],
     name_index: _NameIndex,
 ) -> list[dict];
-
-"""Export a neighbourhood by reading only what surrounds its seeds.
-
-    Gives what cutting a full export down gives, byte for byte, because the same
-    :func:`extract_neighbourhood` runs over a part of the graph it cannot tell
-    from the whole. Resolving names still takes a few columns of every node, and
-    the totals an index scan of the edges; no row of an unrelated edge is loaded.
-
-    Returns None when only a full read gives the right answer.
-    """
 def _export_seeded(store: GraphStore, spec: NeighbourhoodSpec) -> dict | None;
 
 glob depth_default_: any;
@@ -183,41 +104,6 @@ with entry {
     max_nodes_default_ = DEFAULT_MAX_NODES;
 }
 
-"""Export graph nodes and edges as a JSON-serializable dict.
-
-    With no seed argument this exports the whole repository and returns
-    ``{"nodes": [...], "edges": [...], "stats": {...}, "flows": [...],
-    "communities": [...]}`` — the long-standing behaviour.
-
-    With a seed it exports a *neighbourhood* instead: the nodes within *depth*
-    hops of the seed and the edges among them, with everything else left out
-    of the payload rather than dimmed, plus a ``"neighbourhood"`` block
-    describing the seeds, per-node hop labels and (for a path query) the
-    highlighted path.  See :mod:`code_review_graph.neighbourhood` for the hop
-    semantics — ``CONTAINS`` is structural and never counts as a hop.  A seeded
-    export reads only what surrounds the seed, except for a path query, which can
-    run through any part of the graph.
-
-    Args:
-        store: The GraphStore to read graph data from.
-        seed_symbols: Symbol queries to seed the neighbourhood with.
-        seed_files: File paths (e.g. the changed files of a review) to seed
-            with; each seeds its File node and its direct members.
-        seed_flow: Execution flow name or id; every node on it becomes a seed.
-        path_from: Start symbol of a shortest-path query.
-        path_to: End symbol of a shortest-path query.
-        depth: Hops of context to include around the seeds.
-        render_depth: Hops drawn before the user expands on click.
-        max_nodes: Hard cap on payload nodes. The outermost hop is trimmed
-            first; once the outer hops are gone the seed set is trimmed too,
-            lowest whole-graph degree first, so the cap always holds. The
-            returned ``"neighbourhood"`` block reports ``seeds_requested``
-            and ``seeds_dropped``.
-
-    Raises:
-        SeedResolutionError: when a seed matches no node in the graph.
-        ValueError: when the seed flags contradict each other.
-    """
 def export_graph_data(
     store: GraphStore,
     *,
@@ -230,35 +116,9 @@ def export_graph_data(
     render_depth: int | None = None,
     max_nodes: int = max_nodes_default_,
 ) -> dict;
-
-"""Aggregate full graph data into community-level super-nodes.
-
-    Each community becomes a single node sized by member count.
-    Edges between super-nodes represent the count of cross-community edges.
-    Returns a new dict with the same schema as *data* but fewer nodes/edges.
-    Also returns per-community detail data for drill-down rendering.
-    """
 def _aggregate_community(data: dict) -> dict;
-
-"""Aggregate full graph data into file-level nodes.
-
-    Each file becomes a node sized by symbol count.
-    Edges between files represent aggregated cross-file dependencies.
-    """
 def _aggregate_file(data: dict) -> dict;
-
-"""Return True if the exported graph carries any community assignment."""
 def _has_community_data(data: dict) -> bool;
-
-"""Pick the effective rendering mode for ``mode="auto"``.
-
-    The full force layout is only viable while *both* rendered counts stay
-    within budget (see DEFAULT_MAX_FULL_NODES / DEFAULT_MAX_FULL_EDGES).
-    When aggregation is needed, prefer community mode; fall back to file
-    aggregation when no community data is available (otherwise every node
-    would collapse into a single "Uncategorized" super-node whose drill-down
-    re-renders the entire graph).
-    """
 def _resolve_auto_mode(
     node_count: int,
     edge_count: int,
@@ -271,18 +131,6 @@ with entry {
     _SIDECAR_GLOBAL = "window.__CRG_GRAPH_DATA__";
 }
 
-"""Optionally move the payload into a ``<name>.data.js`` file.
-
-    Returns ``(script_tag, payload_expression)``.  When *sidecar* is false the
-    payload stays inline and the page remains a single file you can email,
-    which is the default on purpose.
-
-    The sidecar is JavaScript rather than ``.json`` deliberately: a page opened
-    from ``file://`` is an opaque origin in every modern browser, so a
-    ``fetch()`` of a neighbouring JSON file is blocked, while a ``<script
-    src=...>`` still loads.  The file content is one assignment of the same
-    JSON document.
-    """
 def _write_sidecar(output_path: Path, data_json: str, sidecar: bool) -> tuple[str, str];
 
 glob max_full_nodes_default_: any;
@@ -300,38 +148,6 @@ with entry {
     max_nodes_default__ = DEFAULT_MAX_NODES;
 }
 
-"""Generate a self-contained interactive HTML visualization.
-
-    Args:
-        store: The GraphStore to read graph data from.
-        output_path: Path for the output HTML file.
-        mode: Rendering mode — ``"auto"``, ``"full"``, ``"community"``,
-              or ``"file"``.  ``"auto"`` switches to an aggregated mode
-              (community, or file when no community data exists) when the
-              rendered node count exceeds *max_full_nodes* or the rendered
-              edge count exceeds *max_full_edges*.  Ignored when a seed is
-              given: a neighbourhood is bounded by construction and is always
-              drawn with the full renderer.
-        max_full_nodes: Rendered-node threshold for auto-switching.
-        max_full_edges: Rendered-edge threshold for auto-switching.
-        seed_symbols: Symbol queries to seed a k-hop neighbourhood view with.
-        seed_files: File paths (e.g. a review's changed files) to seed with.
-        seed_flow: Execution flow name or id to seed with.
-        path_from: Start symbol of a shortest-path query.
-        path_to: End symbol of a shortest-path query.
-        depth: Hops of context around the seeds.
-        render_depth: Hops drawn before the user expands on click.
-        max_nodes: Hard cap on payload nodes, seeds included.
-        report: Optional dict filled in with the neighbourhood summary
-            (``seeds``, ``seeds_requested``, ``seeds_dropped``, ``truncated``,
-            ``max_nodes``, ``node_count``) so a caller can report a trimmed
-            seed set without re-exporting the graph.
-        sidecar: Write the payload to a ``<name>.data.js`` file next to the
-            page instead of inlining it.  Opt-in: the default is still one
-            self-contained file you can email.
-
-    Writes the HTML file to *output_path* and returns the resolved Path.
-    """
 def generate_html(
     store: GraphStore,
     output_path: str | Path,

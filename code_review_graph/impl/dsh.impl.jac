@@ -158,7 +158,7 @@ impl _without_operation(document: list[Any], op_index: int) -> list[Any] {
     return [operation for (index, operation) in enumerate(document) if index != op_index];
 }
 
-impl _check(rewritten: str, expected: list[Any]) -> None {
+impl _check(rewritten: str, expected: list[Any]) {
     try {
         parsed: any = load(rewritten);
     } except yaml.YAMLError as exc {

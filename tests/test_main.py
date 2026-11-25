@@ -20,6 +20,7 @@ import pytest
 import code_review_graph.incremental as incremental_module
 import code_review_graph.tools.docs as docs_module
 from code_review_graph import main as crg_main
+from tests._project import function_source
 from code_review_graph.http_origin_guard import LoopbackOriginGuard
 
 
@@ -249,7 +250,7 @@ class TestLongRunningToolsAreAsync:
         checked each wrapper for a literal ``asyncio.to_thread``. There is
         one implementation now (#262), so the check is in two halves:
         every wrapper delegates, and the thing they delegate to threads."""
-        offload_source = inspect.getsource(crg_main._run_off_loop)
+        offload_source = function_source(crg_main._run_off_loop)
         assert "anyio.to_thread.run_sync" in offload_source, (
             "_offload must thread its work through anyio.to_thread.run_sync; "
             "it is the single place every heavy tool relies on to stay off "
@@ -263,7 +264,7 @@ class TestLongRunningToolsAreAsync:
             # The @mcp.tool() decorator wraps the original function; walk
             # through the wrapper to find the underlying source.
             underlying = getattr(fn, "fn", None) or fn
-            source = inspect.getsource(underlying)
+            source = function_source(underlying)
             assert "_offload(" in source, (
                 f"{tool_name} must hand its blocking work to _offload; "
                 f"otherwise it runs inline and MCP clients see a hang. "
@@ -596,7 +597,7 @@ class TestLongRunningToolsAreAsync:
         be the opposite of the point of #262.
         """
         # The docstring explains the contrast, so read the code, not the prose.
-        tree = ast.parse(textwrap.dedent(inspect.getsource(crg_main._run_off_loop)))
+        tree = ast.parse(textwrap.dedent(function_source(crg_main._run_off_loop)))
         func = tree.body[0]
         statements = [
             node for node in func.body
@@ -708,12 +709,12 @@ class TestGraphBackedToolProvenanceCoverage:
         # ``_offload`` stamps provenance for every tool that routes through
         # it, so a wrapper attaches provenance either directly or by
         # delegating without opting out. See #262.
-        assert "with_provenance" in inspect.getsource(crg_main._offload)
+        assert "with_provenance" in function_source(crg_main._offload)
         for tool_name in tool_names:
             tool = getattr(crg_main, tool_name, None)
             assert tool is not None, f"{category}: missing {tool_name}"
             underlying = getattr(tool, "fn", None) or tool
-            source = inspect.getsource(underlying)
+            source = function_source(underlying)
             attaches = "with_provenance" in source or (
                 "_offload(" in source and "provenance=False" not in source
             )
@@ -731,7 +732,7 @@ class TestGraphBackedToolProvenanceCoverage:
     ):
         tool = getattr(crg_main, tool_name)
         underlying = getattr(tool, "fn", None) or tool
-        source = inspect.getsource(underlying)
+        source = function_source(underlying)
         assert "with_provenance" not in source
         # Offloading must not smuggle provenance in through the back door:
         # a tool that spans several repositories, or none, has no single

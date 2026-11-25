@@ -322,7 +322,7 @@ impl _describe_open_failure(db_path: Path, exc: Exception) -> str {
     return f"the graph database at {db_path} is unreadable ({detail}). {_RECOVERY_HINT}";
 }
 
-impl _assert_usable_database(conn: sqlite3.Connection, db_path: Path) -> None {
+impl _assert_usable_database(conn: sqlite3.Connection, db_path: Path) {
     rows: any = conn.execute(
         "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
     ).fetchall();
@@ -518,16 +518,16 @@ impl GraphStore.__enter__ -> "GraphStore" {
     return self;
 }
 
-impl GraphStore.__exit__(exc_type, exc_val, exc_tb) -> None {
+impl GraphStore.__exit__(exc_type, exc_val, exc_tb) {
     self.close();
 }
 
-impl GraphStore._init_schema -> None {
+impl GraphStore._init_schema {
     self._conn.executescript(_SCHEMA_SQL);
     self._conn.commit();
 }
 
-impl GraphStore._invalidate_cache -> None {
+impl GraphStore._invalidate_cache {
     with self._cache_lock {
         self._cache_epoch += 1;
         self._nxg_cache = None;
@@ -535,7 +535,7 @@ impl GraphStore._invalidate_cache -> None {
     }
 }
 
-impl GraphStore.shrink_memory(clear_nx_cache: bool = True) -> None {
+impl GraphStore.shrink_memory(clear_nx_cache: bool = True) {
     if clear_nx_cache {
         self._invalidate_cache();
     }
@@ -545,7 +545,7 @@ impl GraphStore.shrink_memory(clear_nx_cache: bool = True) -> None {
     release_os_memory();
 }
 
-impl GraphStore.close -> None {
+impl GraphStore.close {
     self._invalidate_cache();
     try {
         self._conn.execute("PRAGMA shrink_memory");
@@ -947,7 +947,7 @@ impl GraphStore._settle_collision_endpoints -> int {
 
     updates = [];
 
-    def settle(row: sqlite3.Row, column: str, extra: dict, base: str) -> None {
+    def settle(row: sqlite3.Row, column: str, extra: dict, base: str) {
         candidates: any = current(base);
         endpoint: any = row[column];
         if len(candidates) > 1 {
@@ -1037,7 +1037,7 @@ impl GraphStore._settle_collision_endpoints -> int {
     return len(updates);
 }
 
-impl GraphStore.remove_file_data(file_path: str) -> None {
+impl GraphStore.remove_file_data(file_path: str) {
     file_path = normalize_file_path(file_path);
     self._conn.execute("DELETE FROM nodes WHERE file_path = ?", (file_path,));
     self._conn.execute("DELETE FROM edges WHERE file_path = ?", (file_path,));
@@ -1118,7 +1118,7 @@ impl GraphStore._read_transaction -> Generator[any, any, any] {
     }
 }
 
-impl GraphStore._begin_immediate -> None {
+impl GraphStore._begin_immediate {
     if self._conn.in_transaction {
         if self._active_read_txn is None {
             logger.warning("Rolling back uncommitted transaction before BEGIN IMMEDIATE");
@@ -1133,7 +1133,7 @@ impl GraphStore._begin_immediate -> None {
 
 impl GraphStore.store_file_nodes_edges(
     file_path: str, nodes: list[NodeInfo], edges: list[EdgeInfo], fhash: str = ""
-) -> None {
+) {
     self._begin_immediate();
     try {
         self._replace_file_data(file_path, nodes, edges, fhash);
@@ -1145,9 +1145,7 @@ impl GraphStore.store_file_nodes_edges(
     self._invalidate_cache();
 }
 
-impl GraphStore.store_file_batch(
-    batch: list[tuple[str, list[NodeInfo], list[EdgeInfo], str]]
-) -> None {
+impl GraphStore.store_file_batch(batch: list[tuple[str, list[NodeInfo], list[EdgeInfo], str]]) {
     self._begin_immediate();
     try {
         for (file_path, nodes, edges, fhash) in batch {
@@ -1161,7 +1159,7 @@ impl GraphStore.store_file_batch(
     self._invalidate_cache();
 }
 
-impl GraphStore.store_file_edges(file_path: str, edges: list[EdgeInfo]) -> None {
+impl GraphStore.store_file_edges(file_path: str, edges: list[EdgeInfo]) {
     normalized: any = normalize_file_path(file_path);
     self._begin_immediate();
     try {
@@ -1202,7 +1200,7 @@ impl GraphStore.relocate_edge_targets(old_prefix: str, new_prefix: str) -> int {
 
 impl GraphStore._replace_file_data(
     file_path: str, nodes: list[NodeInfo], edges: list[EdgeInfo], fhash: str = ""
-) -> None {
+) {
     normalized: any = normalize_file_path(file_path);
     identities: any = self._plan_file_identities(normalized, nodes);
     self._conn.execute("DELETE FROM nodes WHERE file_path = ?", (normalized,));
@@ -1247,7 +1245,7 @@ impl GraphStore._replace_file_data(
     self._invalidate_cache();
 }
 
-impl GraphStore._insert_edges(edges: list[EdgeInfo], now: float) -> None {
+impl GraphStore._insert_edges(edges: list[EdgeInfo], now: float) {
     if not edges {
         return;
     }
@@ -1404,7 +1402,7 @@ impl GraphStore._align_edge_with_collisions(
     );
 }
 
-impl GraphStore.set_metadata(key: str, value: str) -> None {
+impl GraphStore.set_metadata(key: str, value: str) {
     self._conn.execute("INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)", (key, value));
     self._conn.commit();
 }
@@ -1438,12 +1436,12 @@ impl GraphStore.has_nodes_for_language(language: str) -> bool {
     return row is not None;
 }
 
-impl GraphStore.commit -> None {
+impl GraphStore.commit {
     self._conn.commit();
     self._invalidate_cache();
 }
 
-impl GraphStore.rollback -> None {
+impl GraphStore.rollback {
     self._conn.rollback();
     self._invalidate_cache();
 }
@@ -2584,15 +2582,13 @@ impl GraphStore.resolve_cpp_scoped_call_targets -> int {
     resolved: any = 0;
     call_updates: list[tuple[str, str, int]] = [];
     mirror_updates = [];
-
-    """Keep parser-generated TESTED_BY mirrors aligned with CALLS."""
     def sync_tested_by(
         call_edge: sqlite3.Row,
         original_target: str,
         source_qualified: str,
         desired_extra: dict,
         serialized_extra: str,
-    ) -> None {
+    ) {
         mirrors: any = self._conn.execute(
             "SELECT id, source_qualified, extra FROM edges WHERE kind = 'TESTED_BY' AND target_qualified = ? AND file_path = ? AND line = ?",
             (call_edge["source_qualified"], call_edge["file_path"], call_edge["line"]),
@@ -2755,7 +2751,7 @@ impl GraphStore.resolve_bare_tested_by_sources -> int {
     }
 }
 
-impl GraphStore._drop_bare_endpoint_context -> None {
+impl GraphStore._drop_bare_endpoint_context {
     with self._cache_lock {
         self._cache_epoch += 1;
         self._bare_endpoint_context_cache = None;
@@ -3987,11 +3983,11 @@ impl GraphStore.get_nodes_without_signature -> list[sqlite3.Row] {
     ).fetchall();
 }
 
-impl GraphStore.update_node_signature(node_id: int, signature: str) -> None {
+impl GraphStore.update_node_signature(node_id: int, signature: str) {
     self._conn.execute("UPDATE nodes SET signature = ? WHERE id = ?", (signature, node_id));
 }
 
-impl GraphStore.update_node_signatures(signature_rows: list[tuple[str, int]]) -> None {
+impl GraphStore.update_node_signatures(signature_rows: list[tuple[str, int]]) {
     if not signature_rows {
         return;
     }

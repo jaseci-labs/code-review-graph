@@ -153,7 +153,7 @@ impl _load_cpp_identity_pending(store: GraphStore) -> set[str] | None {
     return `set(files);
 }
 
-impl _store_cpp_identity_pending(store: GraphStore, files: set[str]) -> None {
+impl _store_cpp_identity_pending(store: GraphStore, files: set[str]) {
     if not files {
         store.set_metadata(_CPP_IDENTITY_METADATA_KEY, CPP_IDENTITY_VERSION);
     }
@@ -272,7 +272,7 @@ impl _run_jedi_enrichment(
     }
 }
 
-impl _refresh_target_resolution(store: GraphStore) -> None {
+impl _refresh_target_resolution(store: GraphStore) {
     try {
         store.refresh_target_resolution();
     } except Exception as exc {
@@ -361,7 +361,7 @@ impl find_project_root(start: Path | None = None, stop_at: Path | None = None) -
     return start or Path.cwd();
 }
 
-impl _write_data_dir_gitignore(data_dir: Path) -> None {
+impl _write_data_dir_gitignore(data_dir: Path) {
     inner_gitignore: any = data_dir / ".gitignore";
     if not inner_gitignore.exists() {
         try {
@@ -373,7 +373,7 @@ impl _write_data_dir_gitignore(data_dir: Path) -> None {
     }
 }
 
-impl _create_data_dir(data_dir: Path) -> None {
+impl _create_data_dir(data_dir: Path) {
     try {
         data_dir.mkdir(parents=True, exist_ok=True);
     } except OSError as exc {
@@ -447,7 +447,7 @@ impl get_db_path(repo_root: Path, *, read_only: bool = False) -> Path {
     return new_db;
 }
 
-impl _prepare_db_path(repo_root: Path, new_db: Path) -> None {
+impl _prepare_db_path(repo_root: Path, new_db: Path) {
     _create_data_dir(new_db.parent);
     legacy_db: any = repo_root / ".code-review-graph.db";
     if legacy_db.exists() and not new_db.exists() {
@@ -681,7 +681,7 @@ impl _nested_output_ignore_patterns(
     return `list(patterns);
 }
 
-impl clear_nested_ignore_cache(repo_root: Path | None = None) -> None {
+impl clear_nested_ignore_cache(repo_root: Path | None = None) {
     with _nested_ignore_lock {
         if repo_root is None {
             _nested_ignore_cache.clear();
@@ -1544,7 +1544,7 @@ impl _keep_candidate(
     return True;
 }
 
-impl _report_once(`root: Path, key: str, level: int, message: str, *args_: object) -> None {
+impl _report_once(`root: Path, key: str, level: int, message: str, *args_: object) {
     args: any = tuple(args_);
     marker: any = (`str(`root), key);
     if marker in _reported_links {
@@ -1604,8 +1604,6 @@ impl _walk_symlinked_dirs(
         return _should_ignore(logical, ignore_patterns)
             or operator.ne(via, logical) and _should_ignore(via, ignore_patterns);
     }
-
-    """List one followed folder; return False once the cap is reached."""
     def _list(directory: Path, logical: str, via: str) -> bool {
         stack: any = [(directory, logical, via)];
         while stack {
@@ -1868,7 +1866,7 @@ impl _load_followed_dirs(store: GraphStore) -> dict[str, str] {
     };
 }
 
-impl _store_followed(store: GraphStore, paths: set[str], dirs: dict[str, str]) -> None {
+impl _store_followed(store: GraphStore, paths: set[str], dirs: dict[str, str]) {
     if store.get_metadata(_FOLLOWED_FILES_KEY) is not None or paths {
         if _load_followed_files(store) != paths or store.get_metadata(_FOLLOWED_FILES_KEY) is None {
             store.set_metadata(_FOLLOWED_FILES_KEY, json.dumps(sorted(paths)));
@@ -1902,7 +1900,7 @@ impl _relinked(value: str, prefixes: list[tuple[str, str]]) -> str {
     return value;
 }
 
-impl _relink_edges(edges: list, repo_root: Path, dirs: dict[str, str]) -> None {
+impl _relink_edges(edges: list, repo_root: Path, dirs: dict[str, str]) {
     if not dirs {
         return;
     }
@@ -1913,7 +1911,7 @@ impl _relink_edges(edges: list, repo_root: Path, dirs: dict[str, str]) -> None {
     }
 }
 
-impl _relink_stored_edges(store: GraphStore, repo_root: Path, dirs: dict[str, str]) -> None {
+impl _relink_stored_edges(store: GraphStore, repo_root: Path, dirs: dict[str, str]) {
     for (real, logical) in _relink_prefixes(repo_root, dirs) {
         store.relocate_edge_targets(real, logical);
     }
@@ -2053,7 +2051,7 @@ impl _reconcile_stale_files(
     return stale_files;
 }
 
-impl _assert_graph_matches_root(repo_root: Path, store: GraphStore) -> None {
+impl _assert_graph_matches_root(repo_root: Path, store: GraphStore) {
     file_paths: any = store.get_file_marker_paths();
     if not file_paths {
         return;
@@ -2074,7 +2072,7 @@ impl _assert_graph_matches_root(repo_root: Path, store: GraphStore) -> None {
     );
 }
 
-impl assert_graph_serves_root(repo_root: Path, store: GraphStore) -> None {
+impl assert_graph_serves_root(repo_root: Path, store: GraphStore) {
     prefix: any;
     markers: any = [`str(path) for path in store.get_file_marker_paths()];
     absolute: any = [path for path in markers if Path(path).is_absolute()];
@@ -2112,7 +2110,7 @@ impl _single_hop_dependents(store: GraphStore, file_path: str) -> set[str] {
     return store.get_direct_dependent_files(file_path);
 }
 
-impl _prewarm_parser_probes(parser: Any, rel_paths: list[str]) -> None {
+impl _prewarm_parser_probes(parser: Any, rel_paths: list[str]) {
     try {
         parser_mod: any = lazy("parser");
     } except Exception {
@@ -2655,7 +2653,7 @@ impl incremental_update(
     flow_node_ids = {};
     reparsed_paths = [];
 
-    def store_parsed(rel_path: str, nodes: list, edges: list, fhash: str) -> None {
+    def store_parsed(rel_path: str, nodes: list, edges: list, fhash: str) {
         reparsed_paths.append(`str(repo_root / rel_path));
         _relink_edges(edges, repo_root, followed_dirs);
         if edges_only.get(rel_path) == fhash {
@@ -2843,28 +2841,28 @@ impl _WatchDebouncer.init(interval: float, callback: Callable[[list[Any]], None]
     self._cond = threading.Condition();
 }
 
-impl _WatchDebouncer.handle_event(event: Any) -> None {
+impl _WatchDebouncer.handle_event(event: Any) {
     with self._cond {
         self._events.append(event);
         self._cond.notify();
     }
 }
 
-impl _WatchDebouncer.requeue(events: list[Any]) -> None {
+impl _WatchDebouncer.requeue(events: list[Any]) {
     with self._cond {
         self._events[:0] = events;
         self._cond.notify();
     }
 }
 
-impl _WatchDebouncer.stop -> None {
+impl _WatchDebouncer.stop {
     with self._cond {
         self._stopping = True;
         self._cond.notify();
     }
 }
 
-impl _WatchDebouncer.run -> None {
+impl _WatchDebouncer.run {
     with self._cond {
         while True {
             while not self._events and not self._stopping {
@@ -2895,7 +2893,7 @@ impl _WatchDebouncer.run -> None {
     }
 }
 
-impl _raise_watch_update_errors(result: dict, context: str) -> None {
+impl _raise_watch_update_errors(result: dict, context: str) {
     errors: any = result.get("errors") or [];
     if not errors {
         return;
@@ -2909,7 +2907,7 @@ impl _raise_watch_update_errors(result: dict, context: str) -> None {
     raise RuntimeError(f"{context} reported errors: {details}");
 }
 
-impl _raise_watch_postprocess_warnings(result: object) -> None {
+impl _raise_watch_postprocess_warnings(result: object) {
     if not isinstance(result, `dict) {
         return;
     }
@@ -3048,10 +3046,8 @@ impl _plan_watch_paths_with_status(
     return ([(repo_root, True)], True);
 }
 
-impl _run_time_boxed(
-    operation: Callable[[], Any], description: str, timeout: float = 10.0
-) -> None {
-    def _call -> None {
+impl _run_time_boxed(operation: Callable[[], Any], description: str, timeout: float = 10.0) {
+    def _call {
         try {
             operation();
         } except Exception as exc {
@@ -3121,11 +3117,11 @@ impl _WatchSupervisor.init(
     self._token = f"{os.getpid()}.{uuid.uuid4().hex[:8]}";
 }
 
-impl _WatchSupervisor.attach(observer: Any) -> None {
+impl _WatchSupervisor.attach(observer: Any) {
     self._observer = observer;
 }
 
-impl _WatchSupervisor.schedule_initial(handler: Any) -> None {
+impl _WatchSupervisor.schedule_initial(handler: Any) {
     self._handler = handler;
     plan: any;
     fallback: any;
@@ -3144,7 +3140,7 @@ impl _WatchSupervisor.schedule_initial(handler: Any) -> None {
     );
 }
 
-impl _WatchSupervisor._schedule(path: Path, *, recursive: bool) -> None {
+impl _WatchSupervisor._schedule(path: Path, *, recursive: bool) {
     key: any = `str(path);
     if key in self._watches {
         return;
@@ -3165,7 +3161,7 @@ impl _WatchSupervisor._schedule(path: Path, *, recursive: bool) -> None {
     }
 }
 
-impl _WatchSupervisor.sync_extra_roots(roots: set[str]) -> None {
+impl _WatchSupervisor.sync_extra_roots(roots: set[str]) {
     if self._handler is None {
         return;
     }
@@ -3197,11 +3193,11 @@ impl _WatchSupervisor.sync_extra_roots(roots: set[str]) -> None {
     }
 }
 
-impl _WatchSupervisor.request_replan -> None {
+impl _WatchSupervisor.request_replan {
     self._replan_requested = True;
 }
 
-impl _WatchSupervisor._remember_ignored_boundaries -> None {
+impl _WatchSupervisor._remember_ignored_boundaries {
     boundaries: dict[str, bool] = {};
     for parent in self._shallow {
         for child in _watch_child_dirs(Path(parent)) {
@@ -3216,7 +3212,7 @@ impl _WatchSupervisor._remember_ignored_boundaries -> None {
     self._ignored_boundaries = boundaries;
 }
 
-impl _WatchSupervisor._replan_if_requested -> None {
+impl _WatchSupervisor._replan_if_requested {
     recursive: any;
     if not self._replan_requested {
         return;
@@ -3397,7 +3393,7 @@ impl _WatchSupervisor.take_refused_to_index -> list[str] {
     return paths;
 }
 
-impl _WatchSupervisor._note_unwatched(key: str) -> None {
+impl _WatchSupervisor._note_unwatched(key: str) {
     self._unwatched.pop(key, None);
     self._unwatched[key] = time.time();
     while len(self._unwatched) > _MAX_UNWATCHED_TRACKED {
@@ -3405,7 +3401,7 @@ impl _WatchSupervisor._note_unwatched(key: str) -> None {
     }
 }
 
-impl _WatchSupervisor._prune_unwatched -> None {
+impl _WatchSupervisor._prune_unwatched {
     for path in [p for p in self._unwatched if not os.path.isdir(p)] {
         self._unwatched.pop(path, None);
     }
@@ -3503,7 +3499,7 @@ impl _WatchSupervisor._promote_to_recursive(parent: str) -> bool {
     return True;
 }
 
-impl _WatchSupervisor._release_directory(path: str) -> None {
+impl _WatchSupervisor._release_directory(path: str) {
     `entry: any;
     `entry = self._watches.pop(path, None);
     self._shallow.discard(path);
@@ -3613,7 +3609,7 @@ impl _WatchSupervisor.report_health(
     dead_threads: tuple[str, ...] = (),
     phase: str = "watching",
     force: bool = False,
-) -> None {
+) {
     if self._health_path is None {
         return;
     }
@@ -3652,7 +3648,7 @@ impl _WatchSupervisor.report_health(
     self._last_health_state = state;
 }
 
-impl _WatchSupervisor.clear_health -> None {
+impl _WatchSupervisor.clear_health {
     if self._health_path is None {
         return;
     }
@@ -3886,7 +3882,9 @@ impl _create_watch_handler(
                 `str(path.relative_to(repo_root))
                 for path in directory.rglob("*")
                 if self._parseable_file(`str(path.relative_to(repo_root)))
-                    and not _should_ignore(`str(path.relative_to(repo_root)), watch_state.ignore_patterns)
+                    and not _should_ignore(
+                        `str(path.relative_to(repo_root)), watch_state.ignore_patterns
+                    )
             };
         }
 
@@ -3923,16 +3921,13 @@ impl _create_watch_handler(
             return paths;
         }
 
-        def _remember_followed -> None {
+        def _remember_followed {
             tree: any = _followed_tree(repo_root, watch_state.ignore_patterns);
             self.followed_links = `set(tree.links);
             self.outside_roots = _outermost(tree.outside);
             self.inside_roots = _outermost(tree.inside);
         }
 
-        """Whether a batch changes a symlinked folder, and whether it
-            changes a file in a followed folder outside the repository or
-            adds or removes one in a followed folder inside it."""
         def _touches_followed(events: list[FileSystemEvent]) -> tuple[bool, bool] {
             relative: any;
             spelled: any;
@@ -4005,7 +4000,7 @@ impl _create_watch_handler(
             return `int(result["files_updated"]);
         }
 
-        def process(events: list[FileSystemEvent]) -> None {
+        def process(events: list[FileSystemEvent]) {
             with self.lock {
                 if not self.write_lock.acquire() {
                     logger.debug(
@@ -4045,7 +4040,8 @@ impl _create_watch_handler(
                         links_changed: any;
                         contents_changed: any;
                         (links_changed, contents_changed) = self._touches_followed(events) as any;
-                        links_changed = links_changed or watch_state.ignore_patterns is not patterns_before;
+                        links_changed = links_changed
+                            or watch_state.ignore_patterns is not patterns_before;
                         if links_changed or contents_changed {
                             files_updated += self._reconcile_followed();
                         }
@@ -4067,7 +4063,7 @@ impl _create_watch_handler(
             }
         }
 
-        def raise_if_failed -> None {
+        def raise_if_failed {
             if self.failure is not None {
                 raise RuntimeError("watch update failed") from self.failure;
             }
@@ -4078,7 +4074,7 @@ impl _create_watch_handler(
     debouncer = _WatchDebouncer(_DEBOUNCE_SECONDS, processor.process);
     write_lock_file = write_lock_path(store.db_path);
 
-    def _handler_dispatch(_self, event: FileSystemEvent) -> None {
+    def _handler_dispatch(_self, event: FileSystemEvent) {
         if event.event_type not in {"created", "modified", "deleted", "moved"} {
             return;
         }
@@ -4097,25 +4093,23 @@ impl _create_watch_handler(
         debouncer.handle_event(event);
     }
 
-    def _handler_start(_self) -> None {
+    def _handler_start(_self) {
         debouncer.start();
     }
 
-    def _handler_stop(_self) -> None {
+    def _handler_stop(_self) {
         debouncer.stop();
         debouncer.join();
     }
 
-    def _handler_process(_self, events: list[FileSystemEvent]) -> None {
+    def _handler_process(_self, events: list[FileSystemEvent]) {
         processor.process(events);
     }
-
-    """The lock event batches hold while they write to the graph."""
     def _handler_serialized(_self) -> threading.Lock {
         return processor.lock;
     }
 
-    def _handler_raise_if_failed(_self) -> None {
+    def _handler_raise_if_failed(_self) {
         processor.raise_if_failed();
     }
 
@@ -4130,8 +4124,6 @@ impl _create_watch_handler(
     def _handler_events_seen(_self) -> int {
         return processor.events_seen;
     }
-
-    """Followed folders outside the repository, to watch as well."""
     def _handler_outside_roots(_self) -> set[str] {
         return processor.outside_roots;
     }
@@ -4160,7 +4152,7 @@ impl _create_watch_handler(
     return handler_class();
 }
 
-impl _sync_watch_tree(supervisor: _WatchSupervisor, handler: Any) -> None {
+impl _sync_watch_tree(supervisor: _WatchSupervisor, handler: Any) {
     import from watchdog.events { DirCreatedEvent, DirDeletedEvent }
 
     adopted: any;
@@ -4195,7 +4187,7 @@ impl _wait_for_watch_write_lock(
 
 impl _install_sigterm_interrupt -> Callable[[], None] {
     previous: any;
-    def _raise_interrupt(_signum: int, _frame: Any) -> None {
+    def _raise_interrupt(_signum: int, _frame: Any) {
         raise KeyboardInterrupt();
     }
 
@@ -4205,7 +4197,7 @@ impl _install_sigterm_interrupt -> Callable[[], None] {
         return lambda -> any { None };
     }
 
-    def _restore -> None {
+    def _restore {
         try {
             signal.signal(signal.SIGTERM, previous);
         } except (ValueError, OSError) {}
@@ -4220,7 +4212,7 @@ impl watch(
     on_files_updated: Optional[Callable] = None,
     stop_event: threading.Event | None = None,
     follow_symlinks: bool | None = None,
-) -> None {
+) {
     import from watchdog.events { DirCreatedEvent, DirDeletedEvent }
     import from watchdog.observers { Observer }
     repo_root = _canonical_repo_root(repo_root);
@@ -4366,7 +4358,7 @@ impl start_watch_thread(
         return None;
     }
 
-    def _run -> None {
+    def _run {
         try {
             if stop_event is None {
                 watch(repo_root, store, on_files_updated=on_files_updated);

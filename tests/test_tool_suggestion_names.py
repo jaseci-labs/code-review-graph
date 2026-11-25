@@ -22,8 +22,9 @@ from pathlib import Path
 import pytest
 
 from code_review_graph import hints, main
+from tests._project import emitted_package
 
-PACKAGE = Path(main.__file__).resolve().parent
+PACKAGE = emitted_package()
 
 
 @pytest.fixture(scope="module")

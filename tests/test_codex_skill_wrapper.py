@@ -17,10 +17,12 @@ from code_review_graph.parser import NodeInfo
 from code_review_graph.search import rebuild_fts_index
 from code_review_graph.tools.query import _QUERY_PATTERNS
 
+from tests._project import package_dir
+
 PROJECT_ROOT = Path(__file__).parents[1]
 WRAPPER = (
-    PROJECT_ROOT
-    / "code_review_graph/assets/code-review-graph/scripts/crg_readonly.py"
+    package_dir()
+    / "assets/code-review-graph/scripts/crg_readonly.py"
 )
 
 
@@ -284,7 +286,7 @@ def test_fallback_uses_a_read_only_connection_without_sidecars(tmp_path):
         **os.environ,
         "CRG_BIN": str(_wrapper_cli(tmp_path)),
         "CRG_HOME": str(tmp_path / "crg-home"),
-        "PYTHONPATH": str(PROJECT_ROOT),
+        "PYTHONPATH": str(package_dir().parent),
     }
 
     data_dir = db.parent
@@ -327,7 +329,7 @@ def test_fallback_does_not_create_a_missing_database(tmp_path):
         **os.environ,
         "CRG_BIN": str(_wrapper_cli(tmp_path)),
         "CRG_HOME": str(tmp_path / "crg-home"),
-        "PYTHONPATH": str(PROJECT_ROOT),
+        "PYTHONPATH": str(package_dir().parent),
     }
 
     result = subprocess.run(
@@ -353,7 +355,7 @@ def test_fallback_does_not_initialize_an_empty_database(tmp_path):
         **os.environ,
         "CRG_BIN": str(_wrapper_cli(tmp_path)),
         "CRG_HOME": str(tmp_path / "crg-home"),
-        "PYTHONPATH": str(PROJECT_ROOT),
+        "PYTHONPATH": str(package_dir().parent),
     }
 
     result = subprocess.run(
@@ -390,7 +392,7 @@ def test_fallback_refuses_a_graph_it_cannot_migrate(tmp_path, command):
         **os.environ,
         "CRG_BIN": str(_wrapper_cli(tmp_path)),
         "CRG_HOME": str(tmp_path / "crg-home"),
-        "PYTHONPATH": str(PROJECT_ROOT),
+        "PYTHONPATH": str(package_dir().parent),
     }
 
     result = subprocess.run(

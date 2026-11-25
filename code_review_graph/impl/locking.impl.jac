@@ -1,4 +1,4 @@
-impl _close_inherited_locks -> None {
+impl _close_inherited_locks {
     for lock in `list(_open_locks) {
         items_: any = list((lock._handle, None));
         if len(items_) != 2 {
@@ -95,7 +95,7 @@ impl WriteLock.acquire(*, blocking: bool = False) -> bool {
     return True;
 }
 
-impl WriteLock._record_holder(handle: Any) -> None {
+impl WriteLock._record_holder(handle: Any) {
     try {
         handle.seek(0);
         handle.truncate();
@@ -106,7 +106,7 @@ impl WriteLock._record_holder(handle: Any) -> None {
     }
 }
 
-impl WriteLock.release -> None {
+impl WriteLock.release {
     items__: any = list((self._handle, None));
     if len(items__) != 2 {
         raise ValueError(
@@ -140,7 +140,7 @@ impl WriteLock.__enter__ -> WriteLock {
     return self;
 }
 
-impl WriteLock.__exit__(*_exc_: object) -> None {
+impl WriteLock.__exit__(*_exc_: object) {
     _exc: any = tuple(_exc_);
     self.release();
 }

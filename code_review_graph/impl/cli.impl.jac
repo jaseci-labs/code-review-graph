@@ -27,7 +27,7 @@ impl _supports_color -> bool {
     return sys.stdout.isatty();
 }
 
-impl _print_banner -> None {
+impl _print_banner {
     color: any = _supports_color();
     version: any = _get_version();
     c: any = "\x1b[36m" if color else "";
@@ -77,7 +77,7 @@ impl _instruction_files_to_modify(
 
     targets = [];
 
-    def _describe(filename: str, path: Path, section: str) -> None {
+    def _describe(filename: str, path: Path, section: str) {
         if not install_plan.exists(path) {
             targets.append((filename, "new"));
             return;
@@ -189,13 +189,13 @@ impl _match_files_to_forget(
     return sorted(matched);
 }
 
-impl _say_nothing(*_args_: object, **_kwargs: object) -> None {
+impl _say_nothing(*_args_: object, **_kwargs: object) {
     _args: any = tuple(_args_);
 }
 
 impl _apply_steering_choice(
     repo_root: Path, target: str, steering: bool, *, skip_hooks: bool, dry_run: bool
-) -> None {
+) {
     install_steering_hook = lazy("skills", "install_steering_hook");
     remove_steering_hook = lazy("uninstall", "remove_steering_hook");
 
@@ -236,7 +236,7 @@ impl _apply_steering_choice(
     }
 }
 
-impl _report_gitignore_block(repo_root: Path, plan: _GitignorePlan, *, dry_run: bool) -> None {
+impl _report_gitignore_block(repo_root: Path, plan: _GitignorePlan, *, dry_run: bool) {
     install_gitignore: any = lazy("install_gitignore");
 
     result: any = install_gitignore.apply(repo_root, plan, dry_run=False);
@@ -269,7 +269,7 @@ impl _report_gitignore_block(repo_root: Path, plan: _GitignorePlan, *, dry_run: 
     }
 }
 
-impl _handle_init(args: argparse.Namespace) -> None {
+impl _handle_init(args: argparse.Namespace) {
     name: any;
     path: any;
     find_repo_root = lazy("incremental", "find_repo_root");
@@ -457,7 +457,7 @@ impl _handle_init(args: argparse.Namespace) -> None {
 
 impl _plan_mcp_configs(
     repo_root: Path, target: str, dry_run: bool, platforms: Iterable[str] | None = None
-) -> None {
+) {
     PLATFORMS = lazy("skills", "PLATFORMS");
     install_platform_configs = lazy("skills", "install_platform_configs");
 
@@ -650,7 +650,7 @@ impl _plan_integrations(
     return codex_skill_error;
 }
 
-impl _print_instruction_conflicts(outcomes: dict[str, str]) -> None {
+impl _print_instruction_conflicts(outcomes: dict[str, str]) {
     stale: any = [f for (f, o) in outcomes.items() if o == "conflict"];
     if stale {
         print(
@@ -663,7 +663,7 @@ impl _print_instruction_conflicts(outcomes: dict[str, str]) -> None {
 
 impl _print_planned_files(
     plan: install_plan.Plan, repo_root: Path, `skip: Iterable[install_plan.FileChange] = ()
-) -> None {
+) {
     change: any;
 
     skipped: any = {change.path for change in `skip};
@@ -681,7 +681,7 @@ impl _print_planned_files(
     print("Run with --dry-run to see each change first.");
 }
 
-impl _print_dry_run(plan: install_plan.Plan, repo_root: Path) -> None {
+impl _print_dry_run(plan: install_plan.Plan, repo_root: Path) {
     changes: any = plan.changes();
     print();
     if not changes {
@@ -695,7 +695,7 @@ impl _print_dry_run(plan: install_plan.Plan, repo_root: Path) -> None {
     print("[dry-run] No files were modified.");
 }
 
-impl _handle_data_dir_option(args, repo_root: Path) -> None {
+impl _handle_data_dir_option(args, repo_root: Path) {
     if hasattr(args, "data_dir") and args.data_dir {
         try {
             Registry = lazy("registry", "Registry");
@@ -710,7 +710,7 @@ impl _handle_data_dir_option(args, repo_root: Path) -> None {
     }
 }
 
-impl _add_embedding_refresh_args(command) -> None {
+impl _add_embedding_refresh_args(command) {
     command.add_argument(
         "--embedding-provider",
         choices=["local", "openai", "google", "minimax", "voyage"],
@@ -724,7 +724,7 @@ impl _add_embedding_refresh_args(command) -> None {
     );
 }
 
-impl _add_follow_symlinks_arg(command) -> None {
+impl _add_follow_symlinks_arg(command) {
     command.add_argument(
         "--follow-symlinks",
         action=argparse.BooleanOptionalAction,
@@ -785,7 +785,7 @@ impl _detail_sections_arg(value: str) -> tuple[str, ...] {
     }
 }
 
-impl _canonicalize_repo_argument(args: argparse.Namespace) -> None {
+impl _canonicalize_repo_argument(args: argparse.Namespace) {
     repo: any = getattr(args, "repo", None);
     if args.command in _PATH_REPO_COMMANDS and repo {
         args.repo = `str(Path(repo).expanduser().resolve());
@@ -809,7 +809,7 @@ impl _find_explicit_repo_root(start: Path) -> "Path | None" {
     }
 }
 
-impl _handle_doctor(args) -> None {
+impl _handle_doctor(args) {
     run_doctor = lazy("doctor", "run_doctor");
     find_project_root = lazy("incremental", "find_project_root");
 
@@ -825,7 +825,7 @@ impl _handle_doctor(args) -> None {
     }
 }
 
-impl _handle_context_history(args) -> None {
+impl _handle_context_history(args) {
     import from datetime { datetime, time, timedelta, timezone }
 
     ch: any = lazy("context_history");
@@ -909,7 +909,7 @@ impl _handle_context_history(args) -> None {
     }
 }
 
-impl _run_graph_tool_command(args, repo_root: Path) -> None {
+impl _run_graph_tool_command(args, repo_root: Path) {
     tools: any = lazy("tools");
 
     `root: any = `str(repo_root);
@@ -978,7 +978,7 @@ impl _run_graph_tool_command(args, repo_root: Path) -> None {
     print(json.dumps(result, indent=2, default=str));
 }
 
-impl _exit_if_contended(result: dict) -> None {
+impl _exit_if_contended(result: dict) {
     if result.get("status") != "contended" {
         return;
     }
@@ -988,7 +988,7 @@ impl _exit_if_contended(result: dict) -> None {
     sys.exit(EXIT_TEMPFAIL);
 }
 
-impl _warn_failed_files(result: dict) -> None {
+impl _warn_failed_files(result: dict) {
     failed: any = result.get("errors") or [];
     if not failed {
         return;
@@ -1007,7 +1007,7 @@ impl _open_graph_store(db_path: Path, command: str) -> any {
     return open_store(db_path, command);
 }
 
-impl _require_repo_folder(repo_root: Path) -> None {
+impl _require_repo_folder(repo_root: Path) {
     if not repo_root.is_dir() {
         raise CodeReviewGraphError(
             f"--repo is not a folder: {repo_root}. Check the path and try again."
@@ -1015,7 +1015,7 @@ impl _require_repo_folder(repo_root: Path) -> None {
     }
 }
 
-impl _ensure_project_marker(repo_root: Path) -> None {
+impl _ensure_project_marker(repo_root: Path) {
     if repo_root.is_dir()
         and not `any(
             (repo_root / marker).exists() for marker in (".git", ".svn", ".code-review-graph")
@@ -1030,7 +1030,7 @@ impl _enrich_kwargs(args) -> dict {
     return {"enrich": True} if getattr(args, "enrich", False) else {};
 }
 
-impl _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) -> None {
+impl _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
     assert_graph_serves_root = lazy("incremental", "assert_graph_serves_root");
     get_db_path = lazy("incremental", "get_db_path");
 
@@ -1182,7 +1182,7 @@ impl _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) -> No
 
 impl _print_savings_panel(
     args, repo_root: Path, changed: list[str], response: dict, original_tokens: int
-) -> None {
+) {
     format_context_savings_panel = lazy("context_savings", "format_context_savings_panel");
     verify_with_tiktoken = lazy("context_savings", "verify_with_tiktoken");
 
@@ -1208,7 +1208,7 @@ impl _print_savings_panel(
     }
 }
 
-impl _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = False) -> None {
+impl _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = False) {
     _prepare_db_path = lazy("incremental", "_prepare_db_path");
     assert_graph_serves_root = lazy("incremental", "assert_graph_serves_root");
 
@@ -1284,7 +1284,7 @@ impl _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = Fals
     }
 }
 
-impl main -> None {
+impl main {
     try {
         _dispatch();
     } except CodeReviewGraphError as exc {
@@ -1313,7 +1313,7 @@ impl _is_seeded(args: argparse.Namespace) -> bool {
     );
 }
 
-impl _check_visualize_flags(args: argparse.Namespace, fmt: str) -> None {
+impl _check_visualize_flags(args: argparse.Namespace, fmt: str) {
     error: any = _SUBCOMMANDS["visualize"].error;
     seeded: any = _is_seeded(args);
     tuning: any = [
@@ -1353,7 +1353,7 @@ impl _check_visualize_flags(args: argparse.Namespace, fmt: str) -> None {
     }
 }
 
-impl _print_seed_budget(`report: dict) -> None {
+impl _print_seed_budget(`report: dict) {
     if not `report {
         return;
     }
@@ -2149,7 +2149,7 @@ impl _command_names(ap: argparse.ArgumentParser) -> list[str] {
     return [];
 }
 
-impl _reject_unknown_command(ap: argparse.ArgumentParser, argv: list[str]) -> None {
+impl _reject_unknown_command(ap: argparse.ArgumentParser, argv: list[str]) {
     names: any = _command_names(ap);
     for word in argv {
         if word in ("-h", "--help") or word in names {
@@ -2167,7 +2167,7 @@ impl _reject_unknown_command(ap: argparse.ArgumentParser, argv: list[str]) -> No
     }
 }
 
-impl _dispatch -> None {
+impl _dispatch {
     _configure_utf8_stdio();
     ap: any = build_parser();
     _reject_unknown_command(ap, sys.argv[1:]);
@@ -2438,7 +2438,7 @@ impl _dispatch -> None {
             "platforms": scoped_platforms,
         };
 
-        def _print_report(`report: UninstallReport) -> None {
+        def _print_report(`report: UninstallReport) {
             action: any;
             for action in `report.removed_paths {
                 print(f"  delete  {action}");

@@ -1,14 +1,6 @@
-"""Evaluation framework for code-review-graph.
-
-Provides scoring metrics (token efficiency, MRR, precision/recall),
-benchmark runners, and report generators for benchmarking graph-based code reviews.
-"""
-
 import from __future__ { annotations }
 
 import importlib;
-
-"""Lazy-import runner functions (require pyyaml)."""
 def __getattr__(name: str) -> any;
 
 glob __all__: any = [

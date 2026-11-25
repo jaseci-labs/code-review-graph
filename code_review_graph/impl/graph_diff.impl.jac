@@ -21,7 +21,7 @@ impl take_snapshot(store: GraphStore) -> dict[str, Any] {
     };
 }
 
-impl save_snapshot(snapshot: dict, path: Path) -> None {
+impl save_snapshot(snapshot: dict, path: Path) {
     data: any = `dict(snapshot);
     if isinstance(data.get("edges"), `set) {
         data["edges"] = sorted(data["edges"]);

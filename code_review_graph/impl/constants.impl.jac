@@ -2,7 +2,7 @@ impl read_only_requested -> bool {
     return os.environ.get(READ_ONLY_ENV, "").strip().lower() in {"1", "true", "yes", "on"};
 }
 
-impl _warn_invalid_env(name: str, raw: str, `default: object) -> None {
+impl _warn_invalid_env(name: str, raw: str, `default: object) {
     if name in _warned_env_vars {
         return;
     }
@@ -102,7 +102,7 @@ impl normalize_file_path(path: "str | os.PathLike[str]") -> str {
     return `str(path).replace("\\", "/");
 }
 
-impl release_os_memory -> None {
+impl release_os_memory {
     import gc;
     import sys;
 

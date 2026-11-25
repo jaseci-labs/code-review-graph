@@ -12,7 +12,7 @@ impl expand_changed_file_paths(
     seen = set[any]();
     relative_inputs: list[str] = [];
 
-    def _add(path: str) -> None {
+    def _add(path: str) {
         normalized: any = normalize_file_path(path);
         if normalized and normalized not in seen {
             seen.add(normalized);

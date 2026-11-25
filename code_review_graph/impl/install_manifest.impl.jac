@@ -64,7 +64,7 @@ impl _render(files: Iterable[str]) -> str {
     return json.dumps({"version": VERSION, "files": sorted(`set(files))}, indent=2) + "\n";
 }
 
-impl plan_record(repo_root: Path, plan: install_plan.Plan) -> None {
+impl plan_record(repo_root: Path, plan: install_plan.Plan) {
     written: any = relative_paths(repo_root, plan.written());
     existing: any = read(repo_root);
     merged: any = sorted(`set(existing) | `set(written));
@@ -79,7 +79,7 @@ impl plan_record(repo_root: Path, plan: install_plan.Plan) -> None {
     install_plan.write_text(path, _render(merged));
 }
 
-impl forget(repo_root: Path, paths: Iterable[Path]) -> None {
+impl forget(repo_root: Path, paths: Iterable[Path]) {
     path: any = manifest_path(repo_root);
     if not path.is_file() or path.is_symlink() {
         return;
@@ -101,7 +101,7 @@ impl forget(repo_root: Path, paths: Iterable[Path]) -> None {
     }
 }
 
-impl _replace(path: Path, text: str) -> None {
+impl _replace(path: Path, text: str) {
     handle: any;
     with tempfile.NamedTemporaryFile(
         "w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", suffix=".tmp", delete=False

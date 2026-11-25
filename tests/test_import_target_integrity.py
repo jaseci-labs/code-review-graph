@@ -42,6 +42,7 @@ import pytest
 
 from code_review_graph.graph import GraphStore
 from code_review_graph.incremental import _run_python_resolver, full_build
+from tests._project import project_root
 from tests.import_audit import (
     audit_imports,
     exists_case_exact,
@@ -275,7 +276,7 @@ def own_package_graph(tmp_path_factory) -> Path:
     """
     root = tmp_path_factory.mktemp("own-package") / "repo"
     shutil.copytree(
-        REPO_ROOT / "code_review_graph",
+        project_root() / "replaced-by-neojac" / "code_review_graph",
         root / "code_review_graph",
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )

@@ -90,7 +90,7 @@ impl split_host_port(value: str) -> tuple[str, str | None] {
     return (host, port);
 }
 
-impl _forbid(send: Send, message: str) -> None {
+impl _forbid(send: Send, message: str) {
     body: any = message.encode();
     await send({
         "type": "http.response.start",
@@ -103,7 +103,7 @@ impl _forbid(send: Send, message: str) -> None {
     await send({"type": "http.response.body", "body": body});
 }
 
-impl _guard_call(guard, scope: Scope, receive: Receive, send: Send) -> None {
+impl _guard_call(guard, scope: Scope, receive: Receive, send: Send) {
     if not guard.enabled or scope["type"] != "http" {
         await guard.app(scope, receive, send);
         return;

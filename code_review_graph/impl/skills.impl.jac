@@ -367,14 +367,14 @@ impl _is_generated_server_entry(`entry: Any) -> bool {
     return name in launchers;
 }
 
-impl _report_user_owned_entry(config_path: Path, label: str = "") -> None {
+impl _report_user_owned_entry(config_path: Path, label: str = "") {
     prefix: any = f"  {label}: " if label else "  ";
     print(
         f"{prefix}{config_path} holds a hand-written 'code-review-graph' entry — leaving it as it is.",
     );
 }
 
-impl _warn_legacy_opencode_config(repo_root: Path) -> None {
+impl _warn_legacy_opencode_config(repo_root: Path) {
     legacy: any = repo_root / ".opencode.json";
     if not legacy.exists() {
         return;
@@ -786,7 +786,6 @@ impl _indent_block(text: str, indent: int) -> str {
 }
 
 impl _strip_jsonc(text: str) -> str {
-    """If a comment starts at ``idx``, return the index just past it."""
     def _skip_comment(s: str, idx: int) -> int | None {
         if s[idx] != "/" or idx + 1 >= len(s) {
             return None;
@@ -967,7 +966,7 @@ impl _install_platform_configs(
 
     configured = [];
 
-    def _record_configured(key: str, plat: dict[str, Any]) -> None {
+    def _record_configured(key: str, plat: dict[str, Any]) {
         configured.append(plat["name"]);
         configured.extend(PLATFORMS[alias]["name"] for alias in shared_aliases.get(key, ()));
     }
@@ -1564,7 +1563,7 @@ impl _lift_block_above_exit(text: str, begin_marker: str, end_marker: str) -> st
     return text[:offset] + text[begin:end] + text[offset:begin] + text[end:];
 }
 
-impl _exit_warning(hook_path: Path, command: str) -> None {
+impl _exit_warning(hook_path: Path, command: str) {
     logger.warning(
         "%s ends with an 'exit' that passes on the last command's status, so a block added after it would never run; leaving it alone. Call 'code-review-graph %s' from it before the 'exit'.",
         hook_path,
@@ -1862,7 +1861,7 @@ impl _is_steering_hook_command(command: Any) -> bool {
     );
 }
 
-impl _report_kept_hook(command: Any) -> None {
+impl _report_kept_hook(command: Any) {
     if not isinstance(command, `str) {
         return;
     }
@@ -1964,7 +1963,7 @@ impl _merge_flat_hook_entries(existing: Any, new_entries: list[Any]) -> list[Any
     return kept[:insert_at] + `list(new_entries) + kept[insert_at:];
 }
 
-impl _report_settings_left_alone(label: str, path: Path, problem: str) -> None {
+impl _report_settings_left_alone(label: str, path: Path, problem: str) {
     print(
         f"  {label}: {path} {problem} — left unchanged to avoid data loss. Please add the hooks manually.",
     );
@@ -2272,7 +2271,7 @@ impl inject_claude_md(repo_root: Path) -> str {
     );
 }
 
-impl _remove_legacy_instruction_file(path: Path) -> None {
+impl _remove_legacy_instruction_file(path: Path) {
     if not install_plan.exists(path) {
         return;
     }
@@ -2323,9 +2322,7 @@ impl install_gemini_cli_hooks(repo_root: Path) -> Path | None {
 
     hooks_obj = existing.get("hooks", {});
 
-    def _ensure_group(
-        event_name: str, matcher: str, hook_command: str, name: str, timeout: int
-    ) -> None {
+    def _ensure_group(event_name: str, matcher: str, hook_command: str, name: str, timeout: int) {
         arr: any = hooks_obj.get(event_name, []);
         hooks_obj[event_name] = _merge_hook_entries(
             arr,

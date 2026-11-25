@@ -1,4 +1,4 @@
-impl clear_cache -> None {
+impl clear_cache {
     with _cache_lock {
         _cache.clear();
     }

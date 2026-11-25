@@ -240,8 +240,6 @@ impl resolve_scoped_calls(store: GraphStore, repo_root: Path | None = None) -> d
             };
         }
     }
-
-    """Is the class the scope names in the candidate's namespace?"""
     def php_namespace_backs(candidate_file: str, caller_file: str, scope: str) -> bool {
         theirs: any;
         written: any;
@@ -256,12 +254,6 @@ impl resolve_scoped_calls(store: GraphStore, repo_root: Path | None = None) -> d
         }
         return written in theirs or `any(f"{ns}\\{written}" in theirs for ns in ours);
     }
-
-    """Does the caller's file say *candidate* is the class it means?
-
-        Being the one match in the whole graph is no evidence on its own: a
-        vendor class or another crate's type of the same name may be meant.
-        """
     def backed(
         candidate: str, caller_file: str, class_name: str, scope: str, language: str
     ) -> bool {

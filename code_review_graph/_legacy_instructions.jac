@@ -1,18 +1,3 @@
-"""Verbatim copies of instruction sections shipped by earlier releases.
-
-``skills._inject_instructions`` upgrades a managed block in place, and it only
-rewrites text that exactly equals a block this project generated. Blocks written
-before the end marker existed have no closing boundary, so matching their full
-text is the only way to find them without guessing where they stop. That is what
-this module stores.
-
-The list is append-only. Dropping an entry means anyone still carrying that block
-stops being upgraded and gets reported as hand-edited instead. Entries were
-recovered by walking git history twice: an AST evaluation of every past revision
-of ``code_review_graph/skills.py``, and a scan of the instruction files this repo
-ships, which caught blocks a markdown formatter rewrote after generation.
-"""
-
 import from __future__ { annotations }
 
 glob _SECTION_01: any = "---\napplyTo: '**'\ndescription: Use code-review-graph MCP tools for token-efficient codebase exploration and code review instead of built-in file/search tools.\n---\n\n<!-- code-review-graph MCP tools -->\n## MCP Tools: code-review-graph\n\n**IMPORTANT: This project has a knowledge graph. ALWAYS use the\ncode-review-graph MCP tools BEFORE using #tool:read/readFile #tool:search/fileSearch #tool:search/textSearch to explore\nthe codebase.** The graph is faster, cheaper (fewer tokens), and gives\nyou structural context (callers, dependents, test coverage) that file\nscanning cannot.\n\n### When to use graph tools FIRST\n\n- **Exploring code**: `semantic_search_nodes_tool` or `query_graph_tool` instead of Grep\n- **Understanding impact**: `get_impact_radius_tool` instead of manually tracing imports\n- **Code review**: `detect_changes_tool` + `get_review_context_tool` instead of reading entire files\n- **Finding relationships**: `query_graph_tool` with callers_of/callees_of/imports_of/tests_for\n- **Architecture questions**: `get_architecture_overview_tool` + `list_communities_tool`\n\nFall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.\n\n### Key Tools\n\n| Tool | Use when |\n| ------ | ---------- |\n| `detect_changes_tool` | Reviewing code changes — gives risk-scored analysis |\n| `get_review_context_tool` | Need source snippets for review — token-efficient |\n| `get_impact_radius_tool` | Understanding blast radius of a change |\n| `get_affected_flows_tool` | Finding which execution paths are impacted |\n| `query_graph_tool` | Tracing callers, callees, imports, tests, dependencies |\n| `semantic_search_nodes_tool` | Finding functions/classes by name or keyword |\n| `get_architecture_overview_tool` | Understanding high-level codebase structure |\n| `refactor_tool` | Planning renames, finding dead code |\n\n### Workflow\n\n1. The graph auto-updates on file changes (via hooks).\n2. Use `detect_changes_tool` for code review.\n3. Use `get_affected_flows_tool` to understand impact.\n4. Use `query_graph_tool` pattern=\"tests_for\" to check coverage.\n";

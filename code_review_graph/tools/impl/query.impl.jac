@@ -477,11 +477,6 @@ impl _query_route(
     def relative(path: str) -> str {
         return _sanitize_name(path.removeprefix(root_prefix));
     }
-
-    """The qualified name from the repository root: ``pkg/a.py::First.run``.
-
-        A bare name would make ``First.run`` and ``Second.run`` both read ``run``.
-        """
     def label(`node: GraphNode) -> str {
         return relative(`node.qualified_name);
     }
@@ -889,9 +884,7 @@ impl query_graph(
         total_results = 0;
         inferred_results = 0;
         call_sites = [];
-
-        """Count every logical result but retain only the bounded prefix."""
-        def add_result(result: dict[str, Any], `edge: Any | None = None) -> None {
+        def add_result(result: dict[str, Any], `edge: Any | None = None) {
             total_results += 1;
             if result.get("inferred_by") {
                 inferred_results += 1;
@@ -912,11 +905,7 @@ impl query_graph(
             }
             return node_cache[qualified];
         }
-
-        """Stage one call site, marking the uncertain ones."""
-        def add_call_site(
-            key: str, result: dict[str, Any], `edge: GraphEdge, certain: bool
-        ) -> None {
+        def add_call_site(key: str, result: dict[str, Any], `edge: GraphEdge, certain: bool) {
             if not certain {
                 result["target_resolution"] = RESOLUTION_UNRESOLVED;
             }
@@ -1659,9 +1648,7 @@ impl _stored_qualified_name(store: GraphStore, hit: dict[str, Any]) -> str | Non
     return qname;
 }
 
-impl _attach_neighbors(
-    results: list[dict[str, Any]], store: GraphStore, budget: _SourceBudget
-) -> None {
+impl _attach_neighbors(results: list[dict[str, Any]], store: GraphStore, budget: _SourceBudget) {
     for hit in results[:_MAX_EXPANDED_HITS] {
         qname: any = _stored_qualified_name(store, hit);
         if not qname {
