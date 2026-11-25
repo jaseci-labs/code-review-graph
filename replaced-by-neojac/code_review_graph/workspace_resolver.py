@@ -377,7 +377,9 @@ def _workspace_patterns(directory: Path) -> Optional[list[str]]:
         if _yaml is not None:
             try:
                 data = _yaml.safe_load(pnpm_file.read_text(encoding="utf-8-sig"))
-            except (*_LOOKUP_ERRORS, _yaml.YAMLError):
+            except Exception as exc:
+                if not isinstance(exc, _LOOKUP_ERRORS + (_yaml.YAMLError,)):
+                    raise
                 logger.warning("WorkspaceResolver: cannot read %s", pnpm_file)
         packages = data.get("packages") if isinstance(data, dict) else None
         return [p for p in packages if isinstance(p, str)] if isinstance(packages, list) else []

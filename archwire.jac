@@ -295,12 +295,6 @@ graph import {
         _load_ignore_patterns,
         _should_ignore,
     }
-    code_review_graph.workspace_resolver --> code_review_graph.npm_alias_resolver {
-        WorkspaceResolver,
-    }
-    code_review_graph.tsconfig_resolver --> code_review_graph.workspace_resolver {
-        _PROBE_EXTENSIONS,
-    }
     code_review_graph.install_plan --> code_review_graph.incremental;
     code_review_graph.build_state --> code_review_graph.incremental {
         advance_to_postprocess_pending,
@@ -392,12 +386,6 @@ graph import {
     code_review_graph --> code_review_graph.embeddings { __version__ }
     code_review_graph.constants --> code_review_graph.embeddings { release_os_memory }
     code_review_graph.graph --> code_review_graph.embeddings { GraphNode, GraphStore, node_to_dict }
-    code_review_graph.constants --> code_review_graph.daemon {
-        crg_home,
-        env_float,
-        release_os_memory,
-    }
-    code_review_graph.registry --> code_review_graph.daemon { Registry }
     code_review_graph.graph --> code_review_graph.migrations { node_index_tokens }
     code_review_graph.install_gitignore --> code_review_graph.uninstall;
     code_review_graph.install_manifest --> code_review_graph.uninstall;
@@ -599,25 +587,6 @@ graph import {
     code_review_graph.postprocessing --> code_review_graph.main { run_post_processing }
     code_review_graph.embeddings --> code_review_graph.main { prewarm_local_embeddings }
     code_review_graph.http_origin_guard --> code_review_graph.main { build_http_middleware }
-    code_review_graph.stdio --> code_review_graph.daemon_cli { configure_utf8_stdio }
-    code_review_graph.daemon --> code_review_graph.daemon_cli {
-        DaemonAlreadyRunningError,
-        WatchDaemon,
-        add_repo_to_config,
-        claim_daemon_lock,
-        clear_pid,
-        find_orphaned_watchers,
-        is_daemon_running,
-        load_config,
-        load_state,
-        pid_alive,
-        read_pid,
-        read_watch_health,
-        reap_orphaned_watchers,
-        remove_repo_from_config,
-        watcher_status,
-        write_pid,
-    }
     code_review_graph.eval.benchmarks.agent_baseline --> code_review_graph.eval.runner;
     code_review_graph.eval.benchmarks.build_performance --> code_review_graph.eval.runner;
     code_review_graph.eval.benchmarks.flow_completeness --> code_review_graph.eval.runner;
@@ -3133,4 +3102,36 @@ graph import {
         codex_home,
         install_codex_skill as _install,
     }
+    code_review_graph --> code_review_graph.cli { __version__ }
+    code_review_graph.tsconfig_resolver ++> code_review_graph.workspace_resolver {
+        _PROBE_EXTENSIONS,
+    }
+    code_review_graph.workspace_resolver ++> code_review_graph.npm_alias_resolver {
+        WorkspaceResolver,
+    }
+    code_review_graph.stdio ++> code_review_graph.daemon_cli { configure_utf8_stdio }
+    code_review_graph.daemon ++> code_review_graph.daemon_cli {
+        DaemonAlreadyRunningError,
+        WatchDaemon,
+        claim_daemon_lock,
+        is_daemon_running,
+        load_config,
+        reap_orphaned_watchers,
+        write_pid,
+        clear_pid,
+        pid_alive,
+        read_pid,
+        find_orphaned_watchers,
+        load_state,
+        read_watch_health,
+        watcher_status,
+        add_repo_to_config,
+        remove_repo_from_config,
+    }
+    code_review_graph.constants ++> code_review_graph.daemon {
+        crg_home,
+        env_float,
+        release_os_memory,
+    }
+    code_review_graph.registry ++> code_review_graph.daemon { Registry }
 }

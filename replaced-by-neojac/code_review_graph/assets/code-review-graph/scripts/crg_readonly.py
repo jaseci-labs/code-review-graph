@@ -269,7 +269,7 @@ def main() -> int:
             command,
             cwd=str(root),
             check=False,
-            env={**os.environ, "CRG_READ_ONLY": "1"},
+            env=dict(os.environ, CRG_READ_ONLY="1"),
         )
     except (FileNotFoundError, OSError) as exc:
         print(f"CRG fallback unavailable: {exc}", file=sys.stderr)

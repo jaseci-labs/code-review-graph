@@ -50,7 +50,7 @@ def compute_mrr(correct: str, results: list[str]) -> float:
     Returns:
         1/rank if *correct* is found in *results*, else 0.0.
     """
-    for i, r in enumerate(results, start=1):
+    for i, r in enumerate(results, 1):
         if r == correct:
             return 1.0 / i
     return 0.0

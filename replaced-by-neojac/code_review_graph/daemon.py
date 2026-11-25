@@ -19,6 +19,7 @@ import signal
 import subprocess
 import sys
 import threading
+import types
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -95,7 +96,7 @@ def __dir__() -> list[str]:
     but names absent from module globals are otherwise invisible to
     ``dir()``, ``from … import *`` and static analysers.
     """
-    return sorted(set(globals()) | set(_LAZY_PATHS))
+    return sorted(set(globals()).union(_LAZY_PATHS))
 
 
 _HEALTH_CHECK_INTERVAL = 30
@@ -136,31 +137,31 @@ class _WindowsJob:
         kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
         kernel32.CloseHandle.restype = wintypes.BOOL
 
-        class IoCounters(ctypes.Structure):
-            _fields_ = [(f"value_{index}", ctypes.c_ulonglong) for index in range(6)]
+        IoCounters = types.new_class("IoCounters", (ctypes.Structure,))
+        IoCounters._fields_ = [(f"value_{index}", ctypes.c_ulonglong) for index in range(6)]
 
-        class BasicLimitInformation(ctypes.Structure):
-            _fields_ = [
-                ("per_process_user_time_limit", ctypes.c_longlong),
-                ("per_job_user_time_limit", ctypes.c_longlong),
-                ("limit_flags", wintypes.DWORD),
-                ("minimum_working_set_size", ctypes.c_size_t),
-                ("maximum_working_set_size", ctypes.c_size_t),
-                ("active_process_limit", wintypes.DWORD),
-                ("affinity", ctypes.c_size_t),
-                ("priority_class", wintypes.DWORD),
-                ("scheduling_class", wintypes.DWORD),
-            ]
+        BasicLimitInformation = types.new_class("BasicLimitInformation", (ctypes.Structure,))
+        BasicLimitInformation._fields_ = [
+            ("per_process_user_time_limit", ctypes.c_longlong),
+            ("per_job_user_time_limit", ctypes.c_longlong),
+            ("limit_flags", wintypes.DWORD),
+            ("minimum_working_set_size", ctypes.c_size_t),
+            ("maximum_working_set_size", ctypes.c_size_t),
+            ("active_process_limit", wintypes.DWORD),
+            ("affinity", ctypes.c_size_t),
+            ("priority_class", wintypes.DWORD),
+            ("scheduling_class", wintypes.DWORD),
+        ]
 
-        class ExtendedLimitInformation(ctypes.Structure):
-            _fields_ = [
-                ("basic_limit_information", BasicLimitInformation),
-                ("io_info", IoCounters),
-                ("process_memory_limit", ctypes.c_size_t),
-                ("job_memory_limit", ctypes.c_size_t),
-                ("peak_process_memory_used", ctypes.c_size_t),
-                ("peak_job_memory_used", ctypes.c_size_t),
-            ]
+        ExtendedLimitInformation = types.new_class("ExtendedLimitInformation", (ctypes.Structure,))
+        ExtendedLimitInformation._fields_ = [
+            ("basic_limit_information", BasicLimitInformation),
+            ("io_info", IoCounters),
+            ("process_memory_limit", ctypes.c_size_t),
+            ("job_memory_limit", ctypes.c_size_t),
+            ("peak_process_memory_used", ctypes.c_size_t),
+            ("peak_job_memory_used", ctypes.c_size_t),
+        ]
 
         self._handle = kernel32.CreateJobObjectW(None, None)
         if not self._handle:
@@ -1083,12 +1084,13 @@ class ConfigWatcher:
 
             watcher = self
 
-            class _Handler(FileSystemEventHandler):  # type: ignore[misc]
-                def on_modified(self, event: Any) -> None:
-                    if Path(event.src_path).resolve() == watcher._config_path.resolve():
-                        watcher._on_config_changed()
+            def on_modified(_handler: Any, event: Any) -> None:
+                if Path(event.src_path).resolve() == watcher._config_path.resolve():
+                    watcher._on_config_changed()
 
-            handler = _Handler()
+            handler_class = types.new_class("_Handler", (FileSystemEventHandler,))
+            handler_class.on_modified = on_modified
+            handler = handler_class()
             self._observer = Observer()
             self._observer.schedule(
                 handler,
@@ -1431,7 +1433,7 @@ class WatchDaemon:
         """Stop the health-check thread."""
         if hasattr(self, "_health_stop"):
             self._health_stop.set()
-        if hasattr(self, "_health_thread") and self._health_thread is not None:
+        if vars(self).get("_health_thread") is not None:
             self._health_thread.join(timeout=5)
             self._health_thread = None
 
