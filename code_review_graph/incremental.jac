@@ -4,8 +4,6 @@ Detects changed files via git diff, re-parses only changed + impacted files,
 and updates the graph accordingly. Also supports CLI invocation for hooks.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import operator;

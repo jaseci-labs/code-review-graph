@@ -4,8 +4,6 @@ Extracts structural nodes (classes, functions, imports, types) and edges
 (calls, inheritance, contains) from source files.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import builtins;
 
 import operator;

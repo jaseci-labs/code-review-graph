@@ -1,7 +1,5 @@
 """Evaluation runner: orchestrates benchmark execution across repositories."""
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import from __future__ { annotations }

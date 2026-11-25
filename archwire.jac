@@ -10,6 +10,45 @@ graph spaces {
 }
 
 graph import {
+    code_review_graph._lazy ++> code_review_graph.change_details { lazy }
+    code_review_graph._lazy ++> code_review_graph.cli { lazy }
+    code_review_graph._lazy ++> code_review_graph.communities { lazy }
+    code_review_graph._lazy ++> code_review_graph.daemon { lazy }
+    code_review_graph._lazy ++> code_review_graph.daemon_cli { lazy }
+    code_review_graph._lazy ++> code_review_graph.doctor { lazy }
+    code_review_graph._lazy ++> code_review_graph.enrich { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.agent_baseline { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.build_performance { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.flow_completeness { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.impact_accuracy { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.incremental_fidelity { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.multi_hop_retrieval { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.search_quality { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.token_efficiency { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.runner { lazy }
+    code_review_graph._lazy ++> code_review_graph.eval.token_benchmark { lazy }
+    code_review_graph._lazy ++> code_review_graph.forget { lazy }
+    code_review_graph._lazy ++> code_review_graph.graph { lazy }
+    code_review_graph._lazy ++> code_review_graph.hook_update { lazy }
+    code_review_graph._lazy ++> code_review_graph.incremental { lazy }
+    code_review_graph._lazy ++> code_review_graph.jedi_resolver { lazy }
+    code_review_graph._lazy ++> code_review_graph.main { lazy }
+    code_review_graph._lazy ++> code_review_graph.migrations { lazy }
+    code_review_graph._lazy ++> code_review_graph.neighbourhood { lazy }
+    code_review_graph._lazy ++> code_review_graph.parser { lazy }
+    code_review_graph._lazy ++> code_review_graph.postprocessing { lazy }
+    code_review_graph._lazy ++> code_review_graph.refactor { lazy }
+    code_review_graph._lazy ++> code_review_graph.search { lazy }
+    code_review_graph._lazy ++> code_review_graph.skills { lazy }
+    code_review_graph._lazy ++> code_review_graph.tools._common { lazy }
+    code_review_graph._lazy ++> code_review_graph.tools.build { lazy }
+    code_review_graph._lazy ++> code_review_graph.tools.context { lazy }
+    code_review_graph._lazy ++> code_review_graph.tools.docs { lazy }
+    code_review_graph._lazy ++> code_review_graph.tools.registry_tools { lazy }
+    code_review_graph._lazy ++> code_review_graph.uncertainty { lazy }
+    code_review_graph._lazy ++> code_review_graph.uninstall { lazy }
+    code_review_graph._lazy ++> code_review_graph.visualization { lazy }
     "code-review-graph-vscode/src/backend/sqlite" --> "code-review-graph-vscode/test/sqlite.test" {
         GraphEdge,
         GraphNode,
@@ -2345,7 +2384,6 @@ graph import {
         target_resolution_expr,
     }
     code_review_graph ++> code_review_graph.graph { __version__ }
-    code_review_graph.parser ++> code_review_graph.graph { EdgeInfo, is_test_file }
     code_review_graph.constants ++> code_review_graph.hcl_resolver { CLAIMED_ENDPOINT_KEY }
     code_review_graph.install_plan as install_plan ++> code_review_graph.incremental;
     code_review_graph.build_state ++> code_review_graph.incremental {
@@ -2406,7 +2444,6 @@ graph import {
         _is_test_file as _parser_is_test_file,
     }
     code_review_graph.graph ++> code_review_graph.jedi_resolver { GraphEdge }
-    code_review_graph.graph ++> code_review_graph.migrations { node_index_tokens }
     code_review_graph.config_keys ++> code_review_graph.parser {
         is_spring_config_path,
         normalize_spring_config_key,
@@ -2426,10 +2463,6 @@ graph import {
     code_review_graph.npm_alias_resolver ++> code_review_graph.parser { NpmAliasResolver }
     code_review_graph.tsconfig_resolver ++> code_review_graph.parser { TsconfigResolver }
     code_review_graph.workspace_resolver ++> code_review_graph.parser { WorkspaceResolver }
-    code_review_graph.incremental ++> code_review_graph.parser {
-        _should_ignore,
-        _load_ignore_patterns,
-    }
     code_review_graph.csharp_resolver ++> code_review_graph.scoped_resolver { resolve_csharp_calls }
     code_review_graph.constants ++> code_review_graph.changes {
         GIT_TIMEOUT as _GIT_TIMEOUT,

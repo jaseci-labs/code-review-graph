@@ -1,7 +1,5 @@
 """Measures total tokens consumed by agent workflows against benchmark repos."""
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import from __future__ { annotations }

@@ -13,8 +13,6 @@ Supports multiple rendering modes for large graphs:
   file otherwise)
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import builtins;

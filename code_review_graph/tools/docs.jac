@@ -1,7 +1,5 @@
 """Tools 7, 8, 19, 20: embed_graph, get_docs_section, wiki tools."""
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import operator;

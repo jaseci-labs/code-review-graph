@@ -6,8 +6,6 @@ Also supports multi-platform MCP server installation and
 Cursor hooks / OpenCode plugin generation.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import builtins;

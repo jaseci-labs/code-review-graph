@@ -8,8 +8,6 @@ and health-checks child processes, restarting any that die.
 No external dependencies beyond Python stdlib — no tmux required.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import builtins;

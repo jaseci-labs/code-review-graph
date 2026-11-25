@@ -21,8 +21,6 @@ dotted-stem JS/TS import resolution, Python keyword-argument callbacks) are
 deliberately absent.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import from __future__ { annotations }

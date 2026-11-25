@@ -9,8 +9,6 @@ dropped calls, uses ``jedi.Script.goto()`` to resolve them, and adds the
 resulting CALLS edges to the graph database.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import builtins;

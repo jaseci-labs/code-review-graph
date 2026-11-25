@@ -5,8 +5,6 @@ and semantic similarity, with query-aware kind boosting and context-file
 boosting for relevance tuning.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import operator;

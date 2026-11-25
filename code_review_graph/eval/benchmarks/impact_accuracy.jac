@@ -17,8 +17,6 @@ excluded from aggregates. (Previously a failure silently set
 ``predicted = set(changed)``, guaranteeing a fake recall of 1.0.)
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import from __future__ { annotations }

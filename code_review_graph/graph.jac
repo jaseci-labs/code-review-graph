@@ -6,8 +6,6 @@ edges (CALLS, IMPORTS_FROM, INHERITS, IMPLEMENTS, CONTAINS, TESTED_BY, DEPENDS_O
 Supports impact-radius queries and subgraph extraction.
 """
 
-import from code_review_graph._lazy { lazy }
-
 import importlib;
 
 import builtins;
