@@ -1098,6 +1098,19 @@ class EdgeInfo {
     }
 }
 
+"""The node types _extract_value_references handles besides shorthand properties: CodeParser's
+_PAIR_TYPES, _ARRAY_TYPES and _ARGUMENTS_TYPES and the assignments, read without the parser."""
+glob _VALUE_REFERENCE_TYPES: frozenset[str] = frozenset({
+    "pair",
+    "array",
+    "list",
+    "arguments",
+    "argument_list",
+    "assignment_expression",
+    "augmented_assignment",
+    "assignment",
+});
+
 glob EXTENSION_TO_LANGUAGE: dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
@@ -7537,6 +7550,7 @@ class CodeParser(builtins.object) {
     def _collect_typed_call_targets(
         `root, language: str, file_path: str, import_map: dict[str, str], defined_names: set[str]
     ) -> dict[tuple[int, str, str], tuple[Optional[str], str, str]] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         targets: dict[tuple[int, str, str], tuple[Optional[str], str, str]];
         declared_type_parameters: list[set[str]];
         if language not in self._TYPED_CALL_LANGUAGES {
@@ -7588,7 +7602,7 @@ class CodeParser(builtins.object) {
 
         def walk(`node, bindings: dict[str, str], class_fields: dict[str, str], depth: int = 0) {
             node_type: any = `node.type;
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if node_type in class_types {
@@ -7727,11 +7741,12 @@ class CodeParser(builtins.object) {
     def _collect_class_typed_fields(
         class_node, language: str, function_types: set[str], class_types: set[str]
     ) -> dict[str, str] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         fields: dict[str, str];
         fields = {};
 
         def `visit(`node, depth: int = 0) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node is not class_node and `node.type in class_types {
@@ -7757,6 +7772,7 @@ class CodeParser(builtins.object) {
     }
 
     def _collect_function_typed_parameters(function_node, language: str) -> dict[str, str] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         bindings: dict[str, str];
         bindings = {};
         parameter_types: any = {
@@ -7771,7 +7787,7 @@ class CodeParser(builtins.object) {
             or set[any]();
 
         def `visit(`node, depth: int = 0) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node is not function_node and `node.type in self._function_types.get(language, []) {
@@ -7794,12 +7810,13 @@ class CodeParser(builtins.object) {
     }
 
     def _collect_ts_parameter_properties(constructor_node) -> dict[str, str] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         bindings: dict[str, str];
         bindings = {};
 
         def `visit(`node, depth: int = 0) {
             child: any;
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node.type in ("required_parameter", "optional_parameter") {
@@ -8152,6 +8169,7 @@ class CodeParser(builtins.object) {
     def _collect_python_receiver_evidence(
         `root, file_path: str, source: bytes
     ) -> tuple[dict[tuple[int, str], tuple[str, str]], list[EdgeInfo]] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         module_bindings: dict[str, set[str]];
         imported_names: set[str];
         class_names: set[str];
@@ -8178,7 +8196,7 @@ class CodeParser(builtins.object) {
             `node, owner_class: Optional[str], in_function: bool = False, depth: int = 0
         ) {
             node_type: any = `node.type;
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if node_type == "class_definition" {
@@ -8402,7 +8420,7 @@ class CodeParser(builtins.object) {
             instance_receiver_name: Optional[str] = None,
             class_receiver_name: Optional[str] = None,
         ) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             node_type: any = `node.type;
@@ -8633,6 +8651,7 @@ class CodeParser(builtins.object) {
     def _collect_python_class_fields(
         class_node, context: _PyReceiverContext
     ) -> dict[str, tuple[str, str]] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         gathered: dict[str, list[tuple[str, str]]];
         gathered = {};
 
@@ -8649,7 +8668,7 @@ class CodeParser(builtins.object) {
         }
 
         def `visit(`node, in_function: bool, depth: int = 0) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node is not class_node and `node.type == "class_definition" {
@@ -8766,6 +8785,7 @@ class CodeParser(builtins.object) {
     }
 
     def _python_module_class_identities(module_file: str) -> dict[str, tuple[str, str]] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         class_counts: dict[str, int];
         imported_names: set[str];
         module_bindings: dict[str, set[str]];
@@ -8806,7 +8826,7 @@ class CodeParser(builtins.object) {
         symbol_bindings = {};
 
         def `visit(`node, depth: int = 0) {
-            if depth > self._MAX_AST_DEPTH or `node.type == "function_definition" {
+            if depth > max_ast_depth or `node.type == "function_definition" {
                 return;
             }
             if `node.type == "class_definition" {
@@ -8869,6 +8889,7 @@ class CodeParser(builtins.object) {
     }
 
     def _read_python_property_return_annotations(module_path: Path) -> dict[tuple[str, str], str] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         properties: dict[tuple[str, str], str];
         class_names: set[str];
         ambiguous_classes: set[str];
@@ -8896,7 +8917,7 @@ class CodeParser(builtins.object) {
             `node, owner_class: Optional[str] = None, in_function: bool = False, depth: int = 0
         ) -> any {
             node_type: any = `node.type;
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if node_type == "class_definition" {
@@ -9724,6 +9745,7 @@ class CodeParser(builtins.object) {
     def _collect_ruby_test_receivers(
         `root
     ) -> dict[tuple[int, str], list[tuple[bool, Optional[_RubyClassRef]]]] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         shared: dict[str, Optional[_RubyClassRef]];
         found: dict[tuple[int, str], list[tuple[bool, Optional[_RubyClassRef]]]];
         shared = {};
@@ -9769,7 +9791,7 @@ class CodeParser(builtins.object) {
         def gather(
             `node, described: Optional[_RubyClassRef], nesting: tuple[str, ...], depth: int = 0
         ) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node.type == "assignment" {
@@ -9839,7 +9861,7 @@ class CodeParser(builtins.object) {
             nesting: tuple[str, ...],
             depth: int = 0,
         ) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node.type in ("method", "singleton_method", "block", "do_block") {
@@ -16886,6 +16908,7 @@ class CodeParser(builtins.object) {
     def _resolve_php_scoped_calls(
         `root, nodes: list[NodeInfo], edges: list[EdgeInfo], file_path: str
     ) -> list[EdgeInfo] {
+        max_ast_depth: any = self._MAX_AST_DEPTH;
         methods: dict[tuple[str, str], list[str]];
         resolutions: dict[tuple[int, str, str], tuple[str, str]];
         methods = {};
@@ -16970,7 +16993,7 @@ class CodeParser(builtins.object) {
             enclosing_func: Optional[str],
             depth: int = 0,
         ) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             if `node.type in self._class_types["php"] {
@@ -17024,7 +17047,7 @@ class CodeParser(builtins.object) {
         }
 
         def walk_sequence(container, namespace: str = "", depth: int = 0) {
-            if depth > self._MAX_AST_DEPTH {
+            if depth > max_ast_depth {
                 return;
             }
             current_namespace: any = namespace;
@@ -18056,13 +18079,7 @@ class CodeParser(builtins.object) {
     ) {
         shorthand: any = node_type == "shorthand_property_identifier"
             and language in ("javascript", "typescript", "tsx");
-        if not (
-            shorthand
-            or node_type in self._PAIR_TYPES
-            or node_type in ("assignment_expression", "augmented_assignment", "assignment")
-            or node_type in self._ARRAY_TYPES
-            or node_type in self._ARGUMENTS_TYPES
-        ) {
+        if not shorthand and node_type not in _VALUE_REFERENCE_TYPES {
             return;
         }
         imap: any = import_map or {};

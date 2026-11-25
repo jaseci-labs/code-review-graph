@@ -3123,4 +3123,8 @@ graph import {
     code_review_graph.graph as _graph ++> code_review_graph.tools._common;
     code_review_graph.incremental as _incremental ++> code_review_graph.tools._common;
     code_review_graph.incremental as _incremental ++> code_review_graph.tools.docs;
+    code_review_graph.parser --> tests.test_value_reference_gate {
+        CodeParser,
+        _VALUE_REFERENCE_TYPES,
+    }
 }
