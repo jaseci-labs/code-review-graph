@@ -7587,10 +7587,11 @@ class CodeParser(builtins.object) {
         }
 
         def walk(`node, bindings: dict[str, str], class_fields: dict[str, str], depth: int = 0) {
+            node_type: any = `node.type;
             if depth > self._MAX_AST_DEPTH {
                 return;
             }
-            if `node.type in class_types {
+            if node_type in class_types {
                 fields: any = self._collect_class_typed_fields(
                     `node, language, function_types, class_types
                 );
@@ -7612,7 +7613,7 @@ class CodeParser(builtins.object) {
                 return;
             }
 
-            if `node.type in function_types {
+            if node_type in function_types {
                 scoped: any = `dict(bindings);
                 scoped.update(class_fields);
                 scoped.update(self._collect_function_typed_parameters(`node, language));
@@ -7622,7 +7623,7 @@ class CodeParser(builtins.object) {
                 return;
             }
 
-            if `node.type in block_types {
+            if node_type in block_types {
                 scoped = `dict(bindings);
                 if language == "csharp" {
                     for child in `node.named_children {
@@ -7652,7 +7653,7 @@ class CodeParser(builtins.object) {
                 return;
             }
 
-            if `node.type in call_types {
+            if node_type in call_types {
                 if language == "csharp" {
                     callee: any = `node.child_by_field_name("function");
                     if callee is not None and callee.type == "identifier" {
@@ -8176,10 +8177,11 @@ class CodeParser(builtins.object) {
         def scan_declarations(
             `node, owner_class: Optional[str], in_function: bool = False, depth: int = 0
         ) {
+            node_type: any = `node.type;
             if depth > self._MAX_AST_DEPTH {
                 return;
             }
-            if `node.type == "class_definition" {
+            if node_type == "class_definition" {
                 name_node: any = `node.child_by_field_name("name");
                 if name_node is not None {
                     owner_class = name_node.text.decode("utf-8", errors="replace");
@@ -8189,7 +8191,7 @@ class CodeParser(builtins.object) {
                     class_names.add(owner_class);
                 }
                 in_function = False;
-            } elif `node.type == "function_definition" and owner_class and not in_function {
+            } elif node_type == "function_definition" and owner_class and not in_function {
                 name_node = `node.child_by_field_name("name");
                 return_node: any = `node.child_by_field_name("return_type");
                 decorators: any = _python_decorator_names(`node);
@@ -8206,7 +8208,7 @@ class CodeParser(builtins.object) {
                         if return_node is not None
                         else "";
                 }
-            } elif `node.type == "function_definition" and owner_class is None and not in_function {
+            } elif node_type == "function_definition" and owner_class is None and not in_function {
                 name_node = `node.child_by_field_name("name");
                 type_node: any = `node.child_by_field_name("return_type");
                 if name_node is not None and type_node is not None {
@@ -8217,11 +8219,11 @@ class CodeParser(builtins.object) {
                     }
                     local_returns[name] = annotation;
                 }
-            } elif `node.type == "import_statement" {
+            } elif node_type == "import_statement" {
                 self._python_plain_import_bindings(
                     `node, file_path, module_bindings, imported_names
                 );
-            } elif `node.type == "import_from_statement" {
+            } elif node_type == "import_from_statement" {
                 import_origins: dict[str, str] = {};
                 import_names: dict[str, str] = {};
                 self._python_from_import_bindings(
@@ -8241,7 +8243,7 @@ class CodeParser(builtins.object) {
                 scan_declarations(
                     child,
                     owner_class,
-                    in_function or operator.eq(`node.type, "function_definition"),
+                    in_function or operator.eq(node_type, "function_definition"),
                     depth + 1,
                 );
             }
@@ -15995,17 +15997,20 @@ class CodeParser(builtins.object) {
         scopes: dict[str, set[str]] = {};
         methods: list[tuple[int, str, str]] = [];
         pending: any = [(`root, "")];
+        class_types: any = self._class_types[language];
+        function_types: any = self._function_types[language];
         while pending {
             `node: any;
             (`node, scope) = pending.pop() as any;
-            if `node.type in self._class_types[language] {
+            node_type: any = `node.type;
+            if node_type in class_types {
                 name: any = self._get_name(`node, language, "class");
                 if name {
                     scope = f"{scope}.{name}" if scope else name;
                     scopes.setdefault(name, set[any]()).add(scope);
                 }
             }
-            if `node.type in self._function_types[language] and scope {
+            if node_type in function_types and scope {
                 methods.append((`node.id, scope.rsplit(".", 1)[-1], scope));
             }
             pending.extend((child, scope) for child in reversed(`node.named_children));
@@ -16628,9 +16633,10 @@ class CodeParser(builtins.object) {
     def _get_member_call_receiver_method(
         `node, language: str
     ) -> tuple[Optional[str], Optional[str]] {
+        node_type: any = `node.type;
         child: any;
         if language == "php"
-            and `node.type in ("member_call_expression", "nullsafe_member_call_expression")
+            and node_type in ("member_call_expression", "nullsafe_member_call_expression")
         {
             receiver: any = `node.child_by_field_name("object");
             method: any = `node.child_by_field_name("name");
@@ -16644,7 +16650,7 @@ class CodeParser(builtins.object) {
             return (receiver.text.decode("utf-8", errors="replace"), method_name);
         }
 
-        if language == "rust" and `node.type == "call_expression" {
+        if language == "rust" and node_type == "call_expression" {
             callee: any = `node.child_by_field_name("function");
             while callee is not None and callee.type == "generic_function" {
                 callee = callee.child_by_field_name("function");
@@ -16663,7 +16669,7 @@ class CodeParser(builtins.object) {
             );
         }
 
-        if language == "go" and `node.type == "call_expression" {
+        if language == "go" and node_type == "call_expression" {
             callee = `node.child_by_field_name("function");
             if callee is None or callee.type != "selector_expression" {
                 return (None, None);
@@ -16691,7 +16697,7 @@ class CodeParser(builtins.object) {
             );
         }
 
-        if language == "cpp" and `node.type == "call_expression" {
+        if language == "cpp" and node_type == "call_expression" {
             callee = `node.child_by_field_name("function");
             if callee is None or callee.type != "field_expression" {
                 return (None, None);
@@ -16707,12 +16713,12 @@ class CodeParser(builtins.object) {
             );
         }
 
-        if language == "java" and `node.type == "method_invocation" {
+        if language == "java" and node_type == "method_invocation" {
             (method, receiver) = self._get_java_method_and_receiver(`node) as any;
             return (receiver, method);
         }
 
-        if language == "java" and `node.type == "method_reference" {
+        if language == "java" and node_type == "method_reference" {
             named: any = [child for child in `node.children if child.is_named];
             if len(named) < 2 {
                 return (None, None);
@@ -16728,7 +16734,7 @@ class CodeParser(builtins.object) {
         }
 
         if language == "csharp" {
-            if `node.type != "invocation_expression" {
+            if node_type != "invocation_expression" {
                 return (None, None);
             }
             return self._get_csharp_receiver_method(`node);
@@ -18047,6 +18053,17 @@ class CodeParser(builtins.object) {
         import_map: Optional[dict[str, str]],
         defined_names: Optional[set[str]],
     ) {
+        shorthand: any = node_type == "shorthand_property_identifier"
+            and language in ("javascript", "typescript", "tsx");
+        if not (
+            shorthand
+            or node_type in self._PAIR_TYPES
+            or node_type in ("assignment_expression", "augmented_assignment", "assignment")
+            or node_type in self._ARRAY_TYPES
+            or node_type in self._ARGUMENTS_TYPES
+        ) {
+            return;
+        }
         imap: any = import_map or {};
         dnames: any = defined_names or set[any]();
         if enclosing_func {
@@ -18058,9 +18075,7 @@ class CodeParser(builtins.object) {
             self._ref_from_pair(child, source, language, file_path, caller, edges, imap, dnames);
             return;
         }
-        if node_type == "shorthand_property_identifier"
-            and language in ("javascript", "typescript", "tsx")
-        {
+        if shorthand {
             name: any = child.text.decode("utf-8", errors="replace");
             self._emit_reference_if_known(
                 name,
