@@ -1,6 +1,6 @@
 import from __future__ { annotations }
 
-import importlib, builtins, operator, hashlib, json, logging, re, sqlite3, threading, time;
+import importlib, builtins, operator, hashlib, json, logging, re, sqlite3, threading, time, sys;
 
 import from collections.abc { Iterable, Iterator }
 
@@ -538,7 +538,7 @@ def _assert_usable_database(conn: sqlite3.Connection, db_path: Path) {
 
     version: any = get_schema_version(conn);
     if version > LATEST_VERSION {
-        __version__ = lazy("", "__version__");
+        import from code_review_graph { __version__ }
 
         `here: any = Path(__file__).resolve().parent;
         raise GraphStoreError(
@@ -1111,7 +1111,7 @@ class GraphStore(builtins.object) {
     def _resolve_edge_identities(
         `edge: EdgeInfo, local_prefix: str | None = None, cache: dict[str, list[str]] | None = None
     ) -> EdgeInfo {
-        EdgeInfo = lazy("parser", "EdgeInfo");
+        import code_review_graph.parser as _parser;
         called: any = 1
             if `edge.kind in _COLLISION_CALL_KINDS
             else 0 if `edge.kind == "TESTED_BY" else None;
@@ -1145,7 +1145,7 @@ class GraphStore(builtins.object) {
         if source == `edge.source and target == `edge.target {
             return `edge;
         }
-        return EdgeInfo(`edge.kind, source, target, `edge.file_path, `edge.line, extra=extra);
+        return _parser.EdgeInfo(`edge.kind, source, target, `edge.file_path, `edge.line, extra=extra);
     }
 
     def _settle_collision_endpoints -> int {
@@ -1546,11 +1546,11 @@ class GraphStore(builtins.object) {
         `edge: EdgeInfo, collisions: dict[str, list[tuple[int, int, str]]]
     ) -> EdgeInfo {
         source: any;
-        EdgeInfo = lazy("parser", "EdgeInfo");
+        import code_review_graph.parser as _parser;
 
         if `edge.kind == "TESTED_BY" {
             call: any = self._align_edge_with_collisions(
-                EdgeInfo(
+                _parser.EdgeInfo(
                     "CALLS",
                     `edge.target,
                     `edge.source,
@@ -1566,7 +1566,7 @@ class GraphStore(builtins.object) {
             {
                 return `edge;
             }
-            return EdgeInfo(
+            return _parser.EdgeInfo(
                 `edge.kind, call.target, call.source, `edge.file_path, `edge.line, extra=call.extra
             );
         }
@@ -1602,7 +1602,7 @@ class GraphStore(builtins.object) {
         {
             target = source;
         } elif target_candidates and `edge.kind in _COLLISION_CALL_KINDS {
-            return EdgeInfo(
+            return _parser.EdgeInfo(
                 `edge.kind,
                 source,
                 _plain_collision_name(`edge.target),
@@ -1619,7 +1619,7 @@ class GraphStore(builtins.object) {
         if source == `edge.source and target == `edge.target {
             return `edge;
         }
-        return EdgeInfo(`edge.kind, source, target, `edge.file_path, `edge.line, extra=`edge.extra);
+        return _parser.EdgeInfo(`edge.kind, source, target, `edge.file_path, `edge.line, extra=`edge.extra);
     }
 
     def set_metadata(key: str, value: str) {
@@ -2094,7 +2094,7 @@ class GraphStore(builtins.object) {
         seeds: list[str], max_depth: int, max_callers: int, repo_root: str | None
     ) -> dict[str, dict[str, Any]] {
         origins: any;
-        is_test_file = lazy("parser", "is_test_file");
+        import code_review_graph.parser as _parser;
 
         routes: dict[str, dict[str, Any]] = {};
         frontier: any = {qn: {qn} for qn in seeds if "::" in qn};
@@ -2144,7 +2144,7 @@ class GraphStore(builtins.object) {
                                 route["tests"].append(caller);
                             }
                         }
-                    } elif row["is_test"] or is_test_file(row["file_path"], repo_root) {
+                    } elif row["is_test"] or _parser.is_test_file(row["file_path"], repo_root) {
                         next_frontier.setdefault(caller, set[any]()).update(fresh);
                     }
                 }
@@ -2246,7 +2246,7 @@ class GraphStore(builtins.object) {
             if not callers {
                 break;
             }
-            is_test_file = lazy("parser", "is_test_file");
+            import code_review_graph.parser as _parser;
 
             caller_names: any = sorted(callers);
             for start in range(0, len(caller_names), 450) {
@@ -2256,7 +2256,7 @@ class GraphStore(builtins.object) {
                     f"SELECT qualified_name, file_path, is_test FROM nodes WHERE qualified_name IN ({placeholders})",
                     batch,
                 ).fetchall() {
-                    if row["is_test"] or is_test_file(row["file_path"], repo_root) {
+                    if row["is_test"] or _parser.is_test_file(row["file_path"], repo_root) {
                         callers.pop(row["qualified_name"], None);
                     }
                 }
@@ -4869,14 +4869,15 @@ def edge_to_dict(e: GraphEdge) -> dict {
 
 def __getattr__(name: str) -> Any {
     if name in ("EdgeInfo", "NodeInfo", "is_test_file") {
-        val: any = getattr(lazy("parser"), name);
-        globals()[name] = val;
+        import code_review_graph.parser as _parser;
+        val: any = getattr(_parser, name);
+        vars(sys.modules[__name__])[name] = val;
         return val;
     }
     if name == "nx" {
         import networkx as _nx;
 
-        globals()["nx"] = _nx;
+        vars(sys.modules[__name__])["nx"] = _nx;
         return _nx;
     }
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}");

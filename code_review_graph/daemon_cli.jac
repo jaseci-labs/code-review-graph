@@ -11,12 +11,12 @@ def _process_already_gone(error: OSError) -> bool {
 
 def _handle_start(args: argparse.Namespace) {
     import from code_review_graph.daemon { DaemonAlreadyRunningError }
-    WatchDaemon = lazy("daemon", "WatchDaemon");
-    claim_daemon_lock = lazy("daemon", "claim_daemon_lock");
-    is_daemon_running = lazy("daemon", "is_daemon_running");
-    load_config = lazy("daemon", "load_config");
-    reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
-    write_pid = lazy("daemon", "write_pid");
+    import from code_review_graph.daemon { WatchDaemon }
+    import from code_review_graph.daemon { claim_daemon_lock }
+    import from code_review_graph.daemon { is_daemon_running }
+    import from code_review_graph.daemon { load_config }
+    import from code_review_graph.daemon { reap_orphaned_watchers }
+    import from code_review_graph.daemon { write_pid }
 
     if is_daemon_running() {
         print("Error: Daemon is already running.");
@@ -60,11 +60,11 @@ def _handle_start(args: argparse.Namespace) {
 }
 
 def _handle_stop(_args: argparse.Namespace) {
-    clear_pid = lazy("daemon", "clear_pid");
-    is_daemon_running = lazy("daemon", "is_daemon_running");
-    pid_alive = lazy("daemon", "pid_alive");
-    read_pid = lazy("daemon", "read_pid");
-    reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
+    import from code_review_graph.daemon { clear_pid }
+    import from code_review_graph.daemon { is_daemon_running }
+    import from code_review_graph.daemon { pid_alive }
+    import from code_review_graph.daemon { read_pid }
+    import from code_review_graph.daemon { reap_orphaned_watchers }
 
     if not is_daemon_running() {
         reaped: any = reap_orphaned_watchers();
@@ -153,7 +153,7 @@ def _handle_stop(_args: argparse.Namespace) {
 }
 
 def _reap_watchers_left_behind {
-    reap_orphaned_watchers = lazy("daemon", "reap_orphaned_watchers");
+    import from code_review_graph.daemon { reap_orphaned_watchers }
 
     for orphan in reap_orphaned_watchers() {
         print(
@@ -167,7 +167,7 @@ def _reap_watchers_left_behind {
 }
 
 def _handle_restart(args: argparse.Namespace) {
-    is_daemon_running = lazy("daemon", "is_daemon_running");
+    import from code_review_graph.daemon { is_daemon_running }
 
     if is_daemon_running() {
         _handle_stop(args);
@@ -197,14 +197,14 @@ def _format_age(seconds: float | None) -> str {
 
 def _handle_status(_args: argparse.Namespace) {
     orphan: any;
-    find_orphaned_watchers = lazy("daemon", "find_orphaned_watchers");
-    is_daemon_running = lazy("daemon", "is_daemon_running");
-    load_config = lazy("daemon", "load_config");
-    load_state = lazy("daemon", "load_state");
-    pid_alive = lazy("daemon", "pid_alive");
-    read_pid = lazy("daemon", "read_pid");
-    read_watch_health = lazy("daemon", "read_watch_health");
-    watcher_status = lazy("daemon", "watcher_status");
+    import from code_review_graph.daemon { find_orphaned_watchers }
+    import from code_review_graph.daemon { is_daemon_running }
+    import from code_review_graph.daemon { load_config }
+    import from code_review_graph.daemon { load_state }
+    import from code_review_graph.daemon { pid_alive }
+    import from code_review_graph.daemon { read_pid }
+    import from code_review_graph.daemon { read_watch_health }
+    import from code_review_graph.daemon { watcher_status }
 
     config: any = load_config();
     running: any = is_daemon_running();
@@ -331,7 +331,7 @@ def _handle_status(_args: argparse.Namespace) {
 }
 
 def _handle_logs(args: argparse.Namespace) {
-    load_config = lazy("daemon", "load_config");
+    import from code_review_graph.daemon { load_config }
 
     config: any = load_config();
 
@@ -368,8 +368,8 @@ def _handle_logs(args: argparse.Namespace) {
 }
 
 def _handle_add(args: argparse.Namespace) {
-    add_repo_to_config = lazy("daemon", "add_repo_to_config");
-    is_daemon_running = lazy("daemon", "is_daemon_running");
+    import from code_review_graph.daemon { add_repo_to_config }
+    import from code_review_graph.daemon { is_daemon_running }
 
     try {
         add_repo_to_config(args.path, alias=args.alias);
@@ -386,9 +386,9 @@ def _handle_add(args: argparse.Namespace) {
 }
 
 def _handle_remove(args: argparse.Namespace) {
-    is_daemon_running = lazy("daemon", "is_daemon_running");
-    load_config = lazy("daemon", "load_config");
-    remove_repo_from_config = lazy("daemon", "remove_repo_from_config");
+    import from code_review_graph.daemon { is_daemon_running }
+    import from code_review_graph.daemon { load_config }
+    import from code_review_graph.daemon { remove_repo_from_config }
 
     config_before: any = load_config();
     count_before: any = len(config_before.repos);

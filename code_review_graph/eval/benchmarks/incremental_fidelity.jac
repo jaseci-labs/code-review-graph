@@ -88,9 +88,9 @@ glob _RENAME_SUFFIX: any = "_crg_renamed";
 glob _PROBE_STEM: any = "crg_fidelity_probe";
 
 def _clean_build(tree: Path, db_path: Path) -> dict[str, Any] {
-    GraphStore = lazy("graph", "GraphStore");
-    full_build = lazy("incremental", "full_build");
-    _run_postprocess = lazy("tools.build", "_run_postprocess");
+    import from code_review_graph.graph { GraphStore }
+    import from code_review_graph.incremental { full_build }
+    import from code_review_graph.tools.build { _run_postprocess }
 
     store: any = GraphStore(db_path);
     try {
@@ -103,9 +103,9 @@ def _clean_build(tree: Path, db_path: Path) -> dict[str, Any] {
 }
 
 def _incremental_build(tree: Path, db_path: Path, base: str) -> dict[str, Any] {
-    GraphStore = lazy("graph", "GraphStore");
-    incremental_update = lazy("incremental", "incremental_update");
-    _run_postprocess = lazy("tools.build", "_run_postprocess");
+    import from code_review_graph.graph { GraphStore }
+    import from code_review_graph.incremental { incremental_update }
+    import from code_review_graph.tools.build { _run_postprocess }
 
     store: any = GraphStore(db_path);
     try {
@@ -346,7 +346,7 @@ def _diff_projection(
 }
 
 def _clean(text: str, path_prefix: str) -> str {
-    _sanitize_name = lazy("graph", "_sanitize_name");
+    import from code_review_graph.graph { _sanitize_name }
 
     if path_prefix {
         text = text.replace(path_prefix, "");
@@ -408,9 +408,9 @@ def compare_graphs(
 }
 
 def _snapshot_summary(incremental_db: Path, rebuild_db: Path) -> dict[str, Any] {
-    GraphStore = lazy("graph", "GraphStore");
-    diff_snapshots = lazy("graph_diff", "diff_snapshots");
-    take_snapshot = lazy("graph_diff", "take_snapshot");
+    import from code_review_graph.graph { GraphStore }
+    import from code_review_graph.graph_diff { diff_snapshots }
+    import from code_review_graph.graph_diff { take_snapshot }
 
     left: any = GraphStore(incremental_db);
     try {

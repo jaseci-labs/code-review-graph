@@ -111,7 +111,7 @@ def _error_row(repo: str, sha: str, mode: str, seed: str, exc: Exception) -> dic
 }
 
 def run(repo_path: Path, store, config: dict) -> list[dict] {
-    analyze_changes = lazy("changes", "analyze_changes");
+    import from code_review_graph.changes { analyze_changes }
 
     results: any = [];
     repo: any = config["name"];

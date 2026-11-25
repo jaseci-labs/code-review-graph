@@ -9,8 +9,8 @@ glob logger: any = logging.getLogger(__name__);
 def run(repo_path: Path, store, config: dict) -> list[dict] {
     stats: any = store.get_stats();
     try {
-        store_flows = lazy("flows", "store_flows");
-        trace_flows = lazy("flows", "trace_flows");
+        import from code_review_graph.flows { store_flows }
+        import from code_review_graph.flows { trace_flows }
         t0: any = time.perf_counter();
         flows: any = trace_flows(store);
         store_flows(store, flows);
@@ -20,8 +20,8 @@ def run(repo_path: Path, store, config: dict) -> list[dict] {
         flow_time = 0.0;
     }
     try {
-        detect_communities = lazy("communities", "detect_communities");
-        store_communities = lazy("communities", "store_communities");
+        import from code_review_graph.communities { detect_communities }
+        import from code_review_graph.communities { store_communities }
         t0 = time.perf_counter();
         comms: any = detect_communities(store);
         store_communities(store, comms);

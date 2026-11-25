@@ -78,8 +78,8 @@ def run(repo_path: Path, store, config: dict) -> list[dict] {
             "error": "",
         };
         try {
-            get_review_context = lazy("tools", "get_review_context");
-            ctx: any = get_review_context(changed_files=changed, repo_root=`str(repo_path));
+            _tools: any = importlib.import_module("code_review_graph.tools");
+            ctx: any = _tools.get_review_context(changed_files=changed, repo_root=`str(repo_path));
             graph_tokens: any = _count_tokens(json.dumps(ctx));
         } except Exception as exc {
             logger.warning("get_review_context failed on %s: %s", tc["sha"], exc);

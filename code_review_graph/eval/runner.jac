@@ -165,8 +165,8 @@ def _embedding_count(store) -> int | None {
 }
 
 def _build_embedding_index(store, db_path, provider: str | None, model: str | None) {
-    EmbeddingStore = lazy("embeddings", "EmbeddingStore");
-    embed_all_nodes = lazy("embeddings", "embed_all_nodes");
+    import from code_review_graph.embeddings { EmbeddingStore }
+    import from code_review_graph.embeddings { embed_all_nodes }
 
     try {
         emb_store: any = EmbeddingStore(db_path, provider=provider, model=model);
@@ -226,10 +226,10 @@ def run_eval(
         name: any = config["name"];
         logger.info("Evaluating %s...", name);
         repo_path: any = clone_or_update(config).resolve();
-        GraphStore = lazy("graph", "GraphStore");
-        full_build = lazy("incremental", "full_build");
-        get_db_path = lazy("incremental", "get_db_path");
-        run_post_processing = lazy("postprocessing", "run_post_processing");
+        import from code_review_graph.graph { GraphStore }
+        import from code_review_graph.incremental { full_build }
+        import from code_review_graph.incremental { get_db_path }
+        import from code_review_graph.postprocessing { run_post_processing }
 
         db_path: any = get_db_path(repo_path);
         store: any = GraphStore(db_path);

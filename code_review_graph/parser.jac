@@ -19291,7 +19291,7 @@ class CodeParser(builtins.object) {
         if patterns is None {
             return True;
         }
-        _should_ignore = lazy("incremental", "_should_ignore");
+        import from code_review_graph.incremental { _should_ignore }
 
         return not _should_ignore(relative, patterns);
     }
@@ -19302,7 +19302,7 @@ class CodeParser(builtins.object) {
             return self._ignore_patterns_cache[key];
         }
         try {
-            _load_ignore_patterns = lazy("incremental", "_load_ignore_patterns");
+            import from code_review_graph.incremental { _load_ignore_patterns }
 
             patterns: Optional[list[str]] = _load_ignore_patterns(boundary);
         } except Exception {

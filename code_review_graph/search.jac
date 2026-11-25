@@ -522,7 +522,7 @@ def _embedding_search(
         return [];
     }
     try {
-        EmbeddingStore = lazy("embeddings", "EmbeddingStore");
+        import from code_review_graph.embeddings { EmbeddingStore }
     } except ImportError {
         return [];
     }

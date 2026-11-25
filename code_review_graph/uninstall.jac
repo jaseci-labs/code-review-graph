@@ -317,7 +317,7 @@ def _remove_toml_entry(
 def _remove_dsh_patch_entry(
     path: Path, boundary: Path, `report: UninstallReport, *, dry_run: bool
 ) {
-    dsh: any = lazy("dsh");
+    import code_review_graph.dsh as dsh;
 
     if not path.exists() or not _safe_path(path, boundary, `report) {
         return;
@@ -1173,7 +1173,7 @@ def _process_platform_configs(
     seen: set[tuple[Path, str, str]] = set[any]();
     active_codex_home: Path | None = None;
     if platforms is None or "codex" in platforms {
-        codex_home = lazy("codex_skill", "codex_home");
+        import from code_review_graph.codex_skill { codex_home }
 
         active_codex_home = codex_home();
     } else {
@@ -1455,9 +1455,9 @@ def _process_user(
         _remove_tree(user_data, home, `report, dry_run=dry_run);
     }
 
-    codex_home = lazy("codex_skill", "codex_home");
-    codex_skill_dir = lazy("codex_skill", "codex_skill_dir");
-    owned_skill_files = lazy("codex_skill", "owned_skill_files");
+    import from code_review_graph.codex_skill { codex_home }
+    import from code_review_graph.codex_skill { codex_skill_dir }
+    import from code_review_graph.codex_skill { owned_skill_files }
 
     active_codex_home: any = codex_home();
     _remove_hooks(
@@ -1558,7 +1558,7 @@ def _normalise_repo(path: Path, home: Path, `report: UninstallReport) -> Path | 
         return None;
     }
 
-    find_repo_root = lazy("incremental", "find_repo_root");
+    import from code_review_graph.incremental { find_repo_root }
 
     repository_root: any = find_repo_root(resolved);
     if repository_root is None {

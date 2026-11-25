@@ -15,21 +15,21 @@ import from pathlib { Path, PurePosixPath }
 import from typing { TYPE_CHECKING, Any, Callable, Iterable, NamedTuple, Optional }
 
 def _get_code_parser_cls -> any {
-    cls: any = globals().get("CodeParser");
+    cls: any = vars(sys.modules[__name__]).get("CodeParser");
     if cls is None {
-        CodeParser = lazy("parser", "CodeParser");
+        import code_review_graph.parser as parser_mod;
 
-        globals()["CodeParser"] = CodeParser;
-        return CodeParser;
+        vars(sys.modules[__name__])["CodeParser"] = parser_mod.CodeParser;
+        return parser_mod.CodeParser;
     }
     return cls;
 }
 
 def __getattr__(name: str) -> any {
     if name == "CodeParser" {
-        CodeParser = lazy("parser", "CodeParser");
-        globals()["CodeParser"] = CodeParser;
-        return CodeParser;
+        import code_review_graph.parser as parser_mod;
+        vars(sys.modules[__name__])["CodeParser"] = parser_mod.CodeParser;
+        return parser_mod.CodeParser;
     }
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}");
 }
@@ -213,7 +213,7 @@ def _store_cpp_identity_pending(store: GraphStore, files: set[str]) {
 
 def _run_python_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_python_imports = lazy("python_resolver", "resolve_python_imports");
+        import from code_review_graph.python_resolver { resolve_python_imports }
         return resolve_python_imports(store);
     } except Exception as exc {
         logger.warning("Python import resolver failed: %s", exc);
@@ -223,7 +223,7 @@ def _run_python_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_rescript_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_rescript_cross_module = lazy("rescript_resolver", "resolve_rescript_cross_module");
+        import from code_review_graph.rescript_resolver { resolve_rescript_cross_module }
         return resolve_rescript_cross_module(store);
     } except Exception as exc {
         logger.warning("ReScript cross-module resolver failed: %s", exc);
@@ -233,7 +233,7 @@ def _run_rescript_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_spring_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_spring_di_calls = lazy("spring_resolver", "resolve_spring_di_calls");
+        import from code_review_graph.spring_resolver { resolve_spring_di_calls }
         return resolve_spring_di_calls(store);
     } except Exception as exc {
         logger.warning("Spring DI resolver failed: %s", exc);
@@ -243,7 +243,7 @@ def _run_spring_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_aop_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_aop_advice = lazy("aop_resolver", "resolve_aop_advice");
+        import from code_review_graph.aop_resolver { resolve_aop_advice }
         return resolve_aop_advice(store);
     } except Exception as exc {
         logger.warning("AOP resolver failed: %s", exc);
@@ -253,7 +253,7 @@ def _run_aop_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_spring_event_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_spring_events = lazy("event_resolver", "resolve_spring_events");
+        import from code_review_graph.event_resolver { resolve_spring_events }
         return resolve_spring_events(store);
     } except Exception as exc {
         logger.warning("Spring event resolver failed: %s", exc);
@@ -263,7 +263,7 @@ def _run_spring_event_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_temporal_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_temporal_calls = lazy("temporal_resolver", "resolve_temporal_calls");
+        import from code_review_graph.temporal_resolver { resolve_temporal_calls }
         return resolve_temporal_calls(store);
     } except Exception as exc {
         logger.warning("Temporal resolver failed: %s", exc);
@@ -273,7 +273,7 @@ def _run_temporal_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_hcl_resolver(store: GraphStore) -> Optional[dict] {
     try {
-        resolve_hcl_module_references = lazy("hcl_resolver", "resolve_hcl_module_references");
+        import from code_review_graph.hcl_resolver { resolve_hcl_module_references }
         return resolve_hcl_module_references(store);
     } except Exception as exc {
         logger.warning("Terraform/HCL resolver failed: %s", exc);
@@ -283,7 +283,7 @@ def _run_hcl_resolver(store: GraphStore) -> Optional[dict] {
 
 def _run_scoped_resolver(store: GraphStore, repo_root: Path) -> Optional[dict] {
     try {
-        resolve_scoped_calls = lazy("scoped_resolver", "resolve_scoped_calls");
+        import from code_review_graph.scoped_resolver { resolve_scoped_calls }
         return resolve_scoped_calls(store, repo_root);
     } except Exception as exc {
         logger.warning("Scoped call resolver failed: %s", exc);
@@ -312,7 +312,7 @@ def _run_jedi_enrichment(
         return {"skipped": True, "reason": reason};
     }
     try {
-        enrich_jedi_calls = lazy("jedi_resolver", "enrich_jedi_calls");
+        import from code_review_graph.jedi_resolver { enrich_jedi_calls }
         return enrich_jedi_calls(store, repo_root, files=files);
     } except Exception as exc {
         logger.warning("Jedi enrichment failed: %s", exc);
@@ -475,8 +475,8 @@ def _create_data_dir(data_dir: Path) {
 
 def get_data_dir(repo_root: Path, *, create: bool = True) -> Path {
     try {
-        Registry = lazy("registry", "Registry");
-        default_registry_path = lazy("registry", "default_registry_path");
+        import from code_review_graph.registry { Registry }
+        import from code_review_graph.registry { default_registry_path }
         if create or default_registry_path().is_file() {
             registry_data_dir: any = Registry().get_data_dir_for_repo(`str(repo_root));
             if registry_data_dir {
@@ -2242,7 +2242,7 @@ glob _NO_GRAMMAR_LANGUAGES: any = frozenset({"rescript", "vbnet", "yaml", "prope
 
 def _prewarm_parser_probes(parser: Any, rel_paths: list[str]) {
     try {
-        parser_mod: any = lazy("parser");
+        import code_review_graph.parser as parser_mod;
     } except Exception {
         return;
     }
@@ -2768,15 +2768,15 @@ def incremental_update(
         } except (OSError, PermissionError) {}
         to_parse.append(rel_path);
     }
-    capture_community_assignments = lazy("communities", "capture_community_assignments");
-    purge_empty_communities = lazy("communities", "purge_empty_communities");
-    remap_community_assignments = lazy("communities", "remap_community_assignments");
-    capture_affected_flow_entry_points = lazy("flows", "capture_affected_flow_entry_points");
-    capture_flow_node_ids = lazy("flows", "capture_flow_node_ids");
-    clear_flows_for_files = lazy("flows", "clear_flows_for_files");
-    expand_changed_file_paths = lazy("flows", "expand_changed_file_paths");
-    purge_orphan_flow_data = lazy("flows", "purge_orphan_flow_data");
-    remap_flow_node_ids = lazy("flows", "remap_flow_node_ids");
+    import from code_review_graph.communities { capture_community_assignments }
+    import from code_review_graph.communities { purge_empty_communities }
+    import from code_review_graph.communities { remap_community_assignments }
+    import from code_review_graph.flows { capture_affected_flow_entry_points }
+    import from code_review_graph.flows { capture_flow_node_ids }
+    import from code_review_graph.flows { clear_flows_for_files }
+    import from code_review_graph.flows { expand_changed_file_paths }
+    import from code_review_graph.flows { purge_orphan_flow_data }
+    import from code_review_graph.flows { remap_flow_node_ids }
     lifecycle_inputs: any = [
         *[rel_path.replace("\\", "/") for rel_path in to_parse],
         *missing_paths,
@@ -3038,7 +3038,7 @@ def _raise_watch_postprocess_warnings(result: object) {
     if not isinstance(result, `dict) {
         return;
     }
-    REFRESH_SKIPPED_WARNING = lazy("embeddings", "REFRESH_SKIPPED_WARNING");
+    import from code_review_graph.embeddings { REFRESH_SKIPPED_WARNING }
 
     warnings: any = [
         warning
@@ -3226,7 +3226,7 @@ def _run_time_boxed(operation: Callable[[], Any], description: str, timeout: flo
 
 def _watch_health_path(repo_root: Path) -> Path | None {
     try {
-        watch_health_path = lazy("daemon", "watch_health_path");
+        import from code_review_graph.daemon { watch_health_path }
 
         return watch_health_path(repo_root);
     } except Exception as exc {

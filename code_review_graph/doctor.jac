@@ -263,7 +263,7 @@ def _upgrade_for(path: str) -> str {
 }
 
 def _read_json(path: Path) -> Any {
-    _strip_jsonc = lazy("skills", "_strip_jsonc");
+    import from code_review_graph.skills { _strip_jsonc }
 
     try {
         text: any = path.read_text(encoding="utf-8");
@@ -278,7 +278,7 @@ def _read_json(path: Path) -> Any {
 }
 
 def _repo_mcp_configs(`root: Path) -> dict[Path, tuple[str, list[str]]] {
-    PLATFORMS = lazy("skills", "PLATFORMS");
+    import from code_review_graph.skills { PLATFORMS }
 
     configs: dict[Path, tuple[str, list[str]]] = {};
     for plat in PLATFORMS.values() {
@@ -526,8 +526,8 @@ def _live_head(`root: Path) -> str | None {
 }
 
 def _holds_commits_since(`root: Path, db_path: Path, built: str) -> bool {
-    files_hold_commits = lazy("incremental", "files_hold_commits");
-    normalize_file_path = lazy("parser", "normalize_file_path");
+    import from code_review_graph.incremental { files_hold_commits }
+    import from code_review_graph.parser { normalize_file_path }
 
     def file_hashes -> dict[str, str] {
         conn: any = sqlite3.connect(_read_only_uri(db_path), uri=True, timeout=2);
@@ -549,11 +549,11 @@ def _holds_commits_since(`root: Path, db_path: Path, built: str) -> bool {
 }
 
 def check_graph(`root: Path) -> tuple[dict[str, Any], list[Finding]] {
-    BUILD_STATE_KEY = lazy("build_state", "BUILD_STATE_KEY");
-    INCOMPLETE_BUILD_STATES = lazy("build_state", "INCOMPLETE_BUILD_STATES");
-    get_db_path = lazy("incremental", "get_db_path");
-    LATEST_VERSION = lazy("migrations", "LATEST_VERSION");
-    get_schema_version = lazy("migrations", "get_schema_version");
+    import from code_review_graph.build_state { BUILD_STATE_KEY }
+    import from code_review_graph.build_state { INCOMPLETE_BUILD_STATES }
+    import from code_review_graph.incremental { get_db_path }
+    import from code_review_graph.migrations { LATEST_VERSION }
+    import from code_review_graph.migrations { get_schema_version }
 
     db_path: any = get_db_path(`root, read_only=True);
     info: dict[str, Any] = {
@@ -712,7 +712,7 @@ def _settings_hook_events(path: Path) -> list[str] {
 }
 
 def _hook_settings_files(`root: Path) -> list[tuple[str, Path]] {
-    _codex_home = lazy("skills", "_codex_home");
+    import from code_review_graph.skills { _codex_home }
 
     return [
         ("Claude Code", `root / ".claude" / "settings.json"),

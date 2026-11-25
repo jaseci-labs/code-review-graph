@@ -7,8 +7,8 @@ import from pathlib { Path }
 glob logger: any = logging.getLogger(__name__);
 
 def run(repo_path: Path, store, config: dict) -> list[dict] {
-    store_flows = lazy("flows", "store_flows");
-    trace_flows = lazy("flows", "trace_flows");
+    import from code_review_graph.flows { store_flows }
+    import from code_review_graph.flows { trace_flows }
 
     flows: any = trace_flows(store);
     count: any = store_flows(store, flows);

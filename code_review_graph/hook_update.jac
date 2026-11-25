@@ -106,7 +106,7 @@ def _recorded_root(db_path: Path) -> Path | None {
 }
 
 def _has_graph(repo_root: Path) -> bool {
-    get_db_path = lazy("incremental", "get_db_path");
+    import from code_review_graph.incremental { get_db_path }
 
     try {
         db_path: any = get_db_path(repo_root, read_only=True);
@@ -182,7 +182,7 @@ def run_update_hook(existing_only: bool = False) {
 }
 
 def _update_repo(repo_root: Path) {
-    build_or_update_graph = lazy("tools.build", "build_or_update_graph");
+    import from code_review_graph.tools.build { build_or_update_graph }
 
     try {
         result: any = build_or_update_graph(

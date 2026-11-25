@@ -1981,7 +1981,7 @@ def rename_preview(store: GraphStore, old_name: str, new_name: str) -> Optional[
         "created_at": time.time(),
     };
 
-    followed_files = lazy("incremental", "followed_files");
+    import from code_review_graph.incremental { followed_files }
 
     followed: any = followed_files(store);
     with _refactor_lock {
@@ -2770,7 +2770,7 @@ def apply_refactor(refactor_id: str, repo_root: Path, dry_run: bool = False) -> 
         }
         return {"status": "ok", "applied": 0, "files_modified": [], "edits_applied": 0};
     }
-    path_within_repo = lazy("incremental", "path_within_repo");
+    import from code_review_graph.incremental { path_within_repo }
 
     with _refactor_lock {
         followed: any = _followed_edit_files.get(refactor_id, frozenset());

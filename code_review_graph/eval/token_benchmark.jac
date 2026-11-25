@@ -11,8 +11,8 @@ def estimate_tokens(`obj: Any) -> int {
 }
 
 def benchmark_review_workflow(repo_root: str, base: str = "HEAD~1") -> dict {
-    get_minimal_context = lazy("tools.context", "get_minimal_context");
-    detect_changes_func = lazy("tools.review", "detect_changes_func");
+    import from code_review_graph.tools.context { get_minimal_context }
+    import from code_review_graph.tools.review { detect_changes_func }
 
     total_tokens: any = 0;
     calls: any = [];
@@ -34,9 +34,9 @@ def benchmark_review_workflow(repo_root: str, base: str = "HEAD~1") -> dict {
 }
 
 def benchmark_architecture_workflow(repo_root: str) -> dict {
-    list_communities_func = lazy("tools.community_tools", "list_communities_func");
-    get_minimal_context = lazy("tools.context", "get_minimal_context");
-    list_flows = lazy("tools.flows_tools", "list_flows");
+    import from code_review_graph.tools.community_tools { list_communities_func }
+    import from code_review_graph.tools.context { get_minimal_context }
+    import from code_review_graph.tools.flows_tools { list_flows }
 
     total_tokens: any = 0;
     calls: any = [];
@@ -65,8 +65,8 @@ def benchmark_architecture_workflow(repo_root: str) -> dict {
 }
 
 def benchmark_debug_workflow(repo_root: str) -> dict {
-    get_minimal_context = lazy("tools.context", "get_minimal_context");
-    semantic_search_nodes = lazy("tools.query", "semantic_search_nodes");
+    import from code_review_graph.tools.context { get_minimal_context }
+    import from code_review_graph.tools.query { semantic_search_nodes }
 
     total_tokens: any = 0;
     calls: any = [];
@@ -90,8 +90,8 @@ def benchmark_debug_workflow(repo_root: str) -> dict {
 }
 
 def benchmark_onboard_workflow(repo_root: str) -> dict {
-    get_minimal_context = lazy("tools.context", "get_minimal_context");
-    list_graph_stats = lazy("tools.query", "list_graph_stats");
+    import from code_review_graph.tools.context { get_minimal_context }
+    import from code_review_graph.tools.query { list_graph_stats }
 
     total_tokens: any = 0;
     calls: any = [];
@@ -115,8 +115,8 @@ def benchmark_onboard_workflow(repo_root: str) -> dict {
 }
 
 def benchmark_pre_merge_workflow(repo_root: str, base: str = "HEAD~1") -> dict {
-    get_minimal_context = lazy("tools.context", "get_minimal_context");
-    detect_changes_func = lazy("tools.review", "detect_changes_func");
+    import from code_review_graph.tools.context { get_minimal_context }
+    import from code_review_graph.tools.review { detect_changes_func }
 
     total_tokens: any = 0;
     calls: any = [];

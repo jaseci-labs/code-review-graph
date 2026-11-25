@@ -84,7 +84,7 @@ def _sync_fts_index(
     changed_files: Sequence[str] | None = None,
 ) {
     try {
-        update_fts_index = lazy("search", "update_fts_index");
+        import from code_review_graph.search { update_fts_index }
 
         mode: list[str] = [];
         result["fts_indexed"] = update_fts_index(store, changed_files, _out_mode=mode);
@@ -99,8 +99,8 @@ def _sync_fts_index(
 
 def _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str]) {
     try {
-        store_flows = lazy("flows", "store_flows");
-        trace_flows = lazy("flows", "trace_flows");
+        import from code_review_graph.flows { store_flows }
+        import from code_review_graph.flows { trace_flows }
 
         flows: any = trace_flows(store);
         count: any = store_flows(store, flows);
@@ -113,8 +113,8 @@ def _trace_flows(store: GraphStore, result: dict[str, Any], warnings: list[str])
 
 def _detect_communities(store: GraphStore, result: dict[str, Any], warnings: list[str]) {
     try {
-        detect_communities = lazy("communities", "detect_communities");
-        store_communities = lazy("communities", "store_communities");
+        import from code_review_graph.communities { detect_communities }
+        import from code_review_graph.communities { store_communities }
 
         comms: any = detect_communities(store);
         count: any = store_communities(store, comms);
@@ -144,8 +144,8 @@ def _refresh_embeddings(
     }
 
     try {
-        REFRESH_SKIPPED_WARNING = lazy("embeddings", "REFRESH_SKIPPED_WARNING");
-        refresh_embeddings = lazy("embeddings", "refresh_embeddings");
+        import from code_review_graph.embeddings { REFRESH_SKIPPED_WARNING }
+        import from code_review_graph.embeddings { refresh_embeddings }
 
         refreshed: any = refresh_embeddings(store, provider=provider, model=model);
         if refreshed is None {

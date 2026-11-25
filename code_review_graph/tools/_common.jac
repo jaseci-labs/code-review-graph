@@ -152,11 +152,10 @@ def _resolve_root(repo_root: str | None = None) -> Path {
 
 def _open_graph_store(db_path: Path, command: str) -> any {
     import from code_review_graph.graph { CorruptGraphDatabaseError }
-    GraphStore = lazy("graph", "GraphStore");
-    discard_corrupt_database = lazy("graph", "discard_corrupt_database");
+    import code_review_graph.graph as _graph;
 
     try {
-        return GraphStore(db_path);
+        return _graph.GraphStore(db_path);
     } except CorruptGraphDatabaseError as exc {
         if command != "build" {
             raise;
@@ -166,15 +165,15 @@ def _open_graph_store(db_path: Path, command: str) -> any {
             db_path,
             exc.reason,
         );
-        discard_corrupt_database(db_path);
-        return GraphStore(db_path);
+        _graph.discard_corrupt_database(db_path);
+        return _graph.GraphStore(db_path);
     }
 }
 
 def _get_store(
     repo_root: str | None = None, *, db_path: Path | None = None, recover_corrupt: bool = False
 ) -> tuple[GraphStore, Path] {
-    assert_graph_serves_root = lazy("incremental", "assert_graph_serves_root");
+    import code_review_graph.incremental as _incremental;
 
     `root: any = _resolve_root(repo_root);
     if db_path is None {
@@ -182,7 +181,7 @@ def _get_store(
     }
     store: any = _open_graph_store(db_path, "build") if recover_corrupt else GraphStore(db_path);
     try {
-        assert_graph_serves_root(`root, store);
+        _incremental.assert_graph_serves_root(`root, store);
     } except BaseException {
         store.close();
         raise;

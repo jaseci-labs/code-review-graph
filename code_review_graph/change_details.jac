@@ -416,7 +416,7 @@ def _gaps(store: GraphStore, `report: dict[str, Any], changed: list[GraphNode]) 
 }
 
 def _graph(store: GraphStore) -> dict[str, Any] {
-    __version__ = lazy("", "__version__");
+    import from code_review_graph { __version__ }
 
     stats: any = store.get_stats();
     schema: any = store.get_metadata("schema_version");

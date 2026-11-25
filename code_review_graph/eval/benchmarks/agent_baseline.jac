@@ -30,7 +30,7 @@ glob _STOPWORDS: any = set(
 );
 
 def derive_search_terms(question: str) -> list[str] {
-    extract_query_identifiers = lazy("search", "extract_query_identifiers");
+    import from code_review_graph.search { extract_query_identifiers }
 
     terms: list[str] = [];
     seen: set[str] = set[any]();
@@ -129,7 +129,7 @@ def run(repo_path: Path, store, config: dict) -> list[dict] {
         };
 
         try {
-            hybrid_search = lazy("search", "hybrid_search");
+            import from code_review_graph.search { hybrid_search }
             hits: any = hybrid_search(
                 store,
                 question,

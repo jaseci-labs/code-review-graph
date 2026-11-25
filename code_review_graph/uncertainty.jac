@@ -179,7 +179,7 @@ def _confirmed_note(target: str, current: bool) -> str {
 }
 
 def _live_git_head(`root: Path) -> str | None {
-    _read_live_git_head = lazy("tools._common", "_read_live_git_head");
+    import from code_review_graph.tools._common { _read_live_git_head }
 
     return _read_live_git_head(`root);
 }

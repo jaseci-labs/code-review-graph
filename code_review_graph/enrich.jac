@@ -83,7 +83,7 @@ def _get_flow_names_for_node(conn: Any, node_id: int) -> list[str] {
 }
 
 def _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> list[str] {
-    GraphNode = lazy("graph", "GraphNode");
+    import from code_review_graph.graph { GraphNode }
     assert isinstance(`node, GraphNode);
 
     qn: any = `node.qualified_name;
@@ -161,8 +161,8 @@ def _format_node_context(`node: Any, store: Any, conn: Any, repo_root: str) -> l
 }
 
 def enrich_search(pattern: str, repo_root: str) -> str {
-    GraphStore = lazy("graph", "GraphStore");
-    _fts_search = lazy("search", "_fts_search");
+    import from code_review_graph.graph { GraphStore }
+    import from code_review_graph.search { _fts_search }
 
     db_path: any = Path(repo_root) / ".code-review-graph" / "graph.db";
     if not db_path.exists() {
@@ -206,7 +206,7 @@ def enrich_search(pattern: str, repo_root: str) -> str {
 }
 
 def enrich_file_read(file_path: str, repo_root: str) -> str {
-    GraphStore = lazy("graph", "GraphStore");
+    import from code_review_graph.graph { GraphStore }
 
     db_path: any = Path(repo_root) / ".code-review-graph" / "graph.db";
     if not db_path.exists() {
@@ -267,8 +267,8 @@ def run_hook {
         return;
     }
     cwd: any = hook_input.get("cwd", os.getcwd());
-    find_project_root = lazy("incremental", "find_project_root");
-    get_db_path = lazy("incremental", "get_db_path");
+    import from code_review_graph.incremental { find_project_root }
+    import from code_review_graph.incremental { get_db_path }
 
     repo_path: any = find_project_root(Path(cwd));
     repo_root: any = `str(repo_path);

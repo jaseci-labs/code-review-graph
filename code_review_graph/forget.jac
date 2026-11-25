@@ -46,10 +46,10 @@ def _purge_orphan_embeddings(store: GraphStore) -> int {
 }
 
 def forget_files(store: GraphStore, repo_root: Path, targets: list[str]) -> dict[str, Any] {
-    CodeParser = lazy("parser", "CodeParser");
-    run_post_processing = lazy("postprocessing", "run_post_processing");
-    resolve_python_imports = lazy("python_resolver", "resolve_python_imports");
-    resolve_scoped_calls = lazy("scoped_resolver", "resolve_scoped_calls");
+    import from code_review_graph.parser { CodeParser }
+    import from code_review_graph.postprocessing { run_post_processing }
+    import from code_review_graph.python_resolver { resolve_python_imports }
+    import from code_review_graph.scoped_resolver { resolve_scoped_calls }
 
     forgotten: any = `set(targets);
     deleted_qualified_names: set[str] = set[any]();
@@ -66,8 +66,8 @@ def forget_files(store: GraphStore, repo_root: Path, targets: list[str]) -> dict
     }
     store.set_metadata("intentionally_incomplete", "1");
     store.commit();
-    _load_followed_dirs = lazy("incremental", "_load_followed_dirs");
-    _relink_edges = lazy("incremental", "_relink_edges");
+    import from code_review_graph.incremental { _load_followed_dirs }
+    import from code_review_graph.incremental { _relink_edges }
 
     parser: any = CodeParser(repo_root);
     parser.exclude_files(forgotten);

@@ -13,7 +13,7 @@ def run(repo_path: Path, store, config: dict) -> list[dict] {
         expected: any = sq["expected"];
 
         try {
-            hybrid_search = lazy("search", "hybrid_search");
+            import from code_review_graph.search { hybrid_search }
             search_results: any = hybrid_search(
                 store,
                 query,

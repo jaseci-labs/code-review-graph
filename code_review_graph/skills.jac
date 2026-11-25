@@ -399,7 +399,7 @@ glob PLATFORMS: dict[str, dict[str, Any]] = {
 };
 
 def _codex_home -> Path {
-    codex_home = lazy("codex_skill", "codex_home");
+    import from code_review_graph.codex_skill { codex_home }
 
     return codex_home();
 }
@@ -930,7 +930,7 @@ def _merge_yaml_mcp_server(
 }
 
 def _merge_dsh_patch_server(config_path: Path, server_entry: dict[str, Any]) -> bool | None {
-    dsh: any = lazy("dsh");
+    import code_review_graph.dsh as dsh;
 
     raw: any = "";
     row: any = dsh.server_row(server_entry);
@@ -2589,7 +2589,7 @@ def install_codex_hooks(repo_root: Path) -> Path | None {
 }
 
 def install_codex_skill -> Path | None {
-    _install = lazy("codex_skill", "install_codex_skill");
+    import from code_review_graph.codex_skill { install_codex_skill as _install }
 
     return _install();
 }

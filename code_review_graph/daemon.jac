@@ -60,7 +60,7 @@ def __getattr__(name: str) -> Path {
 }
 
 def __dir__ -> list[str] {
-    return sorted(`list(globals()) + [name for name in _LAZY_PATHS if name not in globals()]);
+    return sorted(`list(vars(sys.modules[__name__])) + [name for name in _LAZY_PATHS if name not in vars(sys.modules[__name__])]);
 }
 
 glob _HEALTH_CHECK_INTERVAL: any = 30;
@@ -938,7 +938,7 @@ obj WatchDaemon {
 
     def start {
         logger.info("Starting daemon '%s'", self._config.session_name);
-        Registry = lazy("registry", "Registry");
+        import from code_review_graph.registry { Registry }
 
         registry: any = Registry();
         repo: any;
@@ -1005,7 +1005,7 @@ obj WatchDaemon {
             if desired[alias].path != self._current_repos[alias].path
         };
         if to_add or to_update {
-            Registry = lazy("registry", "Registry");
+            import from code_review_graph.registry { Registry }
 
             registry: any = Registry();
 

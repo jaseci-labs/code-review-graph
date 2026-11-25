@@ -240,7 +240,7 @@ def _get_file_call_edges(store, file_path: str) -> any {
     rows: any = conn.execute(
         "SELECT * FROM edges WHERE file_path = ? AND kind = 'CALLS'", (file_path,)
     ).fetchall();
-    GraphEdge = lazy("graph", "GraphEdge");
+    import from code_review_graph.graph { GraphEdge }
     return [
         GraphEdge(
             id=r["id"],

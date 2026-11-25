@@ -130,14 +130,14 @@ def get_docs_section(section_name: str, repo_root: str | None = None) -> dict[st
 }
 
 def generate_wiki_func(repo_root: str | None = None, force: bool = False) -> dict[str, Any] {
-    get_data_dir = lazy("incremental", "get_data_dir");
-    generate_wiki = lazy("wiki", "generate_wiki");
+    import code_review_graph.incremental as _incremental;
+    import from code_review_graph.wiki { generate_wiki }
 
     store: any;
     `root: any;
     (store, `root) = _get_store(repo_root) as any;
     try {
-        wiki_dir: any = get_data_dir(`root) / "wiki";
+        wiki_dir: any = _incremental.get_data_dir(`root) / "wiki";
         result: any = generate_wiki(store, wiki_dir, force=force);
         total: any = result["pages_generated"]
             + result["pages_updated"]
@@ -166,13 +166,13 @@ def generate_wiki_func(repo_root: str | None = None, force: bool = False) -> dic
 def get_wiki_page_func(
     community_name: str, repo_root: str | None = None, max_chars: int = 20000
 ) -> dict[str, Any] {
-    get_data_dir = lazy("incremental", "get_data_dir");
-    get_wiki_page = lazy("wiki", "get_wiki_page");
+    import code_review_graph.incremental as _incremental;
+    import from code_review_graph.wiki { get_wiki_page }
 
     _validate_positive_int(max_chars, "max_chars");
 
     `root: any = _resolve_root(repo_root);
-    wiki_dir: any = get_data_dir(`root) / "wiki";
+    wiki_dir: any = _incremental.get_data_dir(`root) / "wiki";
     content: any = get_wiki_page(wiki_dir, community_name);
     if content is None {
         return {"status": "not_found", "summary": f"No wiki page found for '{community_name}'."};

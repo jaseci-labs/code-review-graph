@@ -13,7 +13,7 @@ glob _MAX_CROSS_REPO_RESULTS: any = 100;
 glob _MAX_ECHOED_NAMES: any = 20;
 
 def list_repos_func -> dict[str, Any] {
-    Registry = lazy("registry", "Registry");
+    import from code_review_graph.registry { Registry }
 
     try {
         registry: any = Registry();
@@ -73,7 +73,7 @@ def cross_repo_search_func(
     max_results: int = 50,
     repos: list[str] | None = None,
 ) -> dict[str, Any] {
-    Registry = lazy("registry", "Registry");
+    import from code_review_graph.registry { Registry }
 
     _validate_positive_int(limit, "limit");
     _validate_positive_int(max_results, "max_results");

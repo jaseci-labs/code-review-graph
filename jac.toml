@@ -202,7 +202,6 @@ dev = [
 files = [
     "code_review_graph/__init__.jac",
     "code_review_graph/__main__.jac",
-    "code_review_graph/_lazy.jac",
     "code_review_graph/_legacy_instructions.jac",
     "code_review_graph/analysis.jac",
     "code_review_graph/aop_resolver.jac",

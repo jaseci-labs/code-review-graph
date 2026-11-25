@@ -10,45 +10,6 @@ graph spaces {
 }
 
 graph import {
-    code_review_graph._lazy ++> code_review_graph.change_details { lazy }
-    code_review_graph._lazy ++> code_review_graph.cli { lazy }
-    code_review_graph._lazy ++> code_review_graph.communities { lazy }
-    code_review_graph._lazy ++> code_review_graph.daemon { lazy }
-    code_review_graph._lazy ++> code_review_graph.daemon_cli { lazy }
-    code_review_graph._lazy ++> code_review_graph.doctor { lazy }
-    code_review_graph._lazy ++> code_review_graph.enrich { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.agent_baseline { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.build_performance { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.flow_completeness { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.impact_accuracy { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.incremental_fidelity { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.multi_hop_retrieval { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.search_quality { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.benchmarks.token_efficiency { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.runner { lazy }
-    code_review_graph._lazy ++> code_review_graph.eval.token_benchmark { lazy }
-    code_review_graph._lazy ++> code_review_graph.forget { lazy }
-    code_review_graph._lazy ++> code_review_graph.graph { lazy }
-    code_review_graph._lazy ++> code_review_graph.hook_update { lazy }
-    code_review_graph._lazy ++> code_review_graph.incremental { lazy }
-    code_review_graph._lazy ++> code_review_graph.jedi_resolver { lazy }
-    code_review_graph._lazy ++> code_review_graph.main { lazy }
-    code_review_graph._lazy ++> code_review_graph.migrations { lazy }
-    code_review_graph._lazy ++> code_review_graph.neighbourhood { lazy }
-    code_review_graph._lazy ++> code_review_graph.parser { lazy }
-    code_review_graph._lazy ++> code_review_graph.postprocessing { lazy }
-    code_review_graph._lazy ++> code_review_graph.refactor { lazy }
-    code_review_graph._lazy ++> code_review_graph.search { lazy }
-    code_review_graph._lazy ++> code_review_graph.skills { lazy }
-    code_review_graph._lazy ++> code_review_graph.tools._common { lazy }
-    code_review_graph._lazy ++> code_review_graph.tools.build { lazy }
-    code_review_graph._lazy ++> code_review_graph.tools.context { lazy }
-    code_review_graph._lazy ++> code_review_graph.tools.docs { lazy }
-    code_review_graph._lazy ++> code_review_graph.tools.registry_tools { lazy }
-    code_review_graph._lazy ++> code_review_graph.uncertainty { lazy }
-    code_review_graph._lazy ++> code_review_graph.uninstall { lazy }
-    code_review_graph._lazy ++> code_review_graph.visualization { lazy }
     "code-review-graph-vscode/src/backend/sqlite" --> "code-review-graph-vscode/test/sqlite.test" {
         GraphEdge,
         GraphNode,
@@ -2384,6 +2345,8 @@ graph import {
         target_resolution_expr,
     }
     code_review_graph ++> code_review_graph.graph { __version__ }
+    code_review_graph.parser as _parser ++> code_review_graph.graph;
+    code_review_graph.eval.runner as _runner ++> code_review_graph.eval;
     code_review_graph.constants ++> code_review_graph.hcl_resolver { CLAIMED_ENDPOINT_KEY }
     code_review_graph.install_plan as install_plan ++> code_review_graph.incremental;
     code_review_graph.build_state ++> code_review_graph.incremental {
@@ -3144,4 +3107,20 @@ graph import {
     tests._project --> tests.test_codex_skill_wrapper { package_dir }
     tests._project --> tests.test_import_target_integrity { project_root }
     tests._project --> tests.test_utf8_encoding { python_source }
+    code_review_graph.context_history as ch ++> code_review_graph.cli;
+    code_review_graph.dsh as dsh ++> code_review_graph.skills;
+    code_review_graph.dsh as dsh ++> code_review_graph.uninstall;
+    code_review_graph.graph ++> code_review_graph.migrations { node_index_tokens }
+    code_review_graph.hook_update as hook_update ++> code_review_graph.cli;
+    code_review_graph.incremental ++> code_review_graph.parser { _load_ignore_patterns }
+    code_review_graph.incremental ++> code_review_graph.parser { _should_ignore }
+    code_review_graph.install_gitignore as install_gitignore ++> code_review_graph.cli;
+    code_review_graph.parser as parser_mod ++> code_review_graph.incremental;
+    code_review_graph.parser ++> code_review_graph.graph { EdgeInfo }
+    code_review_graph.parser ++> code_review_graph.graph { is_test_file }
+    code_review_graph.prompts as _prompts_mod ++> code_review_graph.main;
+    code_review_graph.tools as _tools_mod ++> code_review_graph.main;
+    code_review_graph.graph as _graph ++> code_review_graph.tools._common;
+    code_review_graph.incremental as _incremental ++> code_review_graph.tools._common;
+    code_review_graph.incremental as _incremental ++> code_review_graph.tools.docs;
 }

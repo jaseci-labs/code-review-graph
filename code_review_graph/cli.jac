@@ -45,7 +45,7 @@ def _get_version -> str {
         logger.debug("Package metadata unavailable: %s", exc);
     }
     try {
-        fallback_version = lazy("", "__version__");
+        import from code_review_graph { __version__ as fallback_version }
 
         if fallback_version {
             return fallback_version;
@@ -160,13 +160,13 @@ def _instruction_files_to_modify(
     repo_root: Path, target: str, platforms: Iterable[str] | None = None
 ) -> list[tuple[str, str]] {
     targets: list[tuple[str, str]];
-    _CLAUDE_MD_SECTION = lazy("skills", "_CLAUDE_MD_SECTION");
-    _CLAUDE_MD_SECTION_MARKER = lazy("skills", "_CLAUDE_MD_SECTION_MARKER");
-    _COPILOT_SECTION = lazy("skills", "_COPILOT_SECTION");
-    _PLATFORM_INSTRUCTION_CUSTOM_SECTIONS = lazy("skills", "_PLATFORM_INSTRUCTION_CUSTOM_SECTIONS");
-    _PLATFORM_INSTRUCTION_FILES = lazy("skills", "_PLATFORM_INSTRUCTION_FILES");
-    _upgrade_managed_block = lazy("skills", "_upgrade_managed_block");
-    instruction_file_wanted = lazy("skills", "instruction_file_wanted");
+    import from code_review_graph.skills { _CLAUDE_MD_SECTION }
+    import from code_review_graph.skills { _CLAUDE_MD_SECTION_MARKER }
+    import from code_review_graph.skills { _COPILOT_SECTION }
+    import from code_review_graph.skills { _PLATFORM_INSTRUCTION_CUSTOM_SECTIONS }
+    import from code_review_graph.skills { _PLATFORM_INSTRUCTION_FILES }
+    import from code_review_graph.skills { _upgrade_managed_block }
+    import from code_review_graph.skills { instruction_file_wanted }
 
     targets = [];
 
@@ -291,8 +291,8 @@ def _say_nothing(*_args_: object, **_kwargs: object) {
 def _apply_steering_choice(
     repo_root: Path, target: str, steering: bool, *, skip_hooks: bool, dry_run: bool
 ) {
-    install_steering_hook = lazy("skills", "install_steering_hook");
-    remove_steering_hook = lazy("uninstall", "remove_steering_hook");
+    import from code_review_graph.skills { install_steering_hook }
+    import from code_review_graph.uninstall { remove_steering_hook }
 
     lead: any = "[dry-run] " if dry_run else "";
     if target not in ("claude", "all") {
@@ -332,7 +332,7 @@ def _apply_steering_choice(
 }
 
 def _report_gitignore_block(repo_root: Path, plan: _GitignorePlan, *, dry_run: bool) {
-    install_gitignore: any = lazy("install_gitignore");
+    import code_review_graph.install_gitignore as install_gitignore;
 
     result: any = install_gitignore.apply(repo_root, plan, dry_run=False);
     lead: any = "[dry-run] " if dry_run else "";
@@ -367,9 +367,9 @@ def _report_gitignore_block(repo_root: Path, plan: _GitignorePlan, *, dry_run: b
 def _handle_init(args: argparse.Namespace) {
     name: any;
     path: any;
-    find_repo_root = lazy("incremental", "find_repo_root");
-    inject_instruction_files = lazy("skills", "inject_instruction_files");
-    selected_platforms = lazy("skills", "selected_platforms");
+    import from code_review_graph.incremental { find_repo_root }
+    import from code_review_graph.skills { inject_instruction_files }
+    import from code_review_graph.skills { selected_platforms }
 
     repo_root: any = Path(args.repo) if args.repo else find_repo_root();
     if not repo_root {
@@ -388,7 +388,7 @@ def _handle_init(args: argparse.Namespace) {
     platforms: any = selected_platforms(repo_root, target);
     gitignore_plan: _GitignorePlan | None = None;
     if getattr(args, "gitignore", False) {
-        _plan_gitignore = lazy("install_gitignore", "plan");
+        import from code_review_graph.install_gitignore { plan as _plan_gitignore }
 
         gitignore_plan = _plan_gitignore(
             repo_root,
@@ -553,8 +553,8 @@ def _handle_init(args: argparse.Namespace) {
 def _plan_mcp_configs(
     repo_root: Path, target: str, dry_run: bool, platforms: Iterable[str] | None = None
 ) {
-    PLATFORMS = lazy("skills", "PLATFORMS");
-    install_platform_configs = lazy("skills", "install_platform_configs");
+    import from code_review_graph.skills { PLATFORMS }
+    import from code_review_graph.skills { install_platform_configs }
 
     print("Installing MCP server config...");
     configured: any = install_platform_configs(
@@ -586,23 +586,23 @@ def _plan_integrations(
     *,
     say: Callable[[str], None],
 ) -> str | None {
-    ensure_repo_gitignore_excludes_crg = lazy("incremental", "ensure_repo_gitignore_excludes_crg");
-    _git_hooks_dir = lazy("skills", "_git_hooks_dir");
-    generate_skills = lazy("skills", "generate_skills");
-    install_codebuddy_hooks = lazy("skills", "install_codebuddy_hooks");
-    install_codebuddy_skills = lazy("skills", "install_codebuddy_skills");
-    install_codex_hooks = lazy("skills", "install_codex_hooks");
-    install_codex_skill = lazy("skills", "install_codex_skill");
-    install_cursor_hooks = lazy("skills", "install_cursor_hooks");
-    install_gemini_cli_hooks = lazy("skills", "install_gemini_cli_hooks");
-    install_gemini_cli_skills = lazy("skills", "install_gemini_cli_skills");
-    install_git_hook = lazy("skills", "install_git_hook");
-    install_git_sync_hooks = lazy("skills", "install_git_sync_hooks");
-    install_hermes_skills = lazy("skills", "install_hermes_skills");
-    install_hooks = lazy("skills", "install_hooks");
-    install_opencode_plugin = lazy("skills", "install_opencode_plugin");
-    install_qoder_skills = lazy("skills", "install_qoder_skills");
-    selected_platforms = lazy("skills", "selected_platforms");
+    import from code_review_graph.incremental { ensure_repo_gitignore_excludes_crg }
+    import from code_review_graph.skills { _git_hooks_dir }
+    import from code_review_graph.skills { generate_skills }
+    import from code_review_graph.skills { install_codebuddy_hooks }
+    import from code_review_graph.skills { install_codebuddy_skills }
+    import from code_review_graph.skills { install_codex_hooks }
+    import from code_review_graph.skills { install_codex_skill }
+    import from code_review_graph.skills { install_cursor_hooks }
+    import from code_review_graph.skills { install_gemini_cli_hooks }
+    import from code_review_graph.skills { install_gemini_cli_skills }
+    import from code_review_graph.skills { install_git_hook }
+    import from code_review_graph.skills { install_git_sync_hooks }
+    import from code_review_graph.skills { install_hermes_skills }
+    import from code_review_graph.skills { install_hooks }
+    import from code_review_graph.skills { install_opencode_plugin }
+    import from code_review_graph.skills { install_qoder_skills }
+    import from code_review_graph.skills { selected_platforms }
 
     def shown(path: Path) -> str {
         return install_plan.display_path(path, repo_root);
@@ -785,7 +785,7 @@ def _print_dry_run(plan: install_plan.Plan, repo_root: Path) {
 def _handle_data_dir_option(args, repo_root: Path) {
     if hasattr(args, "data_dir") and args.data_dir {
         try {
-            Registry = lazy("registry", "Registry");
+            import from code_review_graph.registry { Registry }
             data_dir_path: any = Path(args.data_dir).expanduser().resolve();
             data_dir_path.mkdir(parents=True, exist_ok=True);
             Registry().set_data_dir(`str(repo_root), `str(data_dir_path));
@@ -863,7 +863,7 @@ def _positive_int(value: str) -> int {
 }
 
 def _detail_sections_arg(value: str) -> tuple[str, ...] {
-    parse_detail_sections = lazy("change_details", "parse_detail_sections");
+    import from code_review_graph.change_details { parse_detail_sections }
 
     try {
         return parse_detail_sections(value);
@@ -922,8 +922,8 @@ def _find_explicit_repo_root(start: Path) -> "Path | None" {
 }
 
 def _handle_doctor(args) {
-    run_doctor = lazy("doctor", "run_doctor");
-    find_project_root = lazy("incremental", "find_project_root");
+    import from code_review_graph.doctor { run_doctor }
+    import from code_review_graph.incremental { find_project_root }
 
     if args.repo {
         given: any = Path(args.repo).expanduser();
@@ -940,9 +940,9 @@ def _handle_doctor(args) {
 def _handle_context_history(args) {
     import from datetime { datetime, time, timedelta, timezone }
 
-    ch: any = lazy("context_history");
-    find_project_root = lazy("incremental", "find_project_root");
-    get_data_dir = lazy("incremental", "get_data_dir");
+    import code_review_graph.context_history as ch;
+    import from code_review_graph.incremental { find_project_root }
+    import from code_review_graph.incremental { get_data_dir }
 
     if args.repo {
         given: any = Path(args.repo).expanduser();
@@ -1022,7 +1022,7 @@ def _handle_context_history(args) {
 }
 
 def _run_graph_tool_command(args, repo_root: Path) {
-    tools: any = lazy("tools");
+    tools: any = importlib.import_module("code_review_graph.tools");
 
     `root: any = `str(repo_root);
     if args.command == "query" {
@@ -1114,7 +1114,7 @@ def _warn_failed_files(result: dict) {
 }
 
 def _open_graph_store(db_path: Path, command: str) -> any {
-    open_store = lazy("tools._common", "_open_graph_store");
+    import from code_review_graph.tools._common { _open_graph_store as open_store }
 
     return open_store(db_path, command);
 }
@@ -1133,7 +1133,7 @@ def _ensure_project_marker(repo_root: Path) {
             (repo_root / marker).exists() for marker in (".git", ".svn", ".code-review-graph")
         )
     {
-        _create_data_dir = lazy("incremental", "_create_data_dir");
+        import from code_review_graph.incremental { _create_data_dir }
         _create_data_dir(repo_root / ".code-review-graph");
     }
 }
@@ -1145,15 +1145,15 @@ def _enrich_kwargs(args) -> dict {
 glob _BUILD_NEXT_STEP: any = "Next: code-review-graph detect-changes --brief, or ask your assistant \"Review my changes\".";
 
 def _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
-    assert_graph_serves_root = lazy("incremental", "assert_graph_serves_root");
-    get_db_path = lazy("incremental", "get_db_path");
+    import from code_review_graph.incremental { assert_graph_serves_root }
+    import from code_review_graph.incremental { get_db_path }
 
     _ensure_project_marker(repo_root);
     if args.command == "build" {
         pp: any = "none"
             if getattr(args, "skip_postprocess", False)
             else "minimal" if getattr(args, "skip_flows", False) else "full";
-        build_or_update_graph = lazy("tools.build", "build_or_update_graph");
+        import from code_review_graph.tools.build { build_or_update_graph }
 
         previous_disable: any = logging.root.manager.disable;
         if args.quiet {
@@ -1196,7 +1196,7 @@ def _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
         pp = "none"
             if getattr(args, "skip_postprocess", False)
             else "minimal" if getattr(args, "skip_flows", False) else "full";
-        build_or_update_graph = lazy("tools.build", "build_or_update_graph");
+        import from code_review_graph.tools.build { build_or_update_graph }
 
         previous_disable = logging.root.manager.disable;
         if args.quiet {
@@ -1241,23 +1241,23 @@ def _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
         }
         _warn_failed_files(result);
         if getattr(args, "brief", False) and not args.quiet {
-            analyze_changes = lazy("changes", "analyze_changes");
-            CallInfo = lazy("context_history", "CallInfo");
-            attach_context_savings = lazy("context_savings", "attach_context_savings");
-            estimate_file_tokens = lazy("context_savings", "estimate_file_tokens");
-            discover_review_changes = lazy("incremental", "discover_review_changes");
+            import from code_review_graph.changes { analyze_changes }
+            import from code_review_graph.context_history { CallInfo }
+            import from code_review_graph.context_savings { attach_context_savings }
+            import from code_review_graph.context_savings { estimate_file_tokens }
+            import from code_review_graph.incremental { discover_review_changes }
             changed: any;
             brief_base: any;
             (changed, brief_base) = discover_review_changes(
                 repo_root, result.get("base_resolved") or "HEAD~1"
             ) as any;
             if changed {
-                WriteLock = lazy("locking", "WriteLock");
+                import from code_review_graph.locking { WriteLock }
 
                 db_path: any = get_db_path(repo_root, read_only=True);
                 brief_lock: any = WriteLock(db_path);
                 if not brief_lock.acquire(blocking=True) {
-                    _write_skipped_response = lazy("tools.build", "_write_skipped_response");
+                    import from code_review_graph.tools.build { _write_skipped_response }
                     _exit_if_contended(_write_skipped_response(db_path, brief_lock.holder_pid()));
                 }
                 store: any = None;
@@ -1297,8 +1297,8 @@ def _handle_build_update(args, repo_root: Path, embedding_refresh_kwargs) {
 def _print_savings_panel(
     args, repo_root: Path, changed: list[str], response: dict, original_tokens: int
 ) {
-    format_context_savings_panel = lazy("context_savings", "format_context_savings_panel");
-    verify_with_tiktoken = lazy("context_savings", "verify_with_tiktoken");
+    import from code_review_graph.context_savings { format_context_savings_panel }
+    import from code_review_graph.context_savings { verify_with_tiktoken }
 
     if not response.get("changed_functions") {
         print("Token Savings: none to show, as no functions changed.");
@@ -1323,12 +1323,12 @@ def _print_savings_panel(
 }
 
 def _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = False) {
-    _prepare_db_path = lazy("incremental", "_prepare_db_path");
-    assert_graph_serves_root = lazy("incremental", "assert_graph_serves_root");
+    import from code_review_graph.incremental { _prepare_db_path }
+    import from code_review_graph.incremental { assert_graph_serves_root }
 
     lock: any = None;
     if not args.dry_run {
-        _lock_or_skip = lazy("tools.build", "_lock_or_skip");
+        import from code_review_graph.tools.build { _lock_or_skip }
 
         contended: any;
         (lock, contended) = _lock_or_skip(
@@ -1341,7 +1341,7 @@ def _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = False
     store: any = None;
     try {
         if args.dry_run {
-            GraphStore = lazy("graph", "GraphStore");
+            import from code_review_graph.graph { GraphStore }
 
             store = GraphStore(
                 repo_root / ".code-review-graph.db" if legacy else db_path, read_only=True
@@ -1376,7 +1376,7 @@ def _handle_forget(args, repo_root: Path, db_path: Path, *, legacy: bool = False
             return;
         }
 
-        forget_files = lazy("forget", "forget_files");
+        import from code_review_graph.forget { forget_files }
 
         summary: any = forget_files(store, repo_root, targets);
         reparsed: any = summary.get("reparsed", []);
@@ -2056,7 +2056,7 @@ def build_parser -> argparse.ArgumentParser {
         "--data-dir", default=None, help="External directory containing the graph database"
     );
     query_cmd: any = sub.add_parser("query", help="Query graph relationships");
-    QUERY_PATTERNS = lazy("constants", "QUERY_PATTERNS");
+    import from code_review_graph.constants { QUERY_PATTERNS }
 
     query_cmd.add_argument(
         "pattern",
@@ -2308,14 +2308,14 @@ def _dispatch {
     }
 
     if args.command == "enrich" {
-        run_hook = lazy("enrich", "run_hook");
+        import from code_review_graph.enrich { run_hook }
 
         run_hook();
         return;
     }
 
     if args.command in {"hook-update", "hook-status"} {
-        hook_update: any = lazy("hook_update");
+        import code_review_graph.hook_update as hook_update;
 
         if args.command == "hook-update" {
             hook_update.run_update_hook(existing_only=args.existing_only);
@@ -2326,8 +2326,8 @@ def _dispatch {
     }
 
     if args.command in _GRAPH_TOOL_COMMANDS {
-        find_project_root = lazy("incremental", "find_project_root");
-        get_db_path = lazy("incremental", "get_db_path");
+        import from code_review_graph.incremental { find_project_root }
+        import from code_review_graph.incremental { get_db_path }
 
         if args.repo {
             repo_root: any = _find_explicit_repo_root(Path(args.repo).expanduser());
@@ -2355,7 +2355,7 @@ def _dispatch {
             );
             raise SystemExit(1);
         }
-        recorded_as = lazy("context_history", "recorded_as");
+        import from code_review_graph.context_history { recorded_as }
         with recorded_as(args.command) {
             _run_graph_tool_command(args, repo_root);
         }
@@ -2420,7 +2420,7 @@ def _dispatch {
                 );
             }
             import from code_review_graph.multi_worktree { MultiWorktreeError }
-            run_multi_worktree_server = lazy("multi_worktree", "run_multi_worktree_server");
+            import from code_review_graph.multi_worktree { run_multi_worktree_server }
 
             try {
                 run_multi_worktree_server(
@@ -2432,7 +2432,7 @@ def _dispatch {
             return;
         }
 
-        serve_main = lazy("main", "main");
+        import from code_review_graph.main { main as serve_main }
 
         if args.command == "serve" {
             if args.http {
@@ -2461,13 +2461,13 @@ def _dispatch {
             _SUBCOMMANDS["daemon"].print_help();
             return;
         }
-        _handle_add = lazy("daemon_cli", "_handle_add");
-        _handle_logs = lazy("daemon_cli", "_handle_logs");
-        _handle_remove = lazy("daemon_cli", "_handle_remove");
-        _handle_restart = lazy("daemon_cli", "_handle_restart");
-        _handle_start = lazy("daemon_cli", "_handle_start");
-        _handle_status = lazy("daemon_cli", "_handle_status");
-        _handle_stop = lazy("daemon_cli", "_handle_stop");
+        import from code_review_graph.daemon_cli { _handle_add }
+        import from code_review_graph.daemon_cli { _handle_logs }
+        import from code_review_graph.daemon_cli { _handle_remove }
+        import from code_review_graph.daemon_cli { _handle_restart }
+        import from code_review_graph.daemon_cli { _handle_start }
+        import from code_review_graph.daemon_cli { _handle_status }
+        import from code_review_graph.daemon_cli { _handle_stop }
 
         handlers: any = {
             "start": _handle_start,
@@ -2486,9 +2486,9 @@ def _dispatch {
     }
 
     if args.command == "eval" {
-        generate_full_report = lazy("eval.reporter", "generate_full_report");
-        generate_readme_tables = lazy("eval.reporter", "generate_readme_tables");
-        run_eval = lazy("eval.runner", "run_eval");
+        import from code_review_graph.eval.reporter { generate_full_report }
+        import from code_review_graph.eval.reporter { generate_readme_tables }
+        import from code_review_graph.eval.runner { run_eval }
 
         if getattr(args, "report", False) {
             output_dir: any = Path(getattr(args, "output_dir", None) or "evaluate/results");
@@ -2529,8 +2529,8 @@ def _dispatch {
     }
 
     if args.command == "uninstall" {
-        UninstallReport = lazy("uninstall", "UninstallReport");
-        run_uninstall = lazy("uninstall", "run");
+        import from code_review_graph.uninstall { UninstallReport }
+        import from code_review_graph.uninstall { run as run_uninstall }
 
         target_repo: any = Path(args.repo).expanduser() if args.repo else None;
         platform_target: any = getattr(args, "platform", "all") or "all";
@@ -2617,7 +2617,7 @@ def _dispatch {
 
     if args.command in ("register", "unregister", "repos") {
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s");
-        Registry = lazy("registry", "Registry");
+        import from code_review_graph.registry { Registry }
 
         registry: any = Registry();
         if args.command == "register" {
@@ -2663,11 +2663,11 @@ def _dispatch {
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s");
 
-    assert_graph_serves_root = lazy("incremental", "assert_graph_serves_root");
-    find_project_root = lazy("incremental", "find_project_root");
-    find_repo_root = lazy("incremental", "find_repo_root");
-    get_db_path = lazy("incremental", "get_db_path");
-    watch = lazy("incremental", "watch");
+    import from code_review_graph.incremental { assert_graph_serves_root }
+    import from code_review_graph.incremental { find_project_root }
+    import from code_review_graph.incremental { find_repo_root }
+    import from code_review_graph.incremental { get_db_path }
+    import from code_review_graph.incremental { watch }
 
     if args.command in ("build", "update", "postprocess") and args.repo {
         _require_repo_folder(Path(args.repo));
@@ -2677,7 +2677,7 @@ def _dispatch {
         repo_root = Path(args.repo) if args.repo else find_project_root();
         _handle_data_dir_option(args, repo_root);
         _ensure_project_marker(repo_root);
-        run_postprocess = lazy("tools.build", "run_postprocess");
+        import from code_review_graph.tools.build { run_postprocess }
 
         result: any = run_postprocess(
             flows=not getattr(args, "no_flows", False),
@@ -2710,7 +2710,7 @@ def _dispatch {
     if args.command == "embed" {
         repo_root = Path(args.repo) if args.repo else find_project_root();
         _handle_data_dir_option(args, repo_root);
-        embed_graph = lazy("tools.docs", "embed_graph");
+        import from code_review_graph.tools.docs { embed_graph }
 
         result = embed_graph(
             repo_root=`str(repo_root),
@@ -2808,7 +2808,7 @@ def _dispatch {
 
     try {
         if args.command == "dead-code" {
-            find_dead_code = lazy("refactor", "find_dead_code");
+            import from code_review_graph.refactor { find_dead_code }
 
             items: any = find_dead_code(
                 store, kind=args.kind, file_pattern=args.file_pattern, root=repo_root
@@ -2828,17 +2828,17 @@ def _dispatch {
                 }
             }
         } elif args.command == "status" {
-            BUILD_IN_PROGRESS = lazy("build_state", "BUILD_IN_PROGRESS");
-            read_build_state = lazy("build_state", "read_build_state");
-            build_was_interrupted = lazy("tools.build", "build_was_interrupted");
+            import from code_review_graph.build_state { BUILD_IN_PROGRESS }
+            import from code_review_graph.build_state { read_build_state }
+            import from code_review_graph.tools.build { build_was_interrupted }
 
             stats: any = store.get_stats();
             interrupted: any = build_was_interrupted(store);
             files_missing: any = operator.eq(read_build_state(store), BUILD_IN_PROGRESS);
             stored_branch: any = store.get_metadata("git_branch");
             stored_sha: any = store.get_metadata("git_head_sha");
-            _git_branch_info = lazy("incremental", "_git_branch_info");
-            detect_vcs = lazy("incremental", "detect_vcs");
+            import from code_review_graph.incremental { _git_branch_info }
+            import from code_review_graph.incremental { detect_vcs }
 
             vcs: any = detect_vcs(repo_root);
             current_branch: any = None;
@@ -2903,7 +2903,7 @@ def _dispatch {
                 }
             }
         } elif args.command == "watch" {
-            run_post_processing = lazy("postprocessing", "run_post_processing");
+            import from code_review_graph.postprocessing { run_post_processing }
 
             try {
                 callback: any = partial(run_post_processing, **embedding_refresh_kwargs)
@@ -2915,7 +2915,7 @@ def _dispatch {
                 sys.exit(1);
             }
         } elif args.command == "visualize" {
-            get_data_dir = lazy("incremental", "get_data_dir");
+            import from code_review_graph.incremental { get_data_dir }
             if getattr(args, "data_dir", None) {
                 data_dir: any = Path(args.data_dir).expanduser().resolve();
                 data_dir.mkdir(parents=True, exist_ok=True);
@@ -2925,32 +2925,32 @@ def _dispatch {
             fmt: any = getattr(args, "format", "html") or "html";
 
             if fmt == "json" {
-                export_json = lazy("exports", "export_json");
+                import from code_review_graph.exports { export_json }
 
                 out: any = data_dir / "graph.json";
                 export_json(store, out);
                 print(f"JSON exported: {out}");
             } elif fmt == "graphml" {
-                export_graphml = lazy("exports", "export_graphml");
+                import from code_review_graph.exports { export_graphml }
 
                 out = data_dir / "graph.graphml";
                 export_graphml(store, out);
                 print(f"GraphML exported: {out}");
             } elif fmt == "cypher" {
-                export_neo4j_cypher = lazy("exports", "export_neo4j_cypher");
+                import from code_review_graph.exports { export_neo4j_cypher }
 
                 out = data_dir / "graph.cypher";
                 export_neo4j_cypher(store, out);
                 print(f"Neo4j Cypher exported: {out}");
             } elif fmt == "obsidian" {
-                export_obsidian_vault = lazy("exports", "export_obsidian_vault");
+                import from code_review_graph.exports { export_obsidian_vault }
 
                 out = data_dir / "obsidian";
                 export_obsidian_vault(store, out);
                 print(f"Obsidian vault exported: {out}");
             } elif fmt == "svg" {
                 import from code_review_graph.exports { MissingOptionalDependencyError }
-                export_svg = lazy("exports", "export_svg");
+                import from code_review_graph.exports { export_svg }
 
                 out = data_dir / "graph.svg";
                 try {
@@ -2962,7 +2962,7 @@ def _dispatch {
                 print(f"SVG exported: {out}");
             } else {
                 import from code_review_graph.neighbourhood { SeedResolutionError }
-                generate_html = lazy("visualization", "generate_html");
+                import from code_review_graph.visualization { generate_html }
 
                 html_path: any = data_dir / "graph.html";
                 vis_mode: any = getattr(args, "mode", "auto") or "auto";
@@ -2972,7 +2972,7 @@ def _dispatch {
                 max_nodes = NB_DEFAULT_MAX_NODES if max_nodes is None else max_nodes;
                 seed_files: any = `list(getattr(args, "seed_file", None) or []);
                 if getattr(args, "seed_changed", False) {
-                    get_changed_files = lazy("incremental", "get_changed_files");
+                    import from code_review_graph.incremental { get_changed_files }
 
                     base: any = args.seed_changed_base or "HEAD~1";
                     changed: any = get_changed_files(repo_root, base=base);
@@ -3035,8 +3035,8 @@ def _dispatch {
                 }
             }
         } elif args.command == "wiki" {
-            get_data_dir = lazy("incremental", "get_data_dir");
-            generate_wiki = lazy("wiki", "generate_wiki");
+            import from code_review_graph.incremental { get_data_dir }
+            import from code_review_graph.wiki { generate_wiki }
 
             if getattr(args, "data_dir", None) {
                 data_dir = Path(args.data_dir).expanduser().resolve();
@@ -3060,11 +3060,11 @@ def _dispatch {
             );
             print(f"Output: {wiki_dir}");
         } elif args.command == "detect-changes" {
-            analyze_changes = lazy("changes", "analyze_changes");
-            CallInfo = lazy("context_history", "CallInfo");
-            attach_context_savings = lazy("context_savings", "attach_context_savings");
-            estimate_file_tokens = lazy("context_savings", "estimate_file_tokens");
-            discover_review_changes = lazy("incremental", "discover_review_changes");
+            import from code_review_graph.changes { analyze_changes }
+            import from code_review_graph.context_history { CallInfo }
+            import from code_review_graph.context_savings { attach_context_savings }
+            import from code_review_graph.context_savings { estimate_file_tokens }
+            import from code_review_graph.incremental { discover_review_changes }
             notes: list[str] = [];
             (changed, base) = discover_review_changes(repo_root, args.base, notes=notes) as any;
             for note in notes {
@@ -3084,9 +3084,9 @@ def _dispatch {
                 );
                 sections: any = getattr(args, "details", ());
                 if sections {
-                    build_change_details = lazy("change_details", "build_change_details");
-                    review_churn_counts = lazy("changes", "review_churn_counts");
-                    normalize_file_path = lazy("parser", "normalize_file_path");
+                    import from code_review_graph.change_details { build_change_details }
+                    import from code_review_graph.changes { review_churn_counts }
+                    import from code_review_graph.parser { normalize_file_path }
 
                     churn_counts: any;
                     _: any;
@@ -3110,7 +3110,7 @@ def _dispatch {
                     ),
                 );
                 if args.brief {
-                    format_brief = lazy("changes", "format_brief");
+                    import from code_review_graph.changes { format_brief }
 
                     print(format_brief(store, result, repo_root));
                     _print_savings_panel(args, repo_root, changed, result, original_tokens);

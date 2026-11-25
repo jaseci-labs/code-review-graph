@@ -849,7 +849,7 @@ def incremental_detect_communities(
         return 0;
     }
 
-    expand_changed_file_paths = lazy("flows", "expand_changed_file_paths");
+    import from code_review_graph.flows { expand_changed_file_paths }
 
     expanded: any = expand_changed_file_paths(store, changed_files, repo_root=repo_root);
     conn: any = store._conn;

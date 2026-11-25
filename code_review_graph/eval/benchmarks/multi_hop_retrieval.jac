@@ -20,8 +20,8 @@ def _name_set(rows: list[dict[str, Any]]) -> set[str] {
 }
 
 def run(repo_path: Path, store, config: dict) -> list[dict] {
-    hybrid_search = lazy("search", "hybrid_search");
-    query_graph = lazy("tools.query", "query_graph");
+    import from code_review_graph.search { hybrid_search }
+    import from code_review_graph.tools.query { query_graph }
 
     repo_root: any = `str(repo_path);
     results: list[dict] = [];

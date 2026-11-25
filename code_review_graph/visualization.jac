@@ -166,7 +166,7 @@ def _node_payload(gnode: GraphNode, community_id: int | None) -> dict {
 
 def _export_flows(store: GraphStore) -> list[dict] {
     try {
-        get_flows = lazy("flows", "get_flows");
+        import from code_review_graph.flows { get_flows }
         return get_flows(store, limit=100);
     } except (ImportError, sqlite3.OperationalError) as exc {
         logger.debug("flows unavailable for export: %s", exc);
@@ -178,7 +178,7 @@ def _export_communities(
     store: GraphStore, members_by_community: dict[int, list[str]] | None = None
 ) -> list[dict] {
     try {
-        get_communities = lazy("communities", "get_communities");
+        import from code_review_graph.communities { get_communities }
         return get_communities(store, members_by_community=members_by_community);
     } except (ImportError, sqlite3.OperationalError) as exc {
         logger.debug("communities unavailable for export: %s", exc);

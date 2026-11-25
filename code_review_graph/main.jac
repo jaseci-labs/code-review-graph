@@ -50,7 +50,7 @@ glob _LAZY_PROMPT_NAMES: any = frozenset({
 });
 
 def _resolve_attr(name: str) -> any {
-    g: any = globals();
+    g: any = vars(sys.modules[__name__]);
     if name in g {
         return g[name];
     }
@@ -59,15 +59,15 @@ def _resolve_attr(name: str) -> any {
 
 def __getattr__(name: str) -> any {
     if name in _LAZY_TOOL_NAMES {
-        _tools_mod: any = lazy("tools");
+        import code_review_graph.tools as _tools_mod;
         val: any = getattr(_tools_mod, name);
-        globals()[name] = val;
+        vars(sys.modules[__name__])[name] = val;
         return val;
     }
     if name in _LAZY_PROMPT_NAMES {
-        _prompts_mod: any = lazy("prompts");
+        import code_review_graph.prompts as _prompts_mod;
         val = getattr(_prompts_mod, name);
-        globals()[name] = val;
+        vars(sys.modules[__name__])[name] = val;
         return val;
     }
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}");
@@ -238,7 +238,7 @@ async def _offload(
 ) -> dict {
     def run_fn -> Any {
         for name in getattr(getattr(work, "__code__", None), "co_names", ()) {
-            if name in _LAZY_TOOL_NAMES and name not in globals() {
+            if name in _LAZY_TOOL_NAMES and name not in vars(sys.modules[__name__]) {
                 _resolve_attr(name);
             }
         }
@@ -1671,7 +1671,7 @@ def main(
     watch_stop: any = threading.Event();
     try {
         if auto_watch and `root is not None {
-            run_post_processing = lazy("postprocessing", "run_post_processing");
+            import from code_review_graph.postprocessing { run_post_processing }
 
             watch_store = GraphStore(get_db_path(`root));
             watch_thread = start_watch_thread(
@@ -1688,7 +1688,7 @@ def main(
 
         if operator.eq(sys.platform, "win32") {
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy());
-            prewarm_local_embeddings = lazy("embeddings", "prewarm_local_embeddings");
+            import from code_review_graph.embeddings { prewarm_local_embeddings }
 
             prewarm_local_embeddings();
         }
@@ -1699,7 +1699,7 @@ def main(
             if host is None or port is None {
                 raise ValueError("streamable-http transport requires host and port");
             }
-            build_http_middleware = lazy("http_origin_guard", "build_http_middleware");
+            import from code_review_graph.http_origin_guard { build_http_middleware }
 
             mcp.run(
                 transport="streamable-http",

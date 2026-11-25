@@ -70,7 +70,7 @@ def get_minimal_context(
         }
         if files {
             try {
-                analyze_changes = lazy("changes", "analyze_changes");
+                import from code_review_graph.changes { analyze_changes }
 
                 abs_files: any = [normalize_file_path(`root / f) for f in files];
                 analysis: any = analyze_changes(

@@ -9,7 +9,7 @@ import from dataclasses { dataclass }
 import from typing { Iterable, Sequence }
 
 def _sanitize_name(value: str) -> str {
-    _impl = lazy("graph", "_sanitize_name");
+    import from code_review_graph.graph { _sanitize_name as _impl }
 
     return _impl(value);
 }

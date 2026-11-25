@@ -5,7 +5,8 @@ import importlib;
 def __getattr__(name: str) -> any {
     _runner_names: any = {"load_all_configs", "load_config", "run_eval", "write_csv"};
     if name in _runner_names {
-        return getattr(lazy("eval.runner"), name);
+        import code_review_graph.eval.runner as _runner;
+        return getattr(_runner, name);
     }
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}");
 }
